@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Sidearc",
+  "description": "Arc 风格的侧边标签栏:垂直标签页、收藏夹、固定标签与空间。",
+  "version": "1.0.0",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel", "tabs", "storage", "favicon", "search"],
+  "background": { "service_worker": "background.js" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "action": {
+    "default_title": "打开/关闭侧边标签栏",
+    "default_icon": { "16": "icons/16.png", "32": "icons/32.png" }
+  },
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": { "default": "Alt+S", "mac": "Alt+S" },
+      "description": "打开/关闭侧边标签栏"
+    }
+  }
+}
