@@ -704,6 +704,7 @@ function spaceMenu(e, id) {
     { label: '编辑空间…', run: () => editSpace(id) },
     { label: '新建空间…', run: addSpace },
     { label: space?.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleNoHistory(id) },
+    { label: '从 Arc 导入…', run: () => $('#arc-file').click() },
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { label: '删除空间', danger: true, run: () => deleteSpace(id) },
   ]);
@@ -760,6 +761,101 @@ function ask(title, fields, color, okLabel = '保存') {
     );
     dlg.showModal();
     Object.values(inputs)[0]?.select();
+  });
+}
+
+// ---------- 从 Arc 导入 ----------
+
+// 解析 Arc 的 StorableSidebar.json → { favorites: [项], spaces: [{ name, pinned: [项], tabs: [项] }] }
+// 项为 { title, url, alias? };Arc 里手动改过的名字当作别名,文件夹展开成平铺
+function parseArc(json) {
+  const containers = json?.sidebar?.containers ?? [];
+  const usable = (c) => Array.isArray(c?.items) && Array.isArray(c?.spaces);
+  // Windows 版里窗口数据排在 { global } 标记后面;找不到就取内容最多的那个
+  const marked = containers[containers.findIndex((c) => c?.global) + 1];
+  const c = usable(marked) ? marked : containers.filter(usable).sort((a, b) => b.items.length - a.items.length)[0];
+  if (!c) throw new Error('not an Arc sidebar file');
+
+  // items / spaces 数组里对象和 id 字符串交替出现,只要对象
+  const items = new Map(c.items.filter((x) => x && typeof x === 'object').map((x) => [x.id, x]));
+  const leaves = (id) => {
+    const it = items.get(id);
+    const tab = it?.data?.tab;
+    if (!tab) return (it?.childrenIds ?? []).flatMap(leaves);
+    if (!tab.savedURL) return [];
+    const title = tab.savedTitle || tab.savedURL;
+    return [{ title, url: tab.savedURL, ...(it.title && it.title !== title && { alias: it.title }) }];
+  };
+  const favorites = (c.topAppsContainerIDs ?? []).filter((x) => typeof x === 'string').flatMap(leaves);
+  const spaces = c.spaces
+    .filter((x) => x && typeof x === 'object')
+    .map((s) => {
+      // containerIDs 形如 ['pinned', <id>, 'unpinned', <id>]
+      const ids = s.containerIDs ?? [];
+      const of = (key) => (ids.includes(key) ? leaves(ids[ids.indexOf(key) + 1]) : []);
+      return { name: s.title || 'Arc', pinned: of('pinned'), tabs: of('unpinned') };
+    });
+  return { favorites, spaces };
+}
+
+// 收藏夹并入收藏夹;Arc 的第一个空间并入当前空间,其余按名字并入或新建;未固定的标签页在后台打开。
+// 网址已存在的跳过,所以重复导入不会产生重复项
+async function importArc(file) {
+  let arc;
+  try {
+    arc = parseArc(JSON.parse(await file.text()));
+  } catch {
+    return toast('这不是 Arc 的 StorableSidebar.json');
+  }
+  const added = new Set();
+  const newSpaces = new Set();
+  const opened = [];
+  const count = { fav: 0, pin: 0, tab: 0 };
+  const merge = (arr, list, key) => {
+    const have = new Set(arr.map((i) => i.url));
+    for (const it of list) {
+      if (have.has(it.url)) continue;
+      have.add(it.url);
+      const item = { id: uid(), ...it };
+      arr.push(item);
+      added.add(item.id);
+      count[key]++;
+    }
+  };
+
+  merge(state.favorites, arc.favorites, 'fav');
+  const openUrls = new Set(tabs.map((t) => t.url));
+  for (const [i, s] of arc.spaces.entries()) {
+    let space = i === 0 ? activeSpace() : state.spaces.find((x) => x.name === s.name);
+    if (!space) {
+      space = { id: uid(), name: s.name, color: COLORS[state.spaces.length % COLORS.length], pinned: [] };
+      state.spaces.push(space);
+      newSpaces.add(space.id);
+    }
+    merge(space.pinned, s.pinned, 'pin');
+    for (const t of s.tabs) {
+      if (openUrls.has(t.url) || !/^https?:/i.test(t.url)) continue;
+      openUrls.add(t.url);
+      const tab = await chrome.tabs.create({ url: t.url, windowId, active: false }).catch(() => null);
+      if (!tab) continue;
+      opened.push(tab.id);
+      await setTabSpace(tab.id, space.id);
+      if (t.alias) await setTabAlias(tab.id, t.alias);
+      count.tab++;
+    }
+  }
+  await save();
+  schedule();
+
+  pushUndo(`已从 Arc 导入 ${count.fav} 个收藏、${count.pin} 个固定标签、${count.tab} 个标签页`, async () => {
+    const keep = (i) => !added.has(i.id);
+    state.favorites = state.favorites.filter(keep);
+    state.spaces.forEach((s) => (s.pinned = s.pinned.filter(keep)));
+    state.spaces = state.spaces.filter((s) => !newSpaces.has(s.id) || s.pinned.length);
+    normalize();
+    await save();
+    await chrome.tabs.remove(opened).catch(() => {});
+    schedule();
   });
 }
 
@@ -941,6 +1037,11 @@ function bindEvents() {
   $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
   $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
+  $('#arc-file').addEventListener('change', (e) => {
+    const [file] = e.target.files;
+    e.target.value = '';
+    if (file) importArc(file);
+  });
 
   const search = $('#search');
   search.addEventListener('input', () => {

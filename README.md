@@ -24,6 +24,7 @@ Arc 风格的 Chrome 侧边标签栏:垂直标签页、收藏夹、固定标签�
 - **关闭下方所有标签页**:右键标签页,关闭列表里排在它下面的所有标签页,可撤销。
 - **复制链接地址**:右键标签页或固定项,把网址复制到剪贴板。
 - **撤销**:关闭标签页、清理、关闭下方所有标签页、取消固定之后,可以点底部提示条的「撤销」,或在侧边栏里按 `Ctrl/Cmd+Z`(可连续撤销多步)。
+- **从 Arc 导入**:空间菜单里选「从 Arc 导入…」,选择 Arc 的 `StorableSidebar.json`,即可导入收藏夹、各空间的固定标签和打开的标签页。Windows 上该文件在 `%LOCALAPPDATA%\Packages\TheBrowserCompany.Arc_*\LocalCache\Local\Arc\`,macOS 上在 `~/Library/Application Support/Arc/`。
 - **右键菜单**:标签页、收藏/固定项、空间圆点都有。
 - 跟随系统的浅色 / 深色模式。
 
