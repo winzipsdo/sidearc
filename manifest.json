@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sidearc",
-  "description": "Arc 风格的侧边标签栏:垂直标签页、收藏夹、固定标签与空间。",
+  "description": "侧边标签栏:垂直标签页、子标签、别名、收藏夹、固定标签与空间,支持撤销和重启后恢复。",
   "version": "1.2.0",
   "minimum_chrome_version": "116",
   "permissions": ["sidePanel", "tabs", "storage", "favicon", "search", "clipboardWrite", "sessions"],
