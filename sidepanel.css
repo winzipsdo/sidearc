@@ -143,7 +143,23 @@ header { padding: 12px 12px 8px; }
   background: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
 }
-.space-head span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.space-head span { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.space-head .ghost { margin-left: auto; }
+.badge {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fill-hover);
+  color: var(--fg-2);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.badge[hidden] { display: none; }
 .divider {
   display: flex;
   align-items: center;
@@ -169,7 +185,9 @@ header { padding: 12px 12px 8px; }
 
 /* 行 */
 .list { display: flex; flex-direction: column; gap: 2px; min-height: 8px; border-radius: 11px; }
-#tabs { flex: 1; min-height: 56px; }
+/* 滚动区里的各段都不许被压扁:内容多了就滚动,而不是互相重叠 */
+#scroll > * { flex-shrink: 0; }
+#tabs { flex: 1 0 auto; min-height: 56px; }
 .row {
   display: flex;
   align-items: center;

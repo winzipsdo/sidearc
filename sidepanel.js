@@ -265,6 +265,7 @@ function render() {
   const tabById = new Map(tabs.map((t) => [t.id, t]));
   document.documentElement.style.setProperty('--accent', space.color);
   $('#space-name').textContent = space.name;
+  $('#space-private').hidden = !space.noHistory;
 
   const itemEl = (item, kind) => {
     const open = bind.has(item.id);
@@ -684,10 +685,25 @@ function itemMenu(e, { item, kind }) {
   ]);
 }
 
+// 开关「不记录历史」:实际的清除在 background.js 里,这里只改设置;开启时顺手清掉已打开页面的记录
+async function toggleNoHistory(id) {
+  const space = state.spaces.find((s) => s.id === id);
+  if (!space) return;
+  space.noHistory = !space.noHistory;
+  await save();
+  render();
+  if (space.noHistory) {
+    for (const t of tabs) if (tabSpace.get(t.id) === id && t.url) chrome.history.deleteUrl({ url: t.url }).catch(() => {});
+  }
+  toast(space.noHistory ? `「${space.name}」不再记录浏览历史` : `「${space.name}」恢复记录浏览历史`);
+}
+
 function spaceMenu(e, id) {
+  const space = state.spaces.find((s) => s.id === id);
   showMenu(e, [
     { label: '编辑空间…', run: () => editSpace(id) },
     { label: '新建空间…', run: addSpace },
+    { label: space?.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleNoHistory(id) },
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { label: '删除空间', danger: true, run: () => deleteSpace(id) },
   ]);

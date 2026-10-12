@@ -29,6 +29,21 @@ chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   if (children.length && !info.isWindowClosing) await chrome.tabs.remove(children).catch(() => {});
 });
 
+// ---------- 不记录历史的空间 ----------
+// Chrome 不能让普通窗口里的个别标签页进入无痕模式,所以改为事后清除:
+// 某个网址刚被记进历史时,如果它正开在「不记录历史」的空间里,就立刻删掉。
+// 注意 history.deleteUrl 是按网址删的,会连同这个网址以前的访问记录一起删除。
+chrome.history.onVisited.addListener(async (item) => {
+  const { state } = await chrome.storage.local.get('state');
+  const off = new Set((state?.spaces ?? []).filter((s) => s.noHistory).map((s) => s.id));
+  if (!off.size) return;
+  const hits = (await chrome.tabs.query({})).filter((t) => t.url === item.url || t.pendingUrl === item.url);
+  if (!hits.length) return;
+  const space = await chrome.storage.session.get(hits.map((t) => `t:${t.id}`));
+  // 侧边栏没开时新标签页还没分配空间,按当前空间算
+  if (hits.some((t) => off.has(space[`t:${t.id}`] ?? state.activeSpaceId))) await chrome.history.deleteUrl({ url: item.url });
+});
+
 // ---------- 重启 / 重新加载后恢复 ----------
 // 标签页 id 和会话存储在浏览器重启、扩展重新加载后都会清空。
 // 所以把每个标签页的数据连同网址、位置存一份快照到 storage.local,
