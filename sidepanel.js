@@ -393,7 +393,7 @@ async function removeItem(id, openIfClosed) {
   render();
 
   // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
-  toast(`已${kind === 'fav' ? '从收藏夹移除' : '取消固定'}「${item.alias || item.title}」`, '撤销', async () => {
+  pushUndo(`已${kind === 'fav' ? '从收藏夹移除' : '取消固定'}「${item.alias || item.title}」`, async () => {
     const arr = kind === 'fav' ? state.favorites : state.spaces.find((s) => s.id === spaceId)?.pinned;
     if (!arr || findItem(id)) return;
     arr.splice(Math.min(index, arr.length), 0, item);
@@ -497,8 +497,64 @@ async function deleteSpace(id) {
 }
 
 function clearTabs() {
-  const ids = listedTabs().filter((t) => !t.active).map((t) => t.id);
-  if (ids.length) chrome.tabs.remove(ids);
+  const doomed = listedTabs().filter((t) => !t.active);
+  closeWithUndo(doomed, `已清理 ${doomed.length} 个标签页`);
+}
+
+// 关闭一个标签页;它的子标签会跟着关,所以一起记下来以便撤销
+function closeTab(tab) {
+  const kids = listedTabs().filter((t) => tabParent.get(t.id) === tab.id);
+  const name = `「${tabAlias.get(tab.id) || tab.title || tab.url}」`;
+  return closeWithUndo([tab, ...kids], kids.length ? `已关闭${name}及 ${kids.length} 个子标签` : `已关闭${name}`);
+}
+
+// 关闭一批标签页,并在提示条里提供撤销
+async function closeWithUndo(doomed, text) {
+  if (!doomed.length) return;
+  const ids = new Set(doomed.map((t) => t.id));
+  const spaceId = state.activeSpaceId;
+  const saved = doomed
+    .map((t) => ({ id: t.id, url: t.url, index: t.index, active: t.active, alias: tabAlias.get(t.id), parent: tabParent.get(t.id) }))
+    .sort((a, b) => a.index - b.index);
+  // 留下来的标签页如果挂在要关的父标签下,先脱离,免得被连带关闭
+  const orphans = tabs.filter((t) => !ids.has(t.id) && ids.has(tabParent.get(t.id))).map((t) => ({ id: t.id, parent: tabParent.get(t.id) }));
+  for (const o of orphans) await setTabParent(o.id, null);
+  await chrome.tabs.remove([...ids]).catch(() => {});
+  pushUndo(text, () => reopenTabs(saved, orphans, spaceId));
+}
+
+// 撤销关闭:优先用浏览器的「最近关闭」恢复(保留历史记录和页面状态),找不到的按网址重新打开
+async function reopenTabs(saved, orphans, spaceId) {
+  const [current] = await chrome.tabs.query({ active: true, windowId });
+  const recent = (await chrome.sessions.getRecentlyClosed().catch(() => [])).filter((s) => s.tab);
+  const idMap = new Map();
+  let focus = current?.id;
+  for (const s of saved) {
+    const i = recent.findIndex((r) => r.tab.url === s.url);
+    let tab = i < 0 ? null : (await chrome.sessions.restore(recent.splice(i, 1)[0].tab.sessionId).catch(() => null))?.tab;
+    tab ??= await chrome.tabs.create({ url: s.url, windowId, index: s.index, active: false }).catch(() => null);
+    if (!tab) continue;
+    idMap.set(s.id, tab.id);
+    if (s.active) focus = tab.id;
+  }
+  // 放回原来的位置(从前往后依次归位)
+  for (const s of saved) {
+    if (idMap.has(s.id)) await chrome.tabs.move(idMap.get(s.id), { index: s.index }).catch(() => {});
+  }
+  // 空间、别名、父子关系接回去
+  const set = {};
+  for (const s of saved) {
+    const id = idMap.get(s.id);
+    if (id == null) continue;
+    set[`t:${id}`] = spaceId;
+    if (s.alias) set[`a:${id}`] = s.alias;
+    const parent = idMap.get(s.parent) ?? (tabs.some((t) => t.id === s.parent) ? s.parent : null);
+    if (parent != null) set[`c:${id}`] = parent;
+  }
+  for (const o of orphans) if (idMap.has(o.parent)) set[`c:${o.id}`] = idMap.get(o.parent);
+  await chrome.storage.session.set(set);
+  if (focus != null) await chrome.tabs.update(focus, { active: true }).catch(() => {});
+  schedule();
 }
 
 async function submitSearch(force) {
@@ -522,6 +578,21 @@ function toast(text, action, run) {
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (el.hidden = true), action ? 8000 : 2000);
+}
+
+// 可撤销的操作都进这个栈:提示条上的「撤销」和 Ctrl/Cmd+Z 走同一条路,后做的先撤
+const undoStack = [];
+function pushUndo(text, run) {
+  const entry = { run };
+  undoStack.push(entry);
+  if (undoStack.length > 30) undoStack.shift();
+  toast(text, '撤销', () => undo(entry));
+}
+async function undo(entry = undoStack.at(-1)) {
+  if (!entry) return toast('没有可撤销的操作');
+  undoStack.splice(undoStack.indexOf(entry), 1);
+  await entry.run();
+  toast('已撤销');
 }
 
 async function copyText(text, done) {
@@ -558,8 +629,8 @@ function showMenu(e, items) {
 
 function tabMenu(e, tab) {
   // 只算列表里看得见的:搜索过滤掉的标签页不会被关掉
-  const visible = visibleTabs().map((x) => x.tab.id);
-  const below = visible.slice(visible.indexOf(tab.id) + 1);
+  const visible = visibleTabs().map((x) => x.tab);
+  const below = visible.slice(visible.findIndex((t) => t.id === tab.id) + 1);
   const children = listedTabs().filter((t) => tabParent.get(t.id) === tab.id).map((t) => t.id);
   showMenu(e, [
     { label: tabAlias.has(tab.id) ? '修改别名…' : '设置别名…', run: () => editTabAlias(tab.id) },
@@ -584,8 +655,8 @@ function tabMenu(e, tab) {
       .filter((s) => s.id !== state.activeSpaceId)
       .map((s) => ({ label: `移到空间「${s.name}」`, run: () => moveTabToSpace(tab.id, s.id) })),
     '-',
-    { label: '关闭', run: () => chrome.tabs.remove(tab.id) },
-    below.length && { label: '关闭下方所有标签页', danger: true, run: () => chrome.tabs.remove(below) },
+    { label: '关闭', run: () => closeTab(tab) },
+    below.length && { label: '关闭下方所有标签页', danger: true, run: () => closeWithUndo(below, `已关闭 ${below.length} 个标签页`) },
   ]);
 }
 
@@ -791,7 +862,7 @@ function bindEvents() {
     if (kind === 'tab') {
       const tab = tabs.find((t) => t.id === +id);
       if (!tab) return;
-      if (act === 'close') chrome.tabs.remove(tab.id);
+      if (act === 'close') closeTab(tab);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
       else chrome.tabs.update(tab.id, { active: true });
     } else {
@@ -817,8 +888,10 @@ function bindEvents() {
   scroll.addEventListener('auxclick', (e) => {
     const el = e.button === 1 && e.target.closest('[data-kind]');
     if (!el) return;
-    if (el.dataset.kind === 'tab') chrome.tabs.remove(+el.dataset.id);
-    else {
+    if (el.dataset.kind === 'tab') {
+      const tab = tabs.find((t) => t.id === +el.dataset.id);
+      if (tab) closeTab(tab);
+    } else {
       const item = findItem(el.dataset.id)?.item;
       if (item) closeItemTab(item);
     }
@@ -864,6 +937,14 @@ function bindEvents() {
       search.value = query = '';
       render();
     }
+  });
+
+  // Ctrl/Cmd+Z 撤销最近一次操作;在输入框里时留给文字编辑自己的撤销
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;
+    if (e.target.closest?.('input, textarea, dialog') || $('#dlg').open) return;
+    e.preventDefault();
+    undo();
   });
 
   // favicon 加载失败时换成默认图标
