@@ -27,9 +27,12 @@ const uid = () => crypto.randomUUID().slice(0, 8);
 
 // 持久数据(chrome.storage.local)
 let state = { spaces: [], favorites: [], activeSpaceId: null };
-// 会话数据(chrome.storage.session):t:<tabId> -> spaceId,b:<itemId> -> tabId
+// 会话数据(chrome.storage.session):t:<tabId> -> spaceId,b:<itemId> -> tabId,a:<tabId> -> 别名,c:<tabId> -> 父标签页 tabId
 const tabSpace = new Map();
 const bind = new Map();
+const tabAlias = new Map();
+const tabParent = new Map();
+const SESSION_MAPS = { t: tabSpace, b: bind, a: tabAlias, c: tabParent };
 
 let tabs = [];
 let windowId;
@@ -92,9 +95,9 @@ const save = () => chrome.storage.local.set({ state });
 const activeSpace = () => state.spaces.find((s) => s.id === state.activeSpaceId) ?? state.spaces[0];
 
 function applySession(key, value) {
-  const map = key.startsWith('t:') ? tabSpace : key.startsWith('b:') ? bind : null;
+  const map = key[1] === ':' && SESSION_MAPS[key[0]];
   if (!map) return;
-  const k = key.startsWith('t:') ? +key.slice(2) : key.slice(2);
+  const k = map === bind ? key.slice(2) : +key.slice(2);
   if (value === undefined) map.delete(k);
   else map.set(k, value);
 }
@@ -102,6 +105,22 @@ function applySession(key, value) {
 function setTabSpace(tabId, spaceId) {
   tabSpace.set(tabId, spaceId);
   return chrome.storage.session.set({ [`t:${tabId}`]: spaceId });
+}
+function setTabAlias(tabId, alias) {
+  if (!alias) {
+    tabAlias.delete(tabId);
+    return chrome.storage.session.remove(`a:${tabId}`);
+  }
+  tabAlias.set(tabId, alias);
+  return chrome.storage.session.set({ [`a:${tabId}`]: alias });
+}
+function setTabParent(tabId, parentId) {
+  if (parentId == null) {
+    tabParent.delete(tabId);
+    return chrome.storage.session.remove(`c:${tabId}`);
+  }
+  tabParent.set(tabId, parentId);
+  return chrome.storage.session.set({ [`c:${tabId}`]: parentId });
 }
 function setBind(itemId, tabId) {
   bind.set(itemId, tabId);
@@ -148,6 +167,55 @@ function listedTabs() {
   return tabs.filter((t) => !byTab.has(t.id) && tabSpace.get(t.id) === sid);
 }
 
+// 当前空间的标签页按树形排好:[{ tab, depth }],最多两级(depth 0 / 1)。父标签页不在列表里的子标签按顶级显示
+function treeTabs() {
+  const listed = listedTabs();
+  const ids = new Set(listed.map((t) => t.id));
+  const kids = new Map();
+  const roots = [];
+  for (const t of listed) {
+    const p = tabParent.get(t.id);
+    if (p == null || p === t.id || !ids.has(p)) roots.push(t);
+    else if (kids.has(p)) kids.get(p).push(t);
+    else kids.set(p, [t]);
+  }
+  const out = [];
+  const seen = new Set();
+  const walk = (t, depth) => {
+    if (seen.has(t.id)) return;
+    seen.add(t.id);
+    out.push({ tab: t, depth });
+    for (const k of kids.get(t.id) ?? []) walk(k, 1);
+  };
+  roots.forEach((t) => walk(t, 0));
+  // 父子关系万一成环,剩下的按顶级兜底
+  listed.forEach((t) => walk(t, 0));
+  return out;
+}
+
+// 实际显示的行:搜索时平铺,只留匹配项
+function visibleTabs() {
+  const tree = treeTabs();
+  if (!query.trim()) return tree;
+  return tree.filter(({ tab }) => matches(tabAlias.get(tab.id), tab.title, tab.url)).map(({ tab }) => ({ tab, depth: 0 }));
+}
+
+// 某个标签页在列表里的父标签页(不在当前列表里则视为没有)
+function listedParent(tabId) {
+  const p = tabParent.get(tabId);
+  return p != null && listedTabs().some((t) => t.id === p) ? p : null;
+}
+
+// tabId 及其所有后代,按树形顺序
+function subtreeIds(tabId) {
+  const tree = treeTabs();
+  const i = tree.findIndex((x) => x.tab.id === tabId);
+  if (i < 0) return [tabId];
+  const out = [tabId];
+  for (let j = i + 1; j < tree.length && tree[j].depth > tree[i].depth; j++) out.push(tree[j].tab.id);
+  return out;
+}
+
 // ---------- 标签页同步 ----------
 
 async function refreshTabs() {
@@ -156,8 +224,10 @@ async function refreshTabs() {
   const fresh = {};
   for (const t of tabs) {
     if (!tabSpace.has(t.id)) {
-      tabSpace.set(t.id, state.activeSpaceId);
-      fresh[`t:${t.id}`] = state.activeSpaceId;
+      // 从别的标签页打开的,跟着来源标签页走
+      const sid = tabSpace.get(t.openerTabId) ?? state.activeSpaceId;
+      tabSpace.set(t.id, sid);
+      fresh[`t:${t.id}`] = sid;
     }
   }
   if (Object.keys(fresh).length) await chrome.storage.session.set(fresh);
@@ -201,37 +271,38 @@ function render() {
     const tab = tabById.get(bind.get(item.id));
     const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active'].filter(Boolean).join(' ');
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
-    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: item.title, data: { kind, id: item.id } }, img);
+    const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
+    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img);
     return h(
       'div',
       { class: cls, draggable: true, title: item.url, data: { kind, id: item.id } },
       img,
+      item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
       open && h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))
     );
   };
 
-  const favs = state.favorites.filter((i) => matches(i.title, i.url)).map((i) => itemEl(i, 'fav'));
+  const favs = state.favorites.filter((i) => matches(i.alias, i.title, i.url)).map((i) => itemEl(i, 'fav'));
   $('#favs').replaceChildren(...(favs.length || query ? favs : [h('div', { class: 'hint' }, '把标签页拖到这里加入收藏夹')]));
 
-  const pins = space.pinned.filter((i) => matches(i.title, i.url)).map((i) => itemEl(i, 'pin'));
+  const pins = space.pinned.filter((i) => matches(i.alias, i.title, i.url)).map((i) => itemEl(i, 'pin'));
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, '把标签页拖到这里固定到此空间')]));
 
   $('#tabs').replaceChildren(
-    ...listedTabs()
-      .filter((t) => matches(t.title, t.url))
-      .map((t) => {
-        const muted = t.mutedInfo?.muted;
-        const cls = ['row', t.active && 'active', t.discarded && 'discarded', t.status === 'loading' && 'loading'].filter(Boolean).join(' ');
-        return h(
-          'div',
-          { class: cls, draggable: true, title: t.url, data: { kind: 'tab', id: t.id } },
-          h('img', { class: 'icon', src: tabIcon(t), alt: '', draggable: false }),
-          h('span', { class: 'title' }, t.title || t.url || '新标签页'),
-          (t.audible || muted) && h('button', { class: 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
-          h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
-        );
-      })
+    ...visibleTabs().map(({ tab: t, depth }) => {
+      const muted = t.mutedInfo?.muted;
+      const cls = ['row', t.active && 'active', t.discarded && 'discarded', t.status === 'loading' && 'loading'].filter(Boolean).join(' ');
+      return h(
+        'div',
+        { class: cls, draggable: true, title: t.url, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: t.id } },
+        h('img', { class: 'icon', src: tabIcon(t), alt: '', draggable: false }),
+        tabAlias.has(t.id) && h('span', { class: 'alias' }, tabAlias.get(t.id)),
+        h('span', { class: 'title' }, t.title || t.url || '新标签页'),
+        (t.audible || muted) && h('button', { class: 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
+        h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
+      );
+    })
   );
 
   $('#spaces').replaceChildren(
@@ -274,9 +345,22 @@ async function closeItemTab(item) {
   render();
 }
 
-async function addItemFromTab(tab, zone) {
+// 标签页被固定项绑定后不再是列表里的父/子标签:自己脱离父级,子标签变成顶级(否则关掉固定项会连带关掉它们)
+async function detachTab(tabId) {
+  await setTabParent(tabId, null);
+  for (const [child, parent] of [...tabParent]) if (parent === tabId) await setTabParent(child, null);
+}
+
+async function itemFromTab(tab) {
   const item = { id: uid(), title: tab.title || tab.url, url: tab.url };
+  if (tabAlias.has(tab.id)) item.alias = tabAlias.get(tab.id);
+  await detachTab(tab.id);
   await setBind(item.id, tab.id);
+  return item;
+}
+
+async function addItemFromTab(tab, zone) {
+  const item = await itemFromTab(tab);
   (zone === 'fav' ? state.favorites : activeSpace().pinned).push(item);
   await save();
   render();
@@ -291,23 +375,43 @@ async function moveItem(id, zone) {
 }
 
 async function removeItem(id, openIfClosed) {
-  const item = takeItem(id);
-  if (!item) return;
-  const tabId = bind.get(id);
+  const hit = findItem(id);
+  if (!hit) return;
+  const { item, kind } = hit;
+  const spaceId = hit.space?.id;
+  const index = (kind === 'fav' ? state.favorites : hit.space.pinned).indexOf(item);
+  takeItem(id);
+  let tabId = bind.get(id);
   if (tabId != null) {
     await unbind(id);
     await setTabSpace(tabId, state.activeSpaceId);
+    await setTabAlias(tabId, item.alias);
   } else if (openIfClosed) {
-    chrome.tabs.create({ url: item.url, windowId, active: false });
+    tabId = (await chrome.tabs.create({ url: item.url, windowId, active: false })).id;
   }
   await save();
   render();
+
+  // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
+  toast(`已${kind === 'fav' ? '从收藏夹移除' : '取消固定'}「${item.alias || item.title}」`, '撤销', async () => {
+    const arr = kind === 'fav' ? state.favorites : state.spaces.find((s) => s.id === spaceId)?.pinned;
+    if (!arr || findItem(id)) return;
+    arr.splice(Math.min(index, arr.length), 0, item);
+    const tab = tabId != null && (await chrome.tabs.get(tabId).catch(() => null));
+    if (tab) {
+      await detachTab(tab.id);
+      await setBind(id, tab.id);
+    }
+    await save();
+    render();
+  });
 }
 
 async function editItem(id) {
   const item = findItem(id)?.item;
   if (!item) return;
   const out = await ask('编辑', [
+    { key: 'alias', label: '别名(可留空)', value: item.alias, optional: true },
     { key: 'title', label: '名称', value: item.title },
     { key: 'url', label: '网址', value: item.url },
   ]);
@@ -315,7 +419,25 @@ async function editItem(id) {
   if (!target) return;
   target.title = out.title;
   target.url = toUrl(out.url) ?? out.url;
+  if (out.alias) target.alias = out.alias;
+  else delete target.alias;
   await save();
+  render();
+}
+
+async function editTabAlias(tabId) {
+  const out = await ask('设置别名', [{ key: 'alias', label: '别名(留空则清除)', value: tabAlias.get(tabId), optional: true }]);
+  if (!out) return;
+  await setTabAlias(tabId, out.alias);
+  render();
+}
+
+// 连同子标签一起移到另一个空间,并脱离原来的父标签页
+async function moveTabToSpace(tabId, spaceId) {
+  const ids = subtreeIds(tabId);
+  ids.forEach((id) => tabSpace.set(id, spaceId));
+  await chrome.storage.session.set(Object.fromEntries(ids.map((id) => [`t:${id}`, spaceId])));
+  await setTabParent(tabId, null);
   render();
 }
 
@@ -390,7 +512,31 @@ async function submitSearch(force) {
   render();
 }
 
-// ---------- 右键菜单 / 对话框 ----------
+// ---------- 提示条 / 右键菜单 / 对话框 ----------
+
+let toastTimer;
+// 底部提示条;给了 action 就带一个按钮(比如「撤销」)
+function toast(text, action, run) {
+  const el = $('#toast');
+  el.replaceChildren(h('span', {}, text), action && h('button', { onclick: () => ((el.hidden = true), run()) }, action));
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (el.hidden = true), action ? 8000 : 2000);
+}
+
+async function copyText(text, done) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // 面板没拿到焦点时 Clipboard API 会拒绝,退回老办法
+    const ta = h('textarea', { value: text, style: 'position:fixed;opacity:0' });
+    document.body.append(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  toast(done);
+}
 
 function hideMenu() {
   $('#menu').hidden = true;
@@ -411,28 +557,43 @@ function showMenu(e, items) {
 }
 
 function tabMenu(e, tab) {
-  const others = listedTabs().filter((t) => t.id !== tab.id).map((t) => t.id);
+  // 只算列表里看得见的:搜索过滤掉的标签页不会被关掉
+  const visible = visibleTabs().map((x) => x.tab.id);
+  const below = visible.slice(visible.indexOf(tab.id) + 1);
+  const children = listedTabs().filter((t) => tabParent.get(t.id) === tab.id).map((t) => t.id);
   showMenu(e, [
+    { label: tabAlias.has(tab.id) ? '修改别名…' : '设置别名…', run: () => editTabAlias(tab.id) },
+    '-',
+    listedParent(tab.id) != null && { label: '移出为顶级标签页', run: () => setTabParent(tab.id, null).then(render) },
+    children.length && {
+      label: '解除所有子标签',
+      run: async () => {
+        for (const id of children) await setTabParent(id, null);
+        render();
+      },
+    },
     { label: '固定到当前空间', run: () => addItemFromTab(tab, 'pin') },
     { label: '添加到收藏夹', run: () => addItemFromTab(tab, 'fav') },
     '-',
+    { label: '复制链接地址', run: () => copyText(tab.url, '已复制链接地址') },
     { label: '复制标签页', run: () => chrome.tabs.duplicate(tab.id) },
     { label: '重新加载', run: () => chrome.tabs.reload(tab.id) },
     { label: tab.mutedInfo?.muted ? '取消静音' : '静音', run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     state.spaces.length > 1 && '-',
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
-      .map((s) => ({ label: `移到空间「${s.name}」`, run: () => setTabSpace(tab.id, s.id).then(render) })),
+      .map((s) => ({ label: `移到空间「${s.name}」`, run: () => moveTabToSpace(tab.id, s.id) })),
     '-',
     { label: '关闭', run: () => chrome.tabs.remove(tab.id) },
-    others.length && { label: '关闭其他标签页', danger: true, run: () => chrome.tabs.remove(others) },
+    below.length && { label: '关闭下方所有标签页', danger: true, run: () => chrome.tabs.remove(below) },
   ]);
 }
 
 function itemMenu(e, { item, kind }) {
   const tab = tabs.find((t) => t.id === bind.get(item.id));
   showMenu(e, [
-    { label: '编辑…', run: () => editItem(item.id) },
+    { label: '编辑别名、名称和网址…', run: () => editItem(item.id) },
+    { label: '复制链接地址', run: () => copyText(tab?.url || item.url, '已复制链接地址') },
     tab && {
       label: '将网址更新为当前页面',
       run: async () => {
@@ -489,7 +650,7 @@ function ask(title, fields, color, okLabel = '保存') {
         'form',
         { method: 'dialog' },
         h('h3', {}, title),
-        fields.map((f) => h('label', {}, f.label, (inputs[f.key] = h('input', { type: 'text', value: f.value ?? '', required: true })))),
+        fields.map((f) => h('label', {}, f.label, (inputs[f.key] = h('input', { type: 'text', value: f.value ?? '', required: !f.optional })))),
         swatches,
         h(
           'div',
@@ -518,7 +679,7 @@ function ask(title, fields, color, okLabel = '保存') {
 // ---------- 拖拽 ----------
 
 function clearMarks() {
-  for (const el of document.querySelectorAll('.drop-before, .drop-end, .drop-on')) el.classList.remove('drop-before', 'drop-end', 'drop-on');
+  for (const el of document.querySelectorAll('.drop-before, .drop-end, .drop-on, .drop-into')) el.classList.remove('drop-before', 'drop-end', 'drop-on', 'drop-into');
 }
 
 function finishDrag() {
@@ -526,6 +687,17 @@ function finishDrag() {
   clearMarks();
   document.querySelector('.dragging')?.classList.remove('dragging');
   if (renderPending) render();
+}
+
+// 拖标签页时,指针落在某一行的中间部分 = 要成为它的子标签;上下边缘仍是排序
+function nestElement(zone, e) {
+  if (dragging.kind !== 'tab' || zone.dataset.zone !== 'tab') return null;
+  return (
+    [...zone.querySelectorAll('[data-kind="tab"]')].find((el) => {
+      const r = el.getBoundingClientRect();
+      return el.dataset.id !== dragging.id && e.clientY > r.top + r.height * 0.28 && e.clientY < r.bottom - r.height * 0.28;
+    }) ?? null
+  );
 }
 
 // 拖到 zone 里时,应插在哪个元素之前(null = 末尾)
@@ -541,32 +713,60 @@ function refElement(zone, e) {
   );
 }
 
-async function reorderTab(tabId, refId, lastId) {
-  const index = (id) => tabs.find((t) => t.id === id)?.index;
-  const from = index(tabId);
-  let to;
-  if (refId != null) {
-    const b = index(refId);
-    to = from < b ? b - 1 : b;
-  } else if (lastId != null) {
-    const l = index(lastId);
-    to = from < l ? l : l + 1;
+// 在浏览器的标签栏里把 ids 挪成紧挨着的一串:第一个放到 where 指定的位置,其余依次跟在后面
+async function moveGroup(ids, where) {
+  const index = async (id) => (await chrome.tabs.get(id)).index;
+  const move = (id, to, from) => (to === from ? null : chrome.tabs.move(id, { index: to }).catch(() => {}));
+  const from = await index(ids[0]);
+  if (where.before != null) {
+    const r = await index(where.before);
+    await move(ids[0], from < r ? r - 1 : r, from);
+  } else if (where.after != null) {
+    const a = await index(where.after);
+    await move(ids[0], from < a ? a : a + 1, from);
   }
-  if (from == null || to == null || Number.isNaN(to) || to === from) return;
-  await chrome.tabs.move(tabId, { index: to }).catch(() => {});
+  let prev = ids[0];
+  for (const id of ids.slice(1)) {
+    const [p, f] = [await index(prev), await index(id)];
+    await move(id, f < p ? p : p + 1, f);
+    prev = id;
+  }
+  schedule();
 }
 
-async function performDrop(d, zone, refId, lastId) {
+// 把标签页(连同子标签)拖到 refId 之前:和 refId 同级;refId 为空则放到末尾并成为顶级
+async function dropTab(tabId, refId) {
+  const moving = subtreeIds(tabId);
+  if (refId != null && moving.includes(refId)) return;
+  const rest = listedTabs().filter((t) => !moving.includes(t.id));
+  const parent = refId != null ? listedParent(refId) : null;
+  // 最多两级:带着子标签拖进别人名下时,子标签一起并为同级
+  for (const id of parent == null ? [tabId] : moving) await setTabParent(id, parent);
+  const last = rest.reduce((a, b) => (a && a.index > b.index ? a : b), null);
+  await moveGroup(moving, refId != null ? { before: refId } : { after: last?.id });
+}
+
+// 把标签页拖到另一个标签页上:成为它的子标签,排在它现有子标签的最后。
+// 最多两级:目标本身是子标签时,挂到目标的父标签下;自己带着的子标签一起并为同级
+async function nestTab(tabId, targetId) {
+  const parent = listedParent(targetId) ?? targetId;
+  const moving = subtreeIds(tabId);
+  if (moving.includes(parent)) return;
+  const after = subtreeIds(parent).filter((id) => !moving.includes(id)).at(-1);
+  for (const id of moving) await setTabParent(id, parent);
+  await moveGroup(moving, { after });
+}
+
+async function performDrop(d, zone, refId, intoId) {
   if (zone === 'tab') {
-    if (d.kind === 'tab') return reorderTab(+d.id, refId && +refId, lastId && +lastId);
+    if (d.kind === 'tab') return intoId != null ? nestTab(+d.id, +intoId) : dropTab(+d.id, refId == null ? null : +refId);
     return removeItem(d.id, true);
   }
   let item;
   if (d.kind === 'tab') {
     const tab = tabs.find((t) => t.id === +d.id);
     if (!tab) return;
-    item = { id: uid(), title: tab.title || tab.url, url: tab.url };
-    await setBind(item.id, tab.id);
+    item = await itemFromTab(tab);
   } else {
     item = takeItem(d.id);
   }
@@ -600,6 +800,14 @@ function bindEvents() {
       if (act === 'close') closeItemTab(item);
       else openItem(item);
     }
+  });
+
+  // 双击设置别名
+  scroll.addEventListener('dblclick', (e) => {
+    const el = !e.target.closest('[data-act]') && e.target.closest('[data-kind]');
+    if (!el) return;
+    if (el.dataset.kind === 'tab') editTabAlias(+el.dataset.id);
+    else editItem(el.dataset.id);
   });
 
   // 中键关闭
@@ -690,8 +898,10 @@ function bindEvents() {
     }
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    const ref = refElement(target, e);
-    if (ref) ref.classList.add('drop-before');
+    const into = nestElement(target, e);
+    const ref = !into && refElement(target, e);
+    if (into) into.classList.add('drop-into');
+    else if (ref) ref.classList.add('drop-before');
     else target.classList.add('drop-end');
   });
   document.addEventListener('drop', async (e) => {
@@ -702,17 +912,14 @@ function bindEvents() {
     const d = dragging;
     if (target.dataset.space) {
       finishDrag();
-      if (d.kind === 'tab') {
-        await setTabSpace(+d.id, target.dataset.space);
-        render();
-      }
+      if (d.kind === 'tab') await moveTabToSpace(+d.id, target.dataset.space);
       return;
     }
     const zone = target.dataset.zone;
+    const intoId = nestElement(target, e)?.dataset.id;
     const refId = refElement(target, e)?.dataset.id;
-    const lastId = [...target.querySelectorAll('[data-kind="tab"]')].filter((el) => el.dataset.id !== d.id).at(-1)?.dataset.id;
     finishDrag();
-    await performDrop(d, zone, refId, lastId);
+    await performDrop(d, zone, refId, intoId);
   });
   document.addEventListener('dragend', finishDrag);
 

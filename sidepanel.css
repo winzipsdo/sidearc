@@ -194,6 +194,26 @@ header { padding: 12px 12px 8px; }
   /* 标题过长时渐隐,而不是省略号 */
   mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
 }
+/* 子标签:按层级缩进 */
+#tabs .row { padding-left: calc(10px + var(--depth, 0) * 18px); }
+
+/* 别名:标题左侧的小标签 */
+.row .alias {
+  flex: none;
+  max-width: 45%;
+  margin-right: -3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in oklch, var(--accent) 62%, var(--fg));
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row .alias + .title { color: var(--fg-2); }
 .row.discarded .title { color: var(--fg-2); }
 .row.discarded .icon, #pins .row:not(.open) .icon { opacity: 0.6; filter: saturate(0.6); }
 #pins .row:not(.open) .title { color: var(--fg-2); }
@@ -224,6 +244,10 @@ header { padding: 12px 12px 8px; }
 .list .drop-before { box-shadow: 0 -2px 0 -0.5px var(--accent); }
 .list .drop-before.active { box-shadow: var(--shadow), 0 -2px 0 -0.5px var(--accent); }
 .grid .drop-before { box-shadow: -4px 0 0 -1.5px var(--accent); }
+.list .drop-into, .list .drop-into.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
 .zone.drop-end { background: color-mix(in srgb, var(--accent) 13%, transparent); }
 .zone.drop-end .hint { border-color: var(--accent); color: var(--accent); }
 
@@ -259,6 +283,37 @@ header { padding: 12px 12px 8px; }
   transform: scale(1.25);
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
 }
+
+/* 提示条 */
+#toast {
+  position: fixed;
+  z-index: 9;
+  left: 12px;
+  right: 12px;
+  bottom: 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--pop);
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: var(--pop-shadow);
+  font-weight: 400;
+  animation: pop 0.14s ease-out;
+}
+#toast[hidden] { display: none; }
+#toast span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#toast button {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+#toast button:hover { background: var(--fill-hover); }
 
 /* 右键菜单 */
 #menu {
