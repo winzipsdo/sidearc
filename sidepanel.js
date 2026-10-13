@@ -321,6 +321,13 @@ function render() {
 
 // ---------- 操作 ----------
 
+// 扩展自己要开的标签页(固定项、撤销、导入):告诉后台不要按相同地址查重
+async function createTab(props) {
+  const tab = await chrome.tabs.create(props);
+  await chrome.runtime.sendMessage({ keepTab: tab.id }).catch(() => {});
+  return tab;
+}
+
 async function focusTab(tab) {
   await chrome.tabs.update(tab.id, { active: true });
   if (tab.windowId !== windowId) await chrome.windows.update(tab.windowId, { focused: true });
@@ -332,7 +339,7 @@ async function openItem(item) {
   if (!tab) {
     // 没有绑定的标签页:先复用同网址的普通标签页,否则新开
     const byTab = itemByTab();
-    tab = tabs.find((t) => t.url === item.url && !byTab.has(t.id)) ?? (await chrome.tabs.create({ url: item.url, windowId }));
+    tab = tabs.find((t) => t.url === item.url && !byTab.has(t.id)) ?? (await createTab({ url: item.url, windowId }));
     await setBind(item.id, tab.id);
   }
   await focusTab(tab);
@@ -389,7 +396,7 @@ async function removeItem(id, openIfClosed) {
     await setTabSpace(tabId, state.activeSpaceId);
     await setTabAlias(tabId, item.alias);
   } else if (openIfClosed) {
-    tabId = (await chrome.tabs.create({ url: item.url, windowId, active: false })).id;
+    tabId = (await createTab({ url: item.url, windowId, active: false })).id;
   }
   await save();
   render();
@@ -534,7 +541,7 @@ async function reopenTabs(saved, orphans, spaceId) {
   for (const s of saved) {
     const i = recent.findIndex((r) => r.tab.url === s.url);
     let tab = i < 0 ? null : (await chrome.sessions.restore(recent.splice(i, 1)[0].tab.sessionId).catch(() => null))?.tab;
-    tab ??= await chrome.tabs.create({ url: s.url, windowId, index: s.index, active: false }).catch(() => null);
+    tab ??= await createTab({ url: s.url, windowId, index: s.index, active: false }).catch(() => null);
     if (!tab) continue;
     idMap.set(s.id, tab.id);
     if (s.active) focus = tab.id;
@@ -576,7 +583,7 @@ let toastTimer;
 // 底部提示条;给了 action 就带一个按钮(比如「撤销」)
 function toast(text, action, run) {
   const el = $('#toast');
-  el.replaceChildren(h('span', {}, text), action && h('button', { onclick: () => ((el.hidden = true), run()) }, action));
+  el.replaceChildren(h('span', {}, text), ...(action ? [h('button', { onclick: () => ((el.hidden = true), run()) }, action)] : []));
   el.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (el.hidden = true), action ? 8000 : 2000);
@@ -837,7 +844,7 @@ async function importArc(file) {
     for (const t of s.tabs) {
       if (openUrls.has(t.url) || !/^https?:/i.test(t.url)) continue;
       openUrls.add(t.url);
-      const tab = await chrome.tabs.create({ url: t.url, windowId, active: false }).catch(() => null);
+      const tab = await createTab({ url: t.url, windowId, active: false }).catch(() => null);
       if (!tab) continue;
       opened.push(tab.id);
       await setTabSpace(tab.id, space.id);
@@ -1138,6 +1145,13 @@ function bindEvents() {
   chrome.tabs.onActivated.addListener((info) => {
     if (info.windowId === windowId) followSpace(info.tabId);
     schedule();
+  });
+
+  // 后台发现新开的标签页和已有的同地址,已经切过去并关掉了新开的
+  chrome.runtime.onMessage.addListener((msg) => {
+    const d = msg?.deduped;
+    if (!d || d.windowId !== windowId) return;
+    pushUndo(d.active ? '已切到现有标签页' : '标签页已存在', () => chrome.runtime.sendMessage({ openDup: d }));
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {

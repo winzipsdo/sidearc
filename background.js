@@ -1,7 +1,8 @@
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
 
-// 会话存储里的键:t:<tabId> 空间归属,a:<tabId> 别名,c:<tabId> 父标签页,b:<itemId> 固定项绑定的 tabId
+// 会话存储里的键:t:<tabId> 空间归属,a:<tabId> 别名,c:<tabId> 父标签页,b:<itemId> 固定项绑定的 tabId,
+// n:<tabId> 新开的标签页还没载入过网页(用于相同地址查重)
 
 const NEW_TAB = /^[a-z-]+:\/\/(newtab|new-tab-page)/i;
 const urlOf = (tab) => tab.url || tab.pendingUrl || '';
@@ -20,7 +21,7 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId:
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   const keys = Object.keys(all).filter(
-    (k) => k === `t:${tabId}` || k === `a:${tabId}` || k === `c:${tabId}` || (/^[bc]:/.test(k) && all[k] === tabId)
+    (k) => k === `t:${tabId}` || k === `a:${tabId}` || k === `c:${tabId}` || k === `n:${tabId}` || (/^[bc]:/.test(k) && all[k] === tabId)
   );
   const children = keys.filter((k) => k.startsWith('c:') && all[k] === tabId).map((k) => +k.slice(2));
   if (keys.length) await chrome.storage.session.remove(keys);
@@ -126,4 +127,52 @@ chrome.tabs.onRemoved.addListener((_, info) => {
 });
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'session' && Object.keys(changes).some((k) => k !== RESTORE)) touch();
+});
+
+// ---------- 相同地址只开一份 ----------
+// 新开的标签页第一次载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个。
+// 只管新开的标签页(带 n: 标记),已有标签页里的跳转不干预。
+
+// 比较用的地址:忽略 # 锚点;#/ 和 #! 开头的是单页应用的路由,保留
+const addressOf = (url) => {
+  if (!/^https?:/i.test(url)) return null;
+  const i = url.indexOf('#');
+  return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
+};
+const NEW = (tabId) => `n:${tabId}`;
+
+// 不查重的标签页。创建事件和「不查重」的请求谁先到不一定,两头都处理
+const kept = new Set();
+const keep = (tabId) => (kept.add(tabId), serial(() => chrome.storage.session.remove(NEW(tabId))));
+
+chrome.tabs.onCreated.addListener((tab) => serial(() => kept.has(tab.id) || chrome.storage.session.set({ [NEW(tab.id)]: 1 })));
+
+chrome.webNavigation.onCommitted.addListener((nav) =>
+  serial(async () => {
+    const address = addressOf(nav.url);
+    // 新标签页之类的内部页面不算,等它真正载入网页时再查
+    if (nav.frameId !== 0 || nav.documentLifecycle !== 'active' || !address) return;
+    if (!(await chrome.storage.session.get(NEW(nav.tabId)))[NEW(nav.tabId)]) return;
+    await chrome.storage.session.remove(NEW(nav.tabId));
+    // 会话恢复、重新打开关闭的标签页、复制标签页都是 reload 类型,是用户有意要的,不拦
+    if (nav.transitionType === 'reload') return;
+    const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
+    if (!tab) return;
+    const twin = (await chrome.tabs.query({ windowId: tab.windowId })).find((t) => t.id !== tab.id && addressOf(t.url || '') === address);
+    if (!twin) return;
+    // 后台打开的不抢焦点,只关掉重复的
+    if (tab.active) await chrome.tabs.update(twin.id, { active: true });
+    await chrome.tabs.remove(tab.id).catch(() => {});
+    chrome.runtime.sendMessage({ deduped: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
+  })
+);
+
+// 侧边栏的请求:keepTab 这个标签页是扩展自己开的(固定项、撤销、导入),不查重;
+// openDup 用户撤销了查重,照原样再开一份
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.keepTab != null) keep(msg.keepTab);
+  if (msg?.openDup) {
+    const { url, windowId, active } = msg.openDup;
+    chrome.tabs.create({ url, windowId, active }).then((tab) => keep(tab.id));
+  }
 });
