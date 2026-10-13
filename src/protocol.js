@@ -6,7 +6,7 @@ export const PREFIX = {
   alias: 'a', // a:<tabId> -> 别名
   parent: 'c', // c:<tabId> -> 父标签页的 tabId
   bind: 'b', // b:<itemId> -> 收藏/固定项绑定的 tabId
-  fresh: 'n', // n:<tabId> -> 新开的标签页还没载入过网页(相同地址查重用)
+  fresh: 'n', // n:<tabId> -> 新开的标签页还在查重:1 = 还没载入过网页,其他 = 第一次载入网页的时间
 };
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));
 export const hasPrefix = (key, prefix) => key.startsWith(prefix + ':');

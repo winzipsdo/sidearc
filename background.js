@@ -132,7 +132,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 // ---------- 相同地址只开一份 ----------
-// 新开的标签页第一次载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个。
+// 新开的标签页载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个。
 // 只管新开的标签页(带 fresh 标记),已有标签页里的跳转不干预。
 
 const NEW = KEY.fresh;
@@ -143,25 +143,38 @@ const keep = (tabId) => (kept.add(tabId), serial(() => chrome.storage.session.re
 
 chrome.tabs.onCreated.addListener((tab) => serial(() => kept.has(tab.id) || chrome.storage.session.set({ [NEW(tab.id)]: 1 })));
 
-chrome.webNavigation.onCommitted.addListener((nav) =>
-  serial(async () => {
-    const address = addressOf(nav.url);
-    // 新标签页之类的内部页面不算,等它真正载入网页时再查
-    if (nav.frameId !== 0 || nav.documentLifecycle !== 'active' || !address) return;
-    if (!(await chrome.storage.session.get(NEW(nav.tabId)))[NEW(nav.tabId)]) return;
-    await chrome.storage.session.remove(NEW(nav.tabId));
-    // 会话恢复、重新打开关闭的标签页、复制标签页都是 reload 类型,是用户有意要的,不拦
-    if (nav.transitionType === 'reload') return;
-    const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
-    if (!tab) return;
-    const twin = (await chrome.tabs.query({ windowId: tab.windowId })).find((t) => t.id !== tab.id && addressOf(t.url || '') === address);
-    if (!twin) return;
-    // 后台打开的不抢焦点,只关掉重复的
-    if (tab.active) await chrome.tabs.update(twin.id, { active: true });
-    await chrome.tabs.remove(tab.id).catch(() => {});
-    chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
-  })
-);
+// 页面刚载入时常常自己再改一次地址(登录跳转回来、去掉多余的参数),所以第一次没查到重复的话,
+// 这段时间内它自己改地址时再查
+const SETTLE = 10000;
+
+// auto:这次地址变化是页面自己引起的(跳转、改写地址),不是用户又去了别处
+async function dedupe(nav, auto) {
+  const address = addressOf(nav.url);
+  // 新标签页之类的内部页面不算,等它真正载入网页时再查
+  if (nav.frameId !== 0 || nav.documentLifecycle !== 'active' || !address) return;
+  // 标记的值:1 = 还没载入过网页;其他 = 第一次载入网页的时间
+  const since = (await chrome.storage.session.get(NEW(nav.tabId)))[NEW(nav.tabId)];
+  if (!since) return;
+  const first = since === 1;
+  // 会话恢复、重新打开关闭的标签页、复制标签页都是 reload 类型,是用户有意要的,不拦
+  const stop = first ? nav.transitionType === 'reload' : !auto || Date.now() > since + SETTLE;
+  if (stop) return chrome.storage.session.remove(NEW(nav.tabId));
+  if (first) await chrome.storage.session.set({ [NEW(nav.tabId)]: Date.now() });
+  const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
+  if (!tab) return;
+  const twin = (await chrome.tabs.query({ windowId: tab.windowId })).find((t) => t.id !== tab.id && addressOf(t.url || '') === address);
+  if (!twin) return;
+  await chrome.storage.session.remove(NEW(nav.tabId));
+  // 后台打开的不抢焦点,只关掉重复的
+  if (tab.active) await chrome.tabs.update(twin.id, { active: true });
+  await chrome.tabs.remove(tab.id).catch(() => {});
+  chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
+}
+
+const REDIRECTS = ['client_redirect', 'server_redirect'];
+chrome.webNavigation.onCommitted.addListener((nav) => serial(() => dedupe(nav, nav.transitionQualifiers.some((q) => REDIRECTS.includes(q)))));
+// 页面用 history API 改写了自己的地址
+chrome.webNavigation.onHistoryStateUpdated.addListener((nav) => serial(() => dedupe(nav, true)));
 
 // 侧边栏的请求:keepTab 不查重这个标签页;openDup 撤销了查重,照原样再开一份
 chrome.runtime.onMessage.addListener((msg) => {
