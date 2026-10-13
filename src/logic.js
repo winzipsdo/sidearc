@@ -1,0 +1,98 @@
+// 不碰浏览器和页面的纯逻辑,可以直接用 node --test 测。
+
+// 搜索栏里输入的文字如果是网址,补全成能打开的地址;否则返回 null(当作搜索词)
+export function toUrl(text) {
+  if (/\s/.test(text)) return null;
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text) || /^(about|chrome):/i.test(text)) return text;
+  if (/^(localhost|[\w-]+(\.[\w-]+)+)(:\d+)?([/?#].*)?$/i.test(text)) return 'https://' + text;
+  return null;
+}
+
+// 相同地址查重时比较用的地址:忽略 # 锚点;#/ 和 #! 开头的是单页应用的路由,保留。不是网页则返回 null
+export function addressOf(url) {
+  if (!/^https?:/i.test(url)) return null;
+  const i = url.indexOf('#');
+  return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
+}
+
+// 搜索词为空,或者任意一段文字包含它(不分大小写)
+export function matchesQuery(query, texts) {
+  const q = query.trim().toLowerCase();
+  return !q || texts.some((t) => (t || '').toLowerCase().includes(q));
+}
+
+// 收藏夹每行放几个:先算一行最多放几个,再把磁贴平均摊到各行,避免右侧留白
+export function favColumns(count, width, { min = 54, gap = 7 } = {}) {
+  const max = Math.max(1, Math.floor((width + gap) / (min + gap)));
+  const rows = Math.ceil(count / max);
+  return rows ? Math.ceil(count / rows) : 1;
+}
+
+// 把标签页按树形排好:[{ tab, depth }],最多两级(depth 0 / 1)。父标签页不在列表里的子标签按顶级显示。
+// listed 是要显示的标签页(带 id),parentOf 是 tabId -> 父 tabId 的 Map
+export function buildTree(listed, parentOf) {
+  const ids = new Set(listed.map((t) => t.id));
+  const kids = new Map();
+  const roots = [];
+  for (const t of listed) {
+    const p = parentOf.get(t.id);
+    if (p == null || p === t.id || !ids.has(p)) roots.push(t);
+    else if (kids.has(p)) kids.get(p).push(t);
+    else kids.set(p, [t]);
+  }
+  const out = [];
+  const seen = new Set();
+  const walk = (t, depth) => {
+    if (seen.has(t.id)) return;
+    seen.add(t.id);
+    out.push({ tab: t, depth });
+    for (const k of kids.get(t.id) ?? []) walk(k, 1);
+  };
+  roots.forEach((t) => walk(t, 0));
+  // 父子关系万一成环,剩下的按顶级兜底
+  listed.forEach((t) => walk(t, 0));
+  return out;
+}
+
+// 拖拽落点:应插在第几个元素之前(-1 = 末尾)。rects 是各元素的位置({ top, bottom, left, width, height }),
+// 列表按上下半区判断,网格(收藏夹)按行和左右半区判断
+export function dropBefore(rects, x, y, grid) {
+  return rects.findIndex((r) => (grid ? y < r.top || (y <= r.bottom && x < r.left + r.width / 2) : y < r.top + r.height / 2));
+}
+
+// 拖拽落点:指针落在第几行的中间部分(-1 = 没有)。落在中间 = 要成为它的子标签,上下边缘仍是排序
+export function dropInto(rects, y) {
+  return rects.findIndex((r) => y > r.top + r.height * 0.28 && y < r.bottom - r.height * 0.28);
+}
+
+// 解析 Arc 的 StorableSidebar.json → { favorites: [项], spaces: [{ name, pinned: [项], tabs: [项] }] }
+// 项为 { title, url, alias? };Arc 里手动改过的名字当作别名,文件夹展开成平铺
+export function parseArc(json) {
+  const containers = json?.sidebar?.containers ?? [];
+  const usable = (c) => Array.isArray(c?.items) && Array.isArray(c?.spaces);
+  // Windows 版里窗口数据排在 { global } 标记后面;找不到就取内容最多的那个
+  const marked = containers[containers.findIndex((c) => c?.global) + 1];
+  const c = usable(marked) ? marked : containers.filter(usable).sort((a, b) => b.items.length - a.items.length)[0];
+  if (!c) throw new Error('not an Arc sidebar file');
+
+  // items / spaces 数组里对象和 id 字符串交替出现,只要对象
+  const items = new Map(c.items.filter((x) => x && typeof x === 'object').map((x) => [x.id, x]));
+  const leaves = (id) => {
+    const it = items.get(id);
+    const tab = it?.data?.tab;
+    if (!tab) return (it?.childrenIds ?? []).flatMap(leaves);
+    if (!tab.savedURL) return [];
+    const title = tab.savedTitle || tab.savedURL;
+    return [{ title, url: tab.savedURL, ...(it.title && it.title !== title && { alias: it.title }) }];
+  };
+  const favorites = (c.topAppsContainerIDs ?? []).filter((x) => typeof x === 'string').flatMap(leaves);
+  const spaces = c.spaces
+    .filter((x) => x && typeof x === 'object')
+    .map((s) => {
+      // containerIDs 形如 ['pinned', <id>, 'unpinned', <id>]
+      const ids = s.containerIDs ?? [];
+      const of = (key) => (ids.includes(key) ? leaves(ids[ids.indexOf(key) + 1]) : []);
+      return { name: s.title || 'Arc', pinned: of('pinned'), tabs: of('unpinned') };
+    });
+  return { favorites, spaces };
+}

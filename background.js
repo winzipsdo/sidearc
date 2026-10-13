@@ -1,8 +1,10 @@
+// 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
+
+import { addressOf } from './src/logic.js';
+import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
+
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
-
-// 会话存储里的键:t:<tabId> 空间归属,a:<tabId> 别名,c:<tabId> 父标签页,b:<itemId> 固定项绑定的 tabId,
-// n:<tabId> 新开的标签页还没载入过网页(用于相同地址查重)
 
 const NEW_TAB = /^[a-z-]+:\/\/(newtab|new-tab-page)/i;
 const urlOf = (tab) => tab.url || tab.pendingUrl || '';
@@ -12,18 +14,18 @@ const urlOf = (tab) => tab.url || tab.pendingUrl || '';
 // 不看 openerTabId:Ctrl+T 和从其他应用点开的链接也带着它(值是当时的前台标签页),
 // 只有页面里的链接或脚本开出的新标签页才会触发这个事件
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId: opener, tabId }) => {
-  const got = await chrome.storage.session.get([`t:${opener}`, `c:${opener}`]);
-  const space = got[`t:${opener}`];
-  await chrome.storage.session.set({ [`c:${tabId}`]: got[`c:${opener}`] ?? opener, ...(space && { [`t:${tabId}`]: space }) });
+  const got = await chrome.storage.session.get([KEY.space(opener), KEY.parent(opener)]);
+  const space = got[KEY.space(opener)];
+  await chrome.storage.session.set({ [KEY.parent(tabId)]: got[KEY.parent(opener)] ?? opener, ...(space && { [KEY.space(tabId)]: space }) });
 });
 
 // 标签页关闭后清掉它的数据,并把它的子标签一并关闭
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
-  const keys = Object.keys(all).filter(
-    (k) => k === `t:${tabId}` || k === `a:${tabId}` || k === `c:${tabId}` || k === `n:${tabId}` || (/^[bc]:/.test(k) && all[k] === tabId)
-  );
-  const children = keys.filter((k) => k.startsWith('c:') && all[k] === tabId).map((k) => +k.slice(2));
+  // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
+  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId)];
+  const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
+  const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   if (keys.length) await chrome.storage.session.remove(keys);
   if (children.length && !info.isWindowClosing) await chrome.tabs.remove(children).catch(() => {});
 });
@@ -38,9 +40,9 @@ chrome.history.onVisited.addListener(async (item) => {
   if (!off.size) return;
   const hits = (await chrome.tabs.query({})).filter((t) => t.url === item.url || t.pendingUrl === item.url);
   if (!hits.length) return;
-  const space = await chrome.storage.session.get(hits.map((t) => `t:${t.id}`));
+  const space = await chrome.storage.session.get(hits.map((t) => KEY.space(t.id)));
   // 侧边栏没开时新标签页还没分配空间,按当前空间算
-  if (hits.some((t) => off.has(space[`t:${t.id}`] ?? state.activeSpaceId))) await chrome.history.deleteUrl({ url: item.url });
+  if (hits.some((t) => off.has(space[KEY.space(t.id)] ?? state.activeSpaceId))) await chrome.history.deleteUrl({ url: item.url });
 });
 
 // ---------- 重启 / 重新加载后恢复 ----------
@@ -76,14 +78,14 @@ async function restoreStep() {
     r.claimed[best] = tab.id;
     fresh.push(best);
     const e = r.tabs[best];
-    if (e.s) set[`t:${tab.id}`] = e.s;
-    if (e.a) set[`a:${tab.id}`] = e.a;
-    for (const item of e.b ?? []) set[`b:${item}`] = tab.id;
+    if (e.s) set[KEY.space(tab.id)] = e.s;
+    if (e.a) set[KEY.alias(tab.id)] = e.a;
+    for (const item of e.b ?? []) set[KEY.bind(item)] = tab.id;
   }
   // 父子关系要等两头都对上
   r.tabs.forEach((e, pos) => {
     const [child, parent] = [r.claimed[pos], r.claimed[e.p]];
-    if (child != null && parent != null && (fresh.includes(pos) || fresh.includes(e.p))) set[`c:${child}`] = parent;
+    if (child != null && parent != null && (fresh.includes(pos) || fresh.includes(e.p))) set[KEY.parent(child)] = parent;
   });
   set[RESTORE] = r;
   await chrome.storage.session.set(set);
@@ -100,10 +102,10 @@ async function saveSnapshot() {
   const pos = new Map(tabs.map((t, i) => [t.id, i]));
   const binds = new Map();
   for (const [k, v] of Object.entries(all)) {
-    if (k.startsWith('b:')) binds.set(v, [...(binds.get(v) ?? []), k.slice(2)]);
+    if (hasPrefix(k, PREFIX.bind)) binds.set(v, [...(binds.get(v) ?? []), k.slice(2)]);
   }
   const snapshot = {
-    tabs: tabs.map((t) => ({ id: t.id, i: t.index, u: urlOf(t), s: all[`t:${t.id}`], a: all[`a:${t.id}`], p: pos.get(all[`c:${t.id}`]), b: binds.get(t.id) })),
+    tabs: tabs.map((t) => ({ id: t.id, i: t.index, u: urlOf(t), s: all[KEY.space(t.id)], a: all[KEY.alias(t.id)], p: pos.get(all[KEY.parent(t.id)]), b: binds.get(t.id) })),
   };
   await chrome.storage.local.set({ snapshot });
 }
@@ -131,15 +133,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // ---------- 相同地址只开一份 ----------
 // 新开的标签页第一次载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个。
-// 只管新开的标签页(带 n: 标记),已有标签页里的跳转不干预。
+// 只管新开的标签页(带 fresh 标记),已有标签页里的跳转不干预。
 
-// 比较用的地址:忽略 # 锚点;#/ 和 #! 开头的是单页应用的路由,保留
-const addressOf = (url) => {
-  if (!/^https?:/i.test(url)) return null;
-  const i = url.indexOf('#');
-  return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
-};
-const NEW = (tabId) => `n:${tabId}`;
+const NEW = KEY.fresh;
 
 // 不查重的标签页。创建事件和「不查重」的请求谁先到不一定,两头都处理
 const kept = new Set();
@@ -163,16 +159,15 @@ chrome.webNavigation.onCommitted.addListener((nav) =>
     // 后台打开的不抢焦点,只关掉重复的
     if (tab.active) await chrome.tabs.update(twin.id, { active: true });
     await chrome.tabs.remove(tab.id).catch(() => {});
-    chrome.runtime.sendMessage({ deduped: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
+    chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
   })
 );
 
-// 侧边栏的请求:keepTab 这个标签页是扩展自己开的(固定项、撤销、导入),不查重;
-// openDup 用户撤销了查重,照原样再开一份
+// 侧边栏的请求:keepTab 不查重这个标签页;openDup 撤销了查重,照原样再开一份
 chrome.runtime.onMessage.addListener((msg) => {
-  if (msg?.keepTab != null) keep(msg.keepTab);
-  if (msg?.openDup) {
-    const { url, windowId, active } = msg.openDup;
+  if (msg?.[MSG.keepTab] != null) keep(msg[MSG.keepTab]);
+  if (msg?.[MSG.openDup]) {
+    const { url, windowId, active } = msg[MSG.openDup];
     chrome.tabs.create({ url, windowId, active }).then((tab) => keep(tab.id));
   }
 });

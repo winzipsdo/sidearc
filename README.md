@@ -95,9 +95,30 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | 文件 | 作用 |
 | --- | --- |
 | `manifest.json` | 扩展清单 |
-| `background.js` | 点击图标开关侧边栏;子标签归属;相同地址查重;「不记录历史」;标签页关闭后的清理;重启后的数据恢复 |
-| `sidepanel.html` / `.css` / `.js` | 侧边栏界面与全部逻辑 |
+| `background.js` | 后台:点击图标开关侧边栏;子标签归属;相同地址查重;「不记录历史」;标签页关闭后的清理;重启后的数据恢复 |
+| `sidepanel.html` / `.css` | 侧边栏的页面和样式 |
+| `sidepanel.js` | 侧边栏入口,只做初始化 |
+| `src/store.js` | 状态,以及读写状态的函数 |
+| `src/render.js` | 把状态画到页面上 |
+| `src/tabs.js` / `items.js` / `spaces.js` | 对标签页、收藏/固定项、空间的操作 |
+| `src/menus.js` / `ui.js` | 右键菜单的内容;提示条、撤销、菜单外壳、对话框 |
+| `src/drag.js` / `events.js` | 拖拽;事件绑定 |
+| `src/arc.js` | 从 Arc 导入 |
+| `src/dom.js` | 生成页面元素的小工具 |
+| `src/logic.js` | 不碰浏览器的纯逻辑(网址判断、树形排列、拖拽落点、Arc 文件解析等) |
+| `src/protocol.js` | 侧边栏和后台共用的约定:会话存储的键、消息格式 |
+| `test/` | `src/logic.js` 和 `src/protocol.js` 的测试 |
 | `icons/` | 扩展图标 |
 | `store/` | Chrome 应用商店的上架资料、截图和宣传图 |
 | `PRIVACY.md` | 隐私政策 |
 | `CHANGELOG.md` | 更新日志 |
+
+## 开发
+
+没有构建步骤:代码是原生 ES 模块,改完在 `chrome://extensions` 里重新加载扩展即可。
+
+测试用 Node 自带的测试运行器,不需要安装依赖(需要 Node 20 或更高版本):
+
+```bash
+npm test
+```
