@@ -18,6 +18,7 @@
 
 ### 修复
 
+- 相同地址查重漏掉了载入后自己改写地址的页面(比如飞书文档会先带着登录参数载入,再把地址改干净)。现在第一次载入后的 10 秒内,页面自己跳转或改写地址时会再查一次。 ([`5fd70ba`](https://github.com/winzipsdo/sidearc/commit/5fd70ba))
 - 不带按钮的提示条(如「已撤销」)末尾多出 `undefined`。 ([`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe))
 
 ### 重构
