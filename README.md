@@ -100,3 +100,4 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `icons/` | 扩展图标 |
 | `store/` | Chrome 应用商店的上架资料、截图和宣传图 |
 | `PRIVACY.md` | 隐私政策 |
+| `CHANGELOG.md` | 更新日志 |
