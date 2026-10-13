@@ -20,6 +20,10 @@
 
 - 不带按钮的提示条(如「已撤销」)末尾多出 `undefined`。 ([`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe))
 
+### 重构
+
+- `sidepanel.js` 拆成 `src/` 下的 ES 模块,纯逻辑抽到 `src/logic.js` 并加了测试(`npm test`);侧边栏和后台共用的存储键、消息格式集中到 `src/protocol.js`。行为不变。 ([`4141ec4`](https://github.com/winzipsdo/sidearc/commit/4141ec4))
+
 ### 文档
 
 - README 的功能按类别分组,新增「权限与隐私」一节、快捷键表和「把侧边栏放到左边」的说明。 ([`34e9cc6`](https://github.com/winzipsdo/sidearc/commit/34e9cc6)、[`fa551d4`](https://github.com/winzipsdo/sidearc/commit/fa551d4)、[`4616d21`](https://github.com/winzipsdo/sidearc/commit/4616d21))
