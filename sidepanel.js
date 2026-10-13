@@ -286,6 +286,7 @@ function render() {
 
   const favs = state.favorites.filter((i) => matches(i.alias, i.title, i.url)).map((i) => itemEl(i, 'fav'));
   $('#favs').replaceChildren(...(favs.length || query ? favs : [h('div', { class: 'hint' }, '把标签页拖到这里加入收藏夹')]));
+  layoutFavs();
 
   const pins = space.pinned.filter((i) => matches(i.alias, i.title, i.url)).map((i) => itemEl(i, 'pin'));
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, '把标签页拖到这里固定到此空间')]));
@@ -664,7 +665,7 @@ function tabMenu(e, tab) {
 function itemMenu(e, { item, kind }) {
   const tab = tabs.find((t) => t.id === bind.get(item.id));
   showMenu(e, [
-    { label: '编辑别名、名称和网址…', run: () => editItem(item.id) },
+    { label: '编辑别名…', run: () => editItem(item.id) },
     { label: '复制链接地址', run: () => copyText(tab?.url || item.url, '已复制链接地址') },
     tab && {
       label: '将网址更新为当前页面',
@@ -961,10 +962,20 @@ async function performDrop(d, zone, refId, intoId) {
   render();
 }
 
+// 收藏夹按数量均分成几行：先算一行最多放几个，再把磁贴平均摊到各行，避免右侧留白
+function layoutFavs() {
+  const el = $('#favs');
+  const n = el.querySelectorAll('.tile').length;
+  const max = Math.max(1, Math.floor((el.clientWidth + 7) / (54 + 7)));
+  const rows = Math.ceil(n / max);
+  el.style.setProperty('--cols', rows ? Math.ceil(n / rows) : 1);
+}
+
 // ---------- 事件 ----------
 
 function bindEvents() {
   const scroll = $('#scroll');
+  new ResizeObserver(layoutFavs).observe($('#favs'));
 
   scroll.addEventListener('click', (e) => {
     const el = e.target.closest('[data-kind]');

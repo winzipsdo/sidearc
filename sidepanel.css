@@ -89,17 +89,19 @@ header { padding: 12px 12px 8px; }
 
 /* 收藏夹 */
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(54px, 1fr));
+  /* --cols 由 layoutFavs() 按数量和宽度算出，磁贴均分每一行，不留空列 */
+  display: flex;
+  flex-wrap: wrap;
   gap: 7px;
-  border-radius: 13px;
+  border-radius: 11px;
 }
 .tile {
   position: relative;
-  height: 50px;
+  flex: 1 0 calc((100% - (var(--cols, 1) - 1) * 7px) / var(--cols, 1) - 0.1px);
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 13px;
+  border-radius: 11px;
   background: var(--fill);
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
@@ -108,11 +110,11 @@ header { padding: 12px 12px 8px; }
 .tile:active { transform: scale(0.95); }
 .tile.open { background: var(--card-soft); }
 .tile.active { background: var(--card); box-shadow: var(--shadow); }
-.tile .icon { width: 22px; height: 22px; border-radius: 5px; }
+.tile .icon { width: 20px; height: 20px; border-radius: 5px; }
 .tile:not(.open) .icon { opacity: 0.85; }
 
 .hint {
-  grid-column: 1 / -1;
+  flex: 1 0 100%;
   padding: 11px 10px;
   border: 1px dashed var(--line);
   border-radius: 11px;
@@ -128,7 +130,7 @@ header { padding: 12px 12px 8px; }
   align-items: center;
   gap: 8px;
   height: 28px;
-  margin: 14px 0 4px;
+  margin: 10px 0 4px;
   padding: 0 4px 0 10px;
   color: var(--fg-2);
   font-size: 12px;
