@@ -421,13 +421,14 @@ async function editItem(id) {
   if (!item) return;
   const out = await ask('编辑', [
     { key: 'alias', label: '别名(可留空)', value: item.alias, optional: true },
-    { key: 'title', label: '名称', value: item.title },
+    { key: 'title', label: '名称(留空则还原为网页标题)', value: item.title, optional: true },
     { key: 'url', label: '网址', value: item.url },
   ]);
   const target = out && findItem(id)?.item;
   if (!target) return;
-  target.title = out.title;
   target.url = toUrl(out.url) ?? out.url;
+  // 名称留空:还原成网页自己的标题;标签页没开着就拿不到,保留原来的
+  target.title = out.title || tabs.find((t) => t.id === bind.get(id))?.title || target.title || target.url;
   if (out.alias) target.alias = out.alias;
   else delete target.alias;
   await save();
