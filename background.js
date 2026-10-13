@@ -8,14 +8,12 @@ const urlOf = (tab) => tab.url || tab.pendingUrl || '';
 
 // 从某个标签页里打开的新标签页,自动成为它的子标签并留在同一个空间。
 // 最多两级:从子标签里打开的,和它并列挂在同一个父标签页下。
-// Ctrl+T 的新标签页也带 openerTabId,按网址排除掉
-chrome.tabs.onCreated.addListener(async (tab) => {
-  // 其他扩展用 API 开的标签页,事件触发时来源还没填上,重新取一次
-  const opener = tab.openerTabId ?? (await chrome.tabs.get(tab.id).catch(() => null))?.openerTabId;
-  if (opener == null || NEW_TAB.test(urlOf(tab))) return;
+// 不看 openerTabId:Ctrl+T 和从其他应用点开的链接也带着它(值是当时的前台标签页),
+// 只有页面里的链接或脚本开出的新标签页才会触发这个事件
+chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId: opener, tabId }) => {
   const got = await chrome.storage.session.get([`t:${opener}`, `c:${opener}`]);
   const space = got[`t:${opener}`];
-  await chrome.storage.session.set({ [`c:${tab.id}`]: got[`c:${opener}`] ?? opener, ...(space && { [`t:${tab.id}`]: space }) });
+  await chrome.storage.session.set({ [`c:${tabId}`]: got[`c:${opener}`] ?? opener, ...(space && { [`t:${tabId}`]: space }) });
 });
 
 // 标签页关闭后清掉它的数据,并把它的子标签一并关闭
