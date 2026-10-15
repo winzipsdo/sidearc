@@ -1,78 +1,95 @@
 # 更新日志
 
-版本号对应 `manifest.json` 里的 `version`。还没有版本号的改动以提交日期为标题。每条末尾括号里是对应的提交(commit hash),点击可查看具体改动。
+每条先用一句话说明变化,再说具体表现。末尾是对应的提交,点击可查看代码改动。
+
+已发版的改动以版本号为标题(对应 `manifest.json` 里的 `version`),还没发版的以提交日期为标题。
 
 ## 2026-10-15
 
 ### 新增
 
-- 打开的地址和收藏或固定标签相同时,定位到它:还没打开的项,新标签页直接成为它的标签页;已经打开但去了别的页面的,切过去并打开这个地址。 ([`f461947`](https://github.com/winzipsdo/sidearc/commit/f461947))
+- **打开收藏或固定过的网址时,直接用那个收藏或固定标签打开。** [`f461947`](https://github.com/winzipsdo/sidearc/commit/f461947)
+  - 比如在地址栏输入了一个已经固定的网址:以前会在下面的列表里多开一个标签页,现在它会直接出现在固定标签的位置上。
+  - 如果那个固定标签已经开着、但后来点到了别的页面,会切回它并打开你输入的网址,不再多开一个。
 
 ## 2026-10-13
 
 ### 新增
 
-- 相同地址只开一份:新开的标签页如果和本窗口里已有的标签页地址相同,会切到已有的那个并关掉新开的,可撤销。 ([`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe))
-- 编辑收藏或固定项时,名称留空会还原为网页标题。 ([`decf8d9`](https://github.com/winzipsdo/sidearc/commit/decf8d9))
+- **同一个网址不再重复打开。** [`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe)
+  - 新开的标签页如果和当前窗口里已有的标签页是同一个网址,会切到已有的那个,并关掉新开的。
+  - 底部提示条可以「撤销」,撤销后照常再开一份。
+- **编辑收藏或固定标签时,名称清空即恢复成网页标题。** [`decf8d9`](https://github.com/winzipsdo/sidearc/commit/decf8d9)
 
 ### 变更
 
-- 子标签只认网页里的链接:从其他应用点开的链接不再被挂到当前标签页下面。为此新增 `webNavigation` 权限。 ([`ef5fa20`](https://github.com/winzipsdo/sidearc/commit/ef5fa20))
-- 收藏夹更紧凑:图标按数量均分每一行并撑满宽度,高度与搜索栏一致。 ([`bf96cd7`](https://github.com/winzipsdo/sidearc/commit/bf96cd7)、[`ef88f17`](https://github.com/winzipsdo/sidearc/commit/ef88f17))
-- 右键菜单的「编辑别名、名称和网址…」改为「编辑别名…」。 ([`bf96cd7`](https://github.com/winzipsdo/sidearc/commit/bf96cd7))
-- 扩展简介改为「把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。」 ([`4616d21`](https://github.com/winzipsdo/sidearc/commit/4616d21))
+- **从其他应用点开的链接不再变成子标签。** [`ef5fa20`](https://github.com/winzipsdo/sidearc/commit/ef5fa20)
+  - 以前从飞书等应用点开链接,会被挂到你当时正在看的标签页下面;现在只有在网页里点开的链接才算子标签。
+  - 为此新增了 `webNavigation` 权限。
+- **收藏夹更紧凑。** [`bf96cd7`](https://github.com/winzipsdo/sidearc/commit/bf96cd7) · [`ef88f17`](https://github.com/winzipsdo/sidearc/commit/ef88f17)
+  - 图标平均铺满每一行,右侧不再留空;高度和搜索栏一致。
+- **右键菜单的「编辑别名、名称和网址…」简化为「编辑别名…」。** [`bf96cd7`](https://github.com/winzipsdo/sidearc/commit/bf96cd7)
+- **商店简介改为「把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。」** [`4616d21`](https://github.com/winzipsdo/sidearc/commit/4616d21)
 
 ### 修复
 
-- 相同地址查重漏掉了载入后自己改写地址的页面(比如飞书文档会先带着登录参数载入,再把地址改干净)。现在第一次载入后的 10 秒内,页面自己跳转或改写地址时会再查一次。 ([`5fd70ba`](https://github.com/winzipsdo/sidearc/commit/5fd70ba))
-- 不带按钮的提示条(如「已撤销」)末尾多出 `undefined`。 ([`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe))
+- **飞书文档等页面的重复标签页有时没有被合并。** [`5fd70ba`](https://github.com/winzipsdo/sidearc/commit/5fd70ba)
+  - 原因是这类页面打开后会自己改一次网址(比如去掉登录参数),第一次打开时的网址和最终网址对不上。现在会多等 10 秒再核对一次。
+- **「已撤销」等提示后面多出了一个 `undefined`。** [`8801bbe`](https://github.com/winzipsdo/sidearc/commit/8801bbe)
 
-### 重构
+### 内部改进
 
-- `sidepanel.js` 拆成 `src/` 下的 ES 模块,纯逻辑抽到 `src/logic.js` 并加了测试(`npm test`);侧边栏和后台共用的存储键、消息格式集中到 `src/protocol.js`。行为不变。 ([`4141ec4`](https://github.com/winzipsdo/sidearc/commit/4141ec4))
+- **代码拆分成多个文件,并加了自动测试。** 使用上没有变化。[`4141ec4`](https://github.com/winzipsdo/sidearc/commit/4141ec4)
 
 ### 文档
 
-- README 的功能按类别分组,新增「权限与隐私」一节、快捷键表和「把侧边栏放到左边」的说明。 ([`34e9cc6`](https://github.com/winzipsdo/sidearc/commit/34e9cc6)、[`fa551d4`](https://github.com/winzipsdo/sidearc/commit/fa551d4)、[`4616d21`](https://github.com/winzipsdo/sidearc/commit/4616d21))
+- **README 重新整理。** 功能按类别分组,新增「权限与隐私」、快捷键表和「把侧边栏放到左边」的说明。[`34e9cc6`](https://github.com/winzipsdo/sidearc/commit/34e9cc6) · [`fa551d4`](https://github.com/winzipsdo/sidearc/commit/fa551d4) · [`4616d21`](https://github.com/winzipsdo/sidearc/commit/4616d21)
 
 ## 1.3.0 - 2026-10-13
 
 ### 新增
 
-- 不记录历史的空间:在该空间里访问的网址会立刻从浏览历史中删除。为此新增 `history` 权限。 ([`7214d5d`](https://github.com/winzipsdo/sidearc/commit/7214d5d))
-- 从 Arc 导入:通过空间菜单导入 `StorableSidebar.json` 里的收藏夹、各空间的固定标签和打开的标签页,可撤销。 ([`07be4c0`](https://github.com/winzipsdo/sidearc/commit/07be4c0))
+- **可以把某个空间设为「不记录历史」。** [`7214d5d`](https://github.com/winzipsdo/sidearc/commit/7214d5d)
+  - 在这个空间里打开的网页不会留在浏览历史里。这不是无痕模式,登录状态和缓存照常保留。
+  - 为此新增了 `history` 权限。
+- **可以从 Arc 浏览器导入。** [`07be4c0`](https://github.com/winzipsdo/sidearc/commit/07be4c0)
+  - 在空间菜单里选「从 Arc 导入…」,收藏夹、各空间的固定标签和打开的标签页都会搬过来。导入后可以撤销。
 
 ### 修复
 
-- 内容超出侧边栏高度时,固定标签与标签页列表互相重叠。 ([`7214d5d`](https://github.com/winzipsdo/sidearc/commit/7214d5d))
+- **标签页很多时,固定标签和下面的列表会叠在一起。** [`7214d5d`](https://github.com/winzipsdo/sidearc/commit/7214d5d)
 
 ## 1.2.0 - 2026-10-13
 
 ### 新增
 
-- 撤销:关闭标签页、清理、关闭下方所有标签页之后可以撤销,标签页会回到原来的位置,空间、别名和父子关系一并恢复。提示条上的「撤销」和 `Ctrl/⌘+Z` 共用一个撤销栈,可连续撤销多步。为此新增 `sessions` 权限。 ([`d4aa762`](https://github.com/winzipsdo/sidearc/commit/d4aa762))
-- README 截图、隐私政策和 Chrome 应用商店上架资料。 ([`f98f0cc`](https://github.com/winzipsdo/sidearc/commit/f98f0cc))
+- **关错标签页可以撤销。** [`d4aa762`](https://github.com/winzipsdo/sidearc/commit/d4aa762)
+  - 关闭标签页、「清理」、「关闭下方所有标签页」之后,点底部提示条的「撤销」或按 `Ctrl+Z`(Mac 上是 `⌘+Z`)即可恢复,可以连续撤销多步。
+  - 恢复的标签页回到原来的位置,所在空间、别名和子标签关系都保留。
+  - 为此新增了 `sessions` 权限。
+- **README 加了截图,补了隐私政策和应用商店上架资料。** [`f98f0cc`](https://github.com/winzipsdo/sidearc/commit/f98f0cc)
 
 ### 修复
 
-- 清理时,当前标签页会因为父标签页被关闭而一起被关掉。 ([`d4aa762`](https://github.com/winzipsdo/sidearc/commit/d4aa762))
+- **「清理」有时会把当前正在看的标签页也关掉。** [`d4aa762`](https://github.com/winzipsdo/sidearc/commit/d4aa762)
+  - 发生在当前标签页是某个被清理标签页的子标签时。
 
 ## 1.1.0 - 2026-10-13
 
-本版本的改动都在 [`5820dbe`](https://github.com/winzipsdo/sidearc/commit/5820dbe)。
+本版本的改动都在同一个提交里:[`5820dbe`](https://github.com/winzipsdo/sidearc/commit/5820dbe)
 
 ### 新增
 
-- 子标签:从某个标签页里打开的新标签页会缩进显示在它下面,最多两级;可拖拽归组或移出;关闭父标签页会连同子标签一起关闭。
-- 别名:显示在标题左侧,搜索也会匹配。
-- 重启后恢复:浏览器重启或扩展重新加载后,空间归属、别名、父子关系和固定绑定会自动对上。
-- 取消固定或从收藏夹移除后可以撤销。
-- 右键菜单新增「关闭下方所有标签页」「复制链接地址」「解除所有子标签」。
+- **子标签。** 从某个标签页里打开的新标签页会缩进显示在它下面;可以拖拽调整;关闭父标签页时子标签一起关闭。
+- **别名。** 可以给标签页起个自己的名字,显示在标题前面,搜索时也能搜到。
+- **重启后不丢设置。** 浏览器重启后,标签页所在的空间、别名、子标签关系和固定标签都会自动恢复。
+- **取消固定、从收藏夹移除之后可以撤销。**
+- **右键菜单新增**「关闭下方所有标签页」「复制链接地址」「解除所有子标签」。
 
 ### 移除
 
-- 右键菜单的「关闭其他标签页」。
+- **右键菜单去掉了「关闭其他标签页」。**
 
 ## 1.0.0 - 2026-10-13
 
-- 首个版本:垂直标签栏、收藏夹、按空间分组的固定标签、空间,基于 Manifest V3 和 `chrome.sidePanel`。 ([`637a72e`](https://github.com/winzipsdo/sidearc/commit/637a72e))
+- **第一个版本。** 侧边栏里的垂直标签栏、收藏夹、固定标签和空间。[`637a72e`](https://github.com/winzipsdo/sidearc/commit/637a72e)
