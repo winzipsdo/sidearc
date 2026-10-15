@@ -31,7 +31,10 @@ export function render() {
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
-      open && h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))
+      // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
+      open
+        ? h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))
+        : h('button', { class: 'btn x', title: '取消固定', data: { act: 'unpin' } }, icon('unpin'))
     );
   };
 

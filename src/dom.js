@@ -15,6 +15,7 @@ const ICONS = {
   plus: svg('<path d="M8 3.5v9M3.5 8h9"/>'),
   sound: svg(SPEAKER + '<path d="M10.5 5.8a3 3 0 010 4.4M12.3 4a5.5 5.5 0 010 8"/>'),
   muted: svg(SPEAKER + '<path d="M10.8 6.3l3 3.4M13.8 6.3l-3 3.4"/>'),
+  unpin: svg('<path d="M6 2.5h4M7 2.5v3.5L4.5 9h7L9 6V2.5M8 9v4.5M2.5 2.5l11 11"/>'),
 };
 export function icon(name) {
   const el = document.createElement('span');
