@@ -4,7 +4,7 @@
   "description": "把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。",
   "version": "1.3.0",
   "minimum_chrome_version": "116",
-  "permissions": ["sidePanel", "tabs", "storage", "favicon", "search", "clipboardWrite", "sessions", "history", "webNavigation"],
+  "permissions": ["sidePanel", "tabs", "storage", "favicon", "search", "clipboardWrite", "sessions", "history", "webNavigation", "tabGroups"],
   "background": { "service_worker": "background.js", "type": "module" },
   "side_panel": { "default_path": "sidepanel.html" },
   "action": {

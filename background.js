@@ -2,6 +2,7 @@
 
 import { addressOf, ANY_SPACE, itemsAt, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
+import { startGroupSync } from './src/groups.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
@@ -216,3 +217,6 @@ chrome.runtime.onMessage.addListener((msg) => {
     chrome.tabs.create({ url, windowId, active }).then((tab) => keep(tab.id));
   }
 });
+
+// ---------- 空间 ↔ 标签页分组 ----------
+startGroupSync(serial);

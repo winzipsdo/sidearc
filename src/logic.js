@@ -119,3 +119,60 @@ export function parseArc(json) {
     });
   return { favorites, spaces };
 }
+
+// 空间颜色 -> 最接近的 Chrome 标签页分组颜色(分组只支持这几种)
+const GROUP_COLORS = {
+  grey: '#8a8f98',
+  blue: '#6b7cff',
+  red: '#e5687a',
+  yellow: '#d9a927',
+  green: '#4fae6e',
+  pink: '#e86fb8',
+  purple: '#a06be0',
+  cyan: '#3aa7b8',
+  orange: '#f0913f',
+};
+export function groupColor(hex) {
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const [r, g, b] = /^#[0-9a-f]{6}$/i.test(hex ?? '') ? rgb(hex) : rgb(GROUP_COLORS.grey);
+  let best = 'grey';
+  let bestDist = Infinity;
+  for (const [name, h] of Object.entries(GROUP_COLORS)) {
+    const [r2, g2, b2] = rgb(h);
+    const d = (r - r2) ** 2 + (g - g2) ** 2 + (b - b2) ** 2;
+    if (d < bestDist) [best, bestDist] = [name, d];
+  }
+  return best;
+}
+
+// 顶部标签栏应有的样子:[{ spaceId, ids }],从左到右。spaceId 为 null 的一块是收藏(不进分组)。
+// 顺序和侧边栏一致:收藏;然后每个空间按空间顺序,先固定标签,再列表(子标签紧跟父标签)。
+// tabs 是本窗口未被浏览器原生固定的标签页(按 index 排好);不属于任何现有空间的归入当前空间
+export function buildLayout(state, session, tabs) {
+  const spaceIds = new Set((state?.spaces ?? []).map((s) => s.id));
+  const spaceOf = tabSpaces(state, session);
+  const ids = new Set(tabs.map((t) => t.id));
+  const boundTab = (item) => {
+    const id = session[`${PREFIX.bind}:${item.id}`];
+    return ids.has(id) ? id : null;
+  };
+  const used = new Set();
+  const take = (id) => (id == null || used.has(id) ? [] : (used.add(id), [id]));
+  const parents = new Map();
+  for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.parent)) parents.set(+k.slice(2), v);
+
+  const chunks = [{ spaceId: null, ids: (state?.favorites ?? []).flatMap((item) => take(boundTab(item))) }];
+  const pinned = new Set((state?.spaces ?? []).flatMap((s) => s.pinned.map(boundTab)).filter((id) => id != null));
+  const home = (t) => {
+    const s = spaceOf.get(t.id);
+    return spaceIds.has(s) ? s : state?.activeSpaceId;
+  };
+  for (const space of state?.spaces ?? []) {
+    const listed = tabs.filter((t) => !used.has(t.id) && !pinned.has(t.id) && home(t) === space.id);
+    chunks.push({
+      spaceId: space.id,
+      ids: [...space.pinned.flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents).flatMap(({ tab }) => take(tab.id))],
+    });
+  }
+  return chunks.filter((c) => c.ids.length);
+}

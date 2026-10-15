@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, buildTree, dropBefore, dropInto, favColumns, itemsAt, matchesQuery, parseArc, tabSpaces, toUrl } from '../src/logic.js';
+import { addressOf, ANY_SPACE, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, parseArc, tabSpaces, toUrl } from '../src/logic.js';
 
 test('toUrl:网址补全,其余当作搜索词', () => {
   assert.equal(toUrl('https://a.com/x'), 'https://a.com/x');
@@ -140,4 +140,37 @@ test('tabSpaces:绑定到收藏的属于所有空间,绑定到固定项的跟着
   const state = { favorites: [{ id: 'f' }], spaces: [{ id: 'a', pinned: [{ id: 'p' }] }] };
   const session = { 't:1': 'b', 't:2': 'b', 'b:f': 2, 'b:p': 3, 'b:gone': 4, 'c:1': 9 };
   assert.deepEqual([...tabSpaces(state, session)].sort(), [[1, 'b'], [2, ANY_SPACE], [3, 'a']]);
+});
+
+test('groupColor:现有的空间颜色各自对应不同的分组颜色', () => {
+  const colors = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'].map(groupColor);
+  assert.deepEqual(colors, ['blue', 'red', 'orange', 'yellow', 'green', 'cyan', 'purple', 'grey']);
+  assert.equal(groupColor('#f080c0'), 'pink');
+  assert.equal(groupColor(undefined), 'grey');
+  assert.equal(groupColor('red'), 'grey');
+});
+
+test('buildLayout:收藏在最左,然后每个空间先固定标签、再按树形排列', () => {
+  const state = {
+    activeSpaceId: 'a',
+    favorites: [{ id: 'f' }, { id: 'fClosed' }],
+    spaces: [
+      { id: 'a', pinned: [{ id: 'pa' }] },
+      { id: 'b', pinned: [] },
+    ],
+  };
+  // 1 是收藏,2 是 a 的固定标签,3/4/5 在 a(5 是 3 的子标签),6 在 b,7 没有空间,8 的空间已删除
+  const session = { 'b:f': 1, 'b:pa': 2, 't:3': 'a', 't:4': 'a', 't:5': 'a', 'c:5': 3, 't:6': 'b', 't:8': 'gone' };
+  const tabs = [6, 5, 4, 3, 2, 1, 7, 8].map((id) => ({ id }));
+  assert.deepEqual(buildLayout(state, session, tabs), [
+    { spaceId: null, ids: [1] },
+    { spaceId: 'a', ids: [2, 4, 3, 5, 7, 8] },
+    { spaceId: 'b', ids: [6] },
+  ]);
+});
+
+test('buildLayout:空的空间不出现;没有状态时什么都不排', () => {
+  const state = { activeSpaceId: 'a', favorites: [], spaces: [{ id: 'a', pinned: [] }, { id: 'b', pinned: [] }] };
+  assert.deepEqual(buildLayout(state, { 't:1': 'a' }, [{ id: 1 }]), [{ spaceId: 'a', ids: [1] }]);
+  assert.deepEqual(buildLayout(undefined, {}, [{ id: 1 }]), []);
 });
