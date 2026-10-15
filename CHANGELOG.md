@@ -27,6 +27,10 @@
 - **`Cmd+Z` 现在也能恢复在 Chrome 标签栏里关掉的标签页。** [`0da424d`](https://github.com/winzipsdo/sidearc/commit/0da424d)
   - 和侧边栏里的操作按时间先后一起撤销;恢复后不保留别名和子标签关系。
 
+### 文档
+
+- **重做了应用商店的三张截图。** 换成现在的界面,并画出按空间分组的顶部标签栏;以后可以用 `npm run screenshots` 重新生成。 [`84d9803`](https://github.com/winzipsdo/sidearc/commit/84d9803)
+
 ## 2026-10-13
 
 ### 新增
