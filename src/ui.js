@@ -16,12 +16,23 @@ export function toast(text, action, run) {
 // 可撤销的操作都进这个栈:提示条上的「撤销」和 Ctrl/Cmd+Z 走同一条路,后做的先撤
 const undoStack = [];
 export function pushUndo(text, run) {
-  const entry = { run };
+  const entry = { run, time: Date.now() };
   undoStack.push(entry);
   if (undoStack.length > 30) undoStack.shift();
   toast(text, '撤销', () => undo(entry));
 }
-export async function undo(entry = undoStack.at(-1)) {
+// entry 为空 = 按了 Ctrl/Cmd+Z:撤销最近的一步。
+// 在浏览器自己的标签栏里关掉的标签页不经过这个栈,所以先看浏览器的「最近关闭」:比栈顶更晚关掉的,先恢复它
+export async function undo(entry) {
+  if (!entry) {
+    entry = undoStack.at(-1);
+    const [closed] = await chrome.sessions.getRecentlyClosed().catch(() => []);
+    // lastModified 是秒;侧边栏自己关掉的标签页,关闭时间不会晚于它那一步的记录时间
+    if (closed?.tab && closed.lastModified * 1000 > (entry?.time ?? 0)) {
+      await chrome.sessions.restore(closed.tab.sessionId).catch(() => {});
+      return toast(`已恢复「${closed.tab.title || closed.tab.url}」`);
+    }
+  }
   if (!entry) return toast('没有可撤销的操作');
   undoStack.splice(undoStack.indexOf(entry), 1);
   await entry.run();

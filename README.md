@@ -36,7 +36,7 @@ Arc 风格的 Chrome 侧边标签栏。基于 Manifest V3 和 `chrome.sidePanel`
 
 ### 其他
 
-- **撤销**:关闭标签页、清理、关闭下方所有标签页、取消固定、从收藏夹移除、相同地址的自动切换、从 Arc 导入,都可以点底部提示条的「撤销」或按快捷键撤销,可连续撤销多步。
+- **撤销**:关闭标签页、清理、关闭下方所有标签页、取消固定、从收藏夹移除、相同地址的自动切换、从 Arc 导入,都可以点底部提示条的「撤销」或按快捷键撤销,可连续撤销多步。在 Chrome 自己的标签栏里关掉的标签页,在侧边栏里按快捷键也能恢复,和其他操作按先后顺序一起撤销。
 - **从 Arc 导入**:空间菜单里选「从 Arc 导入…」,选择 Arc 的 `StorableSidebar.json`,即可导入收藏夹、各空间的固定标签和打开的标签页。该文件在 macOS 上位于 `~/Library/Application Support/Arc/`,在 Windows 上位于 `%LOCALAPPDATA%\Packages\TheBrowserCompany.Arc_*\LocalCache\Local\Arc\`。
 - **右键菜单**:标签页、收藏/固定项、空间圆点都有,可以复制链接地址、移到别的空间等。
 - **浅色 / 深色模式**:跟随系统。
