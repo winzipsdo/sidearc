@@ -103,6 +103,21 @@ export function render() {
     ),
     h('button', { class: 'space-dot', 'aria-label': '新建空间', data: { name: '新建空间' }, onclick: addSpace }, icon('plus'))
   );
+  saveSnapshot();
+}
+
+// 把这次画出来的样子存一份,下次打开侧边栏时 boot.js 先把它显示出来,免得先空一下
+const SNAPSHOT_PARTS = ['favs', 'space-name', 'pins', 'tabs', 'spaces'];
+let snapshotTimer;
+function saveSnapshot() {
+  clearTimeout(snapshotTimer);
+  snapshotTimer = setTimeout(() => {
+    try {
+      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML]));
+      const accent = document.documentElement.style.getPropertyValue('--accent');
+      localStorage.setItem('snapshot', JSON.stringify({ html, accent, cols: $('#favs').style.getPropertyValue('--cols') }));
+    } catch {}
+  }, 300);
 }
 
 // 收藏夹每行的列数交给 CSS 变量 --cols,磁贴均分每一行

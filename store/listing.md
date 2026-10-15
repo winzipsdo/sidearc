@@ -101,7 +101,7 @@ Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理�
 在项目根目录运行(Windows 自带的 tar,生成的 zip 路径使用正斜杠):
 
 ```bash
-tar -a -cf dist/sidearc-<版本号>.zip manifest.json background.js sidepanel.html sidepanel.css sidepanel.js icons src
+tar -a -cf dist/sidearc-<版本号>.zip manifest.json background.js sidepanel.html sidepanel.css sidepanel.js boot.js icons src
 ```
 
 每次提交新版本前,先把 `manifest.json` 里的 `version` 调高。

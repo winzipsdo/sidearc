@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sidearc</title>
   <link rel="stylesheet" href="sidepanel.css">
+  <!-- 侧边栏用到的模块一次性并行加载,而不是一层层发现后再加载;src/ 下新增模块时记得加上 -->
+  <link rel="modulepreload" href="src/folders.js">
+  <link rel="modulepreload" href="src/dom.js">
+  <link rel="modulepreload" href="src/drag.js">
+  <link rel="modulepreload" href="src/events.js">
+  <link rel="modulepreload" href="src/items.js">
+  <link rel="modulepreload" href="src/logic.js">
+  <link rel="modulepreload" href="src/menus.js">
+  <link rel="modulepreload" href="src/protocol.js">
+  <link rel="modulepreload" href="src/render.js">
+  <link rel="modulepreload" href="src/spaces.js">
+  <link rel="modulepreload" href="src/store.js">
+  <link rel="modulepreload" href="src/tabs.js">
+  <link rel="modulepreload" href="src/ui.js">
 </head>
 <body>
   <header>
@@ -47,6 +61,7 @@
   <div id="menu" hidden></div>
   <dialog id="dlg"></dialog>
 
+  <script src="boot.js"></script>
   <script type="module" src="sidepanel.js"></script>
 </body>
 </html>

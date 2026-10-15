@@ -154,9 +154,9 @@ export function subtreeIds(tabId) {
   return out;
 }
 
-// 重新读取本窗口的标签页
-export async function refreshTabs() {
-  setTabs(await chrome.tabs.query({ windowId }));
+// 重新读取本窗口的标签页(启动时已经读好的可以直接传进来)
+export async function refreshTabs(current) {
+  setTabs(current ?? (await chrome.tabs.query({ windowId })));
   // 还没有归属的标签页(新开的、重启后恢复的)归入当前空间。
   // 不跟着 openerTabId 走:Ctrl+T 新建的标签页也带着它(值是当时的前台标签页,可能在别的空间);
   // 网页里点开的链接由后台按来源标签页分好空间,到这里时已经有归属了
@@ -167,7 +167,8 @@ export async function refreshTabs() {
       fresh[KEY.space(t.id)] = state.activeSpaceId;
     }
   }
-  if (Object.keys(fresh).length) await chrome.storage.session.set(fresh);
+  // 不用等写完:内存里已经记上了,先让界面画出来
+  if (Object.keys(fresh).length) chrome.storage.session.set(fresh);
 }
 
 // 激活的标签页属于别的空间时,侧边栏跟过去

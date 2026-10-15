@@ -11,14 +11,20 @@ import { render } from './src/render.js';
 import { applySession, normalize, refreshTabs, save, setState, setWindowId } from './src/store.js';
 
 async function init() {
-  setWindowId((await chrome.windows.getCurrent()).id);
-  const stored = await chrome.storage.local.get('state');
+  // 启动要读的几样互不依赖,一起读
+  const [win, stored, session, tabs] = await Promise.all([
+    chrome.windows.getCurrent(),
+    chrome.storage.local.get('state'),
+    chrome.storage.session.get(null),
+    chrome.tabs.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }),
+  ]);
+  setWindowId(win.id);
   setState(stored.state);
   normalize();
-  if (!stored.state) await save();
-  for (const [k, v] of Object.entries(await chrome.storage.session.get(null))) applySession(k, v);
+  if (!stored.state) save();
+  for (const [k, v] of Object.entries(session)) applySession(k, v);
   bindEvents();
-  await refreshTabs();
+  await refreshTabs(tabs);
   render();
 }
 
