@@ -18,6 +18,7 @@
 
 ### 变更
 
+- **固定标签开没开一眼能看出来。** 开着的标题和下面列表一样深,没开的标题和别名都变淡。 [`9bfd086`](https://github.com/winzipsdo/sidearc/commit/9bfd086)
 - **空间切换圆点更好认。** 当前空间带一圈细环,悬停时显示空间名。 [`577e2a0`](https://github.com/winzipsdo/sidearc/commit/577e2a0)
 
 ### 修复
