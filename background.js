@@ -1,6 +1,6 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf } from './src/logic.js';
+import { addressOf, itemsAt } from './src/logic.js';
 import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
@@ -132,7 +132,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 // ---------- 相同地址只开一份 ----------
-// 新开的标签页载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个。
+// 新开的标签页载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个;
+// 地址和某个还没打开的收藏/固定项相同时,让它成为那个项的标签页。
 // 只管新开的标签页(带 fresh 标记),已有标签页里的跳转不干预。
 
 const NEW = KEY.fresh;
@@ -162,13 +163,34 @@ async function dedupe(nav, auto) {
   if (first) await chrome.storage.session.set({ [NEW(nav.tabId)]: Date.now() });
   const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
   if (!tab) return;
-  const twin = (await chrome.tabs.query({ windowId: tab.windowId })).find((t) => t.id !== tab.id && addressOf(t.url || '') === address);
-  if (!twin) return;
+  const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => t.id !== tab.id);
+  let twin = others.find((t) => addressOf(t.url || '') === address);
+  if (!twin) {
+    // 没有打开着的同地址标签页,再看收藏/固定项
+    const { state } = await chrome.storage.local.get('state');
+    const items = itemsAt(state, address);
+    if (!items.length) return;
+    const all = await chrome.storage.session.get(items.map(({ item }) => KEY.bind(item.id)));
+    const boundTo = (item) => all[KEY.bind(item.id)];
+    const free = items.find(({ item }) => boundTo(item) == null);
+    // 项已经开着,但那个标签页后来去了别的页面:切过去并打开这个地址
+    twin = !free && others.find((t) => items.some(({ item }) => boundTo(item) === t.id));
+    if (twin) await chrome.tabs.update(twin.id, { url: nav.url });
+    else if (free) return adopt(tab, free.item);
+    else return; // 项开在别的窗口里
+  }
   await chrome.storage.session.remove(NEW(nav.tabId));
   // 后台打开的不抢焦点,只关掉重复的
   if (tab.active) await chrome.tabs.update(twin.id, { active: true });
   await chrome.tabs.remove(tab.id).catch(() => {});
   chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
+}
+
+// 收藏/固定项还没打开:让新标签页直接成为它的标签页,显示在收藏夹或固定标签里,而不是列表里多出一个
+async function adopt(tab, item) {
+  await chrome.storage.session.remove([NEW(tab.id), KEY.parent(tab.id)]);
+  await chrome.storage.session.set({ [KEY.bind(item.id)]: tab.id });
+  chrome.runtime.sendMessage({ [MSG.adopted]: { windowId: tab.windowId, tabId: tab.id, itemId: item.id } }).catch(() => {});
 }
 
 const REDIRECTS = ['client_redirect', 'server_redirect'];

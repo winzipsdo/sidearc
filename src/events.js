@@ -8,7 +8,7 @@ import { itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, findItem, followSpace, normalize, setQuery, setState, state, tabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, setQuery, setState, state, tabs, windowId } from './store.js';
 import { clearTabs, closeTab, editTabAlias, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
@@ -154,6 +154,14 @@ function bindBrowser() {
     const d = msg?.[MSG.deduped];
     if (!d || d.windowId !== windowId) return;
     pushUndo(d.active ? '已切到现有标签页' : '标签页已存在', () => chrome.runtime.sendMessage({ [MSG.openDup]: d }));
+  });
+  // 后台把新标签页绑定到了同地址的收藏/固定项:先记上绑定(存储的变化可能还没到),固定项在别的空间就跟过去
+  chrome.runtime.onMessage.addListener((msg) => {
+    const d = msg?.[MSG.adopted];
+    if (!d || d.windowId !== windowId) return;
+    bind.set(d.itemId, d.tabId);
+    followSpace(d.tabId);
+    schedule();
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {

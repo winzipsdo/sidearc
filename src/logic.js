@@ -15,6 +15,15 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
+// 地址相同的收藏/固定项,按收藏夹、当前空间、其他空间的顺序找。返回 [{ item, spaceId? }]
+export function itemsAt(state, address) {
+  const spaces = [...(state?.spaces ?? [])].sort((a, b) => (b.id === state.activeSpaceId) - (a.id === state.activeSpaceId));
+  return [
+    ...(state?.favorites ?? []).map((item) => ({ item })),
+    ...spaces.flatMap((s) => s.pinned.map((item) => ({ item, spaceId: s.id }))),
+  ].filter(({ item }) => addressOf(item.url) === address);
+}
+
 // 搜索词为空,或者任意一段文字包含它(不分大小写)
 export function matchesQuery(query, texts) {
   const q = query.trim().toLowerCase();

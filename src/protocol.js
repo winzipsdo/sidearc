@@ -16,4 +16,5 @@ export const MSG = {
   keepTab: 'keepTab', // 侧边栏 → 后台:tabId。这个标签页是扩展自己开的(固定项、撤销、导入),不查重
   openDup: 'openDup', // 侧边栏 → 后台:{ url, windowId, active }。用户撤销了查重,照原样再开一份
   deduped: 'deduped', // 后台 → 侧边栏:{ url, windowId, active }。刚关掉了一个地址重复的新标签页
+  adopted: 'adopted', // 后台 → 侧边栏:{ windowId, tabId, itemId }。新标签页的地址和某个收藏/固定项相同,已绑定到它
 };

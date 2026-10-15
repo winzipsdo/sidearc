@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, buildTree, dropBefore, dropInto, favColumns, matchesQuery, parseArc, toUrl } from '../src/logic.js';
+import { addressOf, buildTree, dropBefore, dropInto, favColumns, itemsAt, matchesQuery, parseArc, toUrl } from '../src/logic.js';
 
 test('toUrl:网址补全,其余当作搜索词', () => {
   assert.equal(toUrl('https://a.com/x'), 'https://a.com/x');
@@ -120,4 +120,21 @@ test('parseArc:标记后面的不能用时取内容最多的窗口;不是 Arc �
   assert.deepEqual(arc.spaces, [{ name: 'Arc', pinned: [{ title: 'A', url: 'https://a.com' }], tabs: [] }]);
   assert.throws(() => parseArc({}));
   assert.throws(() => parseArc(null));
+});
+
+test('itemsAt:按收藏夹、当前空间、其他空间的顺序找同地址的项', () => {
+  const state = {
+    activeSpaceId: 'b',
+    favorites: [{ id: 'f', url: 'https://x.com/#top' }, { id: 'g', url: 'https://y.com/' }],
+    spaces: [
+      { id: 'a', pinned: [{ id: 'pa', url: 'https://x.com/' }] },
+      { id: 'b', pinned: [{ id: 'pb', url: 'https://x.com/' }] },
+    ],
+  };
+  assert.deepEqual(
+    itemsAt(state, 'https://x.com/').map((x) => [x.item.id, x.spaceId]),
+    [['f', undefined], ['pb', 'b'], ['pa', 'a']]
+  );
+  assert.deepEqual(itemsAt(state, 'https://z.com/'), []);
+  assert.deepEqual(itemsAt(undefined, 'https://x.com/'), []);
 });
