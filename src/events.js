@@ -123,7 +123,15 @@ function bindKeyboard() {
 }
 
 function bindPage() {
-  new ResizeObserver(layoutFavs).observe($('#favs'));
+  // 只在收藏夹变宽变窄时重排列数。重排会改变它的高度,如果高度变化也触发,就会在同一帧里反复触发,
+  // 浏览器会报「ResizeObserver loop completed with undelivered notifications」;放到下一帧做也是为此
+  let favsWidth = 0;
+  new ResizeObserver(([entry]) => {
+    const width = Math.round(entry.contentRect.width);
+    if (width === favsWidth) return;
+    favsWidth = width;
+    requestAnimationFrame(layoutFavs);
+  }).observe($('#favs'));
 
   // favicon 加载失败时换成默认图标
   document.addEventListener(
