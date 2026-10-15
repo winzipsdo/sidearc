@@ -35,6 +35,10 @@
 - **去掉了「从 Arc 导入」。** [`9011485`](https://github.com/winzipsdo/sidearc/commit/9011485)
 - **去掉了双击设置别名和重命名。** 改用右键菜单里的「设置别名…」「编辑别名…」「重命名…」。 [`9011485`](https://github.com/winzipsdo/sidearc/commit/9011485)
 
+### 修复
+
+- **扩展错误列表里不再出现「ResizeObserver loop completed with undelivered notifications」。** 收藏夹宽度变化时重排列数会引发这条警告,不影响使用。 [`7b6431d`](https://github.com/winzipsdo/sidearc/commit/7b6431d)
+
 ## 2026-10-15
 
 ### 新增
