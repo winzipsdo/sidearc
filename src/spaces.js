@@ -1,5 +1,6 @@
 // 对空间的操作:切换、新建、编辑、删除、开关「不记录历史」。
 
+import { pinnedItems } from './logic.js';
 import { KEY } from './protocol.js';
 import { render, schedule } from './render.js';
 import { applySession, bind, COLORS, itemByTab, normalize, save, state, tabs, tabSpace, uid } from './store.js';
@@ -52,7 +53,7 @@ export async function deleteSpace(id) {
   if (i < 0 || state.spaces.length < 2) return;
   const [gone] = state.spaces.splice(i, 1);
   normalize();
-  const keys = gone.pinned.filter((p) => bind.has(p.id)).map((p) => KEY.bind(p.id));
+  const keys = pinnedItems(gone).filter((p) => bind.has(p.id)).map((p) => KEY.bind(p.id));
   for (const [tabId, sid] of tabSpace) if (sid === id) keys.push(KEY.space(tabId));
   keys.forEach((k) => applySession(k, undefined));
   await chrome.storage.session.remove(keys);

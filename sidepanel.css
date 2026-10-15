@@ -240,6 +240,14 @@ header { padding: 12px 12px 8px; }
 #pins .row.open .title { color: var(--fg); }
 #pins .row:not(.open) .title { color: var(--fg-2); }
 #pins .row:not(.open) .alias { opacity: 0.65; }
+/* 固定标签里的文件夹 */
+#pins .row { padding-left: calc(10px + var(--depth, 0) * 18px); }
+#pins .row.folder .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
+#pins .row.folder .title { color: var(--fg); }
+#pins .row.folder .private { display: grid; color: var(--fg-3); }
+#pins .row.folder .count { flex: none; padding: 0 4px; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+#pins .folder-empty { padding: 3px 10px 7px 38px; color: var(--fg-3); font-size: 12px; font-weight: 400; }
+
 /* 固定标签点进了别的页面:前面是固定的名字,后面是当前页面,右边常驻「回到固定地址」 */
 #pins .row.away .pin-name {
   flex: none;

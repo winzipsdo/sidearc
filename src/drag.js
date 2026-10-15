@@ -1,9 +1,9 @@
 // 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。
 
 import { itemFromTab, removeItem } from './items.js';
-import { dropBefore, dropInto } from './logic.js';
+import { dropBefore, dropInto, isFolder } from './logic.js';
 import { render, schedule } from './render.js';
-import { activeSpace, dragging, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem } from './store.js';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem } from './store.js';
 import { moveTabToSpace } from './tabs.js';
 import { hideMenu } from './ui.js';
 
@@ -22,6 +22,11 @@ const rectsOf = (els) => els.map((el) => el.getBoundingClientRect());
 
 // 拖标签页时,指针落在某一行的中间部分 = 要成为它的子标签;上下边缘仍是排序
 function nestElement(zone, e) {
+  // 固定区:拖到文件夹那一行的中间 = 放进文件夹
+  if (zone.dataset.zone === 'pin' && dragging.kind !== 'folder') {
+    const folders = [...zone.querySelectorAll('[data-kind="folder"]')];
+    return folders[dropInto(rectsOf(folders), e.clientY)] ?? null;
+  }
   if (dragging.kind !== 'tab' || zone.dataset.zone !== 'tab') return null;
   const els = [...zone.querySelectorAll('[data-kind="tab"]')].filter((el) => el.dataset.id !== dragging.id);
   return els[dropInto(rectsOf(els), e.clientY)] ?? null;
@@ -29,7 +34,9 @@ function nestElement(zone, e) {
 
 // 拖到 zone 里时,应插在哪个元素之前(null = 末尾)
 function refElement(zone, e) {
-  const els = [...zone.querySelectorAll('[data-kind]')].filter((el) => el.dataset.id !== dragging.id || el.dataset.kind !== dragging.kind);
+  let els = [...zone.querySelectorAll('[data-kind]')].filter((el) => el.dataset.id !== dragging.id || el.dataset.kind !== dragging.kind);
+  // 文件夹只能在顶层排序:不拿文件夹里的项当参照
+  if (dragging.kind === 'folder') els = els.filter((el) => !el.style.getPropertyValue('--depth'));
   return els[dropBefore(rectsOf(els), e.clientX, e.clientY, zone.classList.contains('grid'))] ?? null;
 }
 
@@ -79,6 +86,20 @@ async function nestTab(tabId, targetId) {
 
 // d 是被拖的东西({ kind, id }),zone 是落下的区域(tab / fav / pin)
 async function performDrop(d, zone, refId, intoId) {
+  // 文件夹只能在固定区里挪位置
+  if (d.kind === 'folder') {
+    if (zone !== 'pin' || refId === d.id) return;
+    const pinned = activeSpace().pinned;
+    const folder = pinned.find((x) => x.id === d.id);
+    if (!folder) return;
+    // 参照是文件夹里的项时,放到那个文件夹前面
+    const ref = refId && (pinned.find((x) => x.id === refId) ?? findItem(refId)?.folder);
+    pinned.splice(pinned.indexOf(folder), 1);
+    const i = ref ? pinned.indexOf(ref) : -1;
+    pinned.splice(i < 0 ? pinned.length : i, 0, folder);
+    await save();
+    return render();
+  }
   if (zone === 'tab') {
     if (d.kind === 'tab') return intoId != null ? nestTab(+d.id, +intoId) : dropTab(+d.id, refId == null ? null : +refId);
     return removeItem(d.id, true);
@@ -92,7 +113,20 @@ async function performDrop(d, zone, refId, intoId) {
     item = takeItem(d.id);
   }
   if (!item) return;
-  const arr = zone === 'fav' ? state.favorites : activeSpace().pinned;
+  let arr = zone === 'fav' ? state.favorites : activeSpace().pinned;
+  if (zone === 'pin') {
+    const pinned = activeSpace().pinned;
+    const into = intoId && pinned.find((x) => isFolder(x) && x.id === intoId);
+    if (into) {
+      // 拖到文件夹上:放进去,排在最后
+      into.items.push(item);
+      into.open = true;
+      await save();
+      return render();
+    }
+    // 参照是文件夹里的项:放进那个文件夹,排在它前面
+    arr = (refId && pinned.find((f) => isFolder(f) && f.items.some((x) => x.id === refId))?.items) || pinned;
+  }
   const i = refId ? arr.findIndex((x) => x.id === refId) : -1;
   arr.splice(i < 0 ? arr.length : i, 0, item);
   await save();

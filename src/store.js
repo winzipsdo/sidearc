@@ -1,7 +1,7 @@
 // 侧边栏的全部状态,以及只读写状态、不碰界面的函数。
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
-import { buildTree, matchesQuery } from './logic.js';
+import { buildTree, matchesQuery, pinnedItems, pinnedLists } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
@@ -96,22 +96,26 @@ export function itemByTab() {
     if (t != null) m.set(t, { item, kind, space });
   };
   state.favorites.forEach((i) => add(i, 'fav'));
-  state.spaces.forEach((s) => s.pinned.forEach((i) => add(i, 'pin', s)));
+  state.spaces.forEach((s) => pinnedItems(s).forEach((i) => add(i, 'pin', s)));
   return m;
 }
 
+// 找收藏/固定项。固定项还带上它所在的数组 list,在文件夹里时还有 folder
 export function findItem(id) {
   let item = state.favorites.find((x) => x.id === id);
-  if (item) return { item, kind: 'fav' };
+  if (item) return { item, kind: 'fav', list: state.favorites };
   for (const space of state.spaces) {
-    item = space.pinned.find((x) => x.id === id);
-    if (item) return { item, kind: 'pin', space };
+    for (const list of pinnedLists(space)) {
+      item = list.find((x) => x.id === id && !x.folder);
+      if (item) return { item, kind: 'pin', space, list, folder: list === space.pinned ? null : space.pinned.find((f) => f.items === list) };
+    }
   }
   return null;
 }
 
+// 从所在的数组里取出(收藏、固定项,或者顶层的文件夹)
 export function takeItem(id) {
-  for (const arr of [state.favorites, ...state.spaces.map((s) => s.pinned)]) {
+  for (const arr of [state.favorites, ...state.spaces.flatMap(pinnedLists)]) {
     const i = arr.findIndex((x) => x.id === id);
     if (i >= 0) return arr.splice(i, 1)[0];
   }

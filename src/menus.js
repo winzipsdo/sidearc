@@ -1,11 +1,11 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { $ } from './dom.js';
 import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { isAway } from './logic.js';
+import { isAway, isFolder } from './logic.js';
+import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, toggleNoHistory } from './spaces.js';
-import { bind, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, visibleTabs } from './store.js';
+import { activeSpace, bind, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, visibleTabs } from './store.js';
 import { closeTab, closeWithUndo, editTabAlias, moveTabToSpace } from './tabs.js';
 import { copyText, showMenu } from './ui.js';
 
@@ -43,7 +43,9 @@ export function tabMenu(e, tab) {
   ]);
 }
 
-export function itemMenu(e, { item, kind }) {
+export function itemMenu(e, { item, kind, space, folder }) {
+  // 固定项:可以移进本空间的文件夹,或移出文件夹
+  const folders = kind === 'pin' ? space.pinned.filter((x) => isFolder(x) && x !== folder) : [];
   const tab = tabs.find((t) => t.id === bind.get(item.id));
   // 标签页点进了别的页面
   const away = tab && isAway(item.url, tab.url);
@@ -63,8 +65,23 @@ export function itemMenu(e, { item, kind }) {
     kind === 'fav'
       ? { icon: 'move', label: '移到当前空间的固定标签', run: () => moveItem(item.id, 'pin') }
       : { icon: 'move', label: '移到收藏夹', run: () => moveItem(item.id, 'fav') },
+    kind === 'pin' && '-',
+    ...folders.map((f) => ({ icon: 'folder', label: `移到「${f.name}」`, run: () => moveToFolder(item.id, f.id) })),
+    folder && { icon: 'outdent', label: '移出文件夹', run: () => moveToFolder(item.id, null) },
+    kind === 'pin' && { icon: 'folderPlus', label: '新建文件夹并移入…', run: () => createFolder(item.id) },
     '-',
     { icon: kind === 'fav' ? 'trash' : 'unpin', label: kind === 'fav' ? '从收藏夹移除' : '取消固定', danger: true, run: () => removeItem(item.id, false) },
+  ]);
+}
+
+export function folderMenu(e, id) {
+  const folder = findFolder(id)?.folder;
+  if (!folder) return;
+  showMenu(e, [
+    { icon: 'edit', label: '重命名…', run: () => renameFolder(id) },
+    { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleFolderNoHistory(id) },
+    '-',
+    { icon: 'trash', label: '删除文件夹(保留里面的固定标签)', danger: true, run: () => deleteFolder(id) },
   ]);
 }
 
@@ -73,8 +90,8 @@ export function spaceMenu(e, id) {
   showMenu(e, [
     { icon: 'edit', label: '编辑空间…', run: () => editSpace(id) },
     { icon: 'plus', label: '新建空间…', run: addSpace },
+    id === activeSpace().id && { icon: 'folderPlus', label: '新建文件夹…', run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleNoHistory(id) },
-    { icon: 'import', label: '从 Arc 导入…', run: () => $('#arc-file').click() },
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { icon: 'trash', label: '删除空间', danger: true, run: () => deleteSpace(id) },
   ]);

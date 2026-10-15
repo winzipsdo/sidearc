@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway } from './logic.js';
+import { favColumns, isAway, isFolder } from './logic.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
@@ -18,7 +18,7 @@ export function render() {
   $('#space-name').textContent = space.name;
   $('#space-private').hidden = !space.noHistory;
 
-  const itemEl = (item, kind) => {
+  const itemEl = (item, kind, inFolder) => {
     const open = bind.has(item.id);
     const tab = tabById.get(bind.get(item.id));
     const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active'].filter(Boolean).join(' ');
@@ -29,7 +29,7 @@ export function render() {
     if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
       return h(
         'div',
-        { class: cls + ' away', draggable: true, title: `当前:${tab.url}\n固定地址:${item.url}`, data: { kind, id: item.id } },
+        { class: cls + ' away', draggable: true, title: `当前:${tab.url}\n固定地址:${item.url}`, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
@@ -38,7 +38,7 @@ export function render() {
     }
     return h(
       'div',
-      { class: cls, draggable: true, title: item.url, data: { kind, id: item.id } },
+      { class: cls, draggable: true, title: item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
@@ -54,7 +54,27 @@ export function render() {
   layoutFavs();
 
   const pinTab = (i) => tabById.get(bind.get(i.id));
-  const pins = space.pinned.filter((i) => matches(i.alias, i.title, i.url, pinTab(i)?.title, pinTab(i)?.url)).map((i) => itemEl(i, 'pin'));
+  const pinMatch = (i) => matches(i.alias, i.title, i.url, pinTab(i)?.title, pinTab(i)?.url);
+  const folderEl = (f, showCount) => {
+    const openKids = f.items.filter((i) => bind.has(i.id)).length;
+    return h(
+      'div',
+      { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, title: f.noHistory ? '此文件夹里的页面不记录浏览历史' : f.name, data: { kind: 'folder', id: f.id } },
+      icon(f.open ? 'folderOpen' : 'folder'),
+      h('span', { class: 'title' }, f.name),
+      f.noHistory && h('span', { class: 'private', title: '不记录浏览历史' }, icon('eyeOff')),
+      // 折叠时显示里面有几项,开着几项
+      showCount && f.items.length > 0 && h('span', { class: 'count' }, openKids ? `${openKids}/${f.items.length}` : `${f.items.length}`)
+    );
+  };
+  const pins = space.pinned.flatMap((x) => {
+    if (!isFolder(x)) return pinMatch(x) ? [itemEl(x, 'pin')] : [];
+    // 搜索时:文件夹名匹配就整个显示,否则只显示匹配的项;没有任何匹配就不显示
+    const kids = query && !matches(x.name) ? x.items.filter(pinMatch) : x.items;
+    if (query && !kids.length) return [];
+    if (!x.open && !query) return [folderEl(x, true)];
+    return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', true)), !kids.length && h('div', { class: 'folder-empty' }, '空文件夹,把固定标签拖进来')].filter(Boolean);
+  });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, '把标签页拖到这里固定到此空间')]));
 
   $('#tabs').replaceChildren(

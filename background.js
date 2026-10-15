@@ -1,6 +1,6 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, ANY_SPACE, itemsAt, tabSpaces } from './src/logic.js';
+import { addressOf, ANY_SPACE, itemsAt, privateItemIds, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
 import { startGroupSync } from './src/groups.js';
 
@@ -14,8 +14,10 @@ const urlOf = (tab) => tab.url || tab.pendingUrl || '';
 // 最多两级:从子标签里打开的,和它并列挂在同一个父标签页下。
 // 不看 openerTabId:Ctrl+T 和从其他应用点开的链接也带着它(值是当时的前台标签页),
 // 只有页面里的链接或脚本开出的新标签页才会触发这个事件
-// 来源是收藏的标签页时(收藏所有空间共用)不指定空间,由侧边栏归入当前空间
+// 来源是收藏的标签页时(收藏所有空间共用)不指定空间,由侧边栏归入当前空间。
+// 这类标签页是用户在网页里特意新开的(Ctrl/⌘+点击、中键、在新标签页打开的链接),地址重复也不合并
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId: opener, tabId }) => {
+  keep(tabId);
   const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);
   const space = tabSpaces(state, all).get(opener);
   await chrome.storage.session.set({
@@ -42,12 +44,16 @@ chrome.tabs.onRemoved.addListener(async (tabId, info) => {
 chrome.history.onVisited.addListener(async (item) => {
   const { state } = await chrome.storage.local.get('state');
   const off = new Set((state?.spaces ?? []).filter((s) => s.noHistory).map((s) => s.id));
-  if (!off.size) return;
+  const privateItems = privateItemIds(state);
+  if (!off.size && !privateItems.size) return;
   const hits = (await chrome.tabs.query({})).filter((t) => t.url === item.url || t.pendingUrl === item.url);
   if (!hits.length) return;
-  const space = await chrome.storage.session.get(hits.map((t) => KEY.space(t.id)));
+  const all = await chrome.storage.session.get(null);
+  // 不记录历史的文件夹:绑定到其中固定项的标签页,以及从它们打开的子标签页
+  const privateTabs = new Set(Object.keys(all).filter((k) => hasPrefix(k, PREFIX.bind) && privateItems.has(k.slice(2))).map((k) => all[k]));
   // 侧边栏没开时新标签页还没分配空间,按当前空间算
-  if (hits.some((t) => off.has(space[KEY.space(t.id)] ?? state.activeSpaceId))) await chrome.history.deleteUrl({ url: item.url });
+  const isPrivate = (t) => off.has(all[KEY.space(t.id)] ?? state.activeSpaceId) || privateTabs.has(t.id) || privateTabs.has(all[KEY.parent(t.id)]);
+  if (hits.some(isPrivate)) await chrome.history.deleteUrl({ url: item.url });
 });
 
 // ---------- 重启 / 重新加载后恢复 ----------

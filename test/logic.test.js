@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, parseArc, tabSpaces, toUrl } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, tabSpaces, toUrl } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -91,46 +91,6 @@ test('dropInto:只有落在行的中间部分才算嵌套', () => {
 const arcFile = (container) => ({ sidebar: { containers: [{ global: {} }, container] } });
 const arcTab = (id, url, savedTitle, title) => ({ id, title, data: { tab: { savedURL: url, savedTitle } } });
 
-test('parseArc:收藏夹、固定标签、普通标签页,文件夹展开,改过的名字当别名', () => {
-  const arc = parseArc(
-    arcFile({
-      topAppsContainerIDs: [{ default: true }, 'top'],
-      spaces: ['s1', { id: 's1', title: 'Work', containerIDs: ['pinned', 'pin', 'unpinned', 'unpin'] }],
-      items: [
-        'top', { id: 'top', childrenIds: ['f1'] },
-        arcTab('f1', 'https://fav.com', 'Fav'),
-        { id: 'pin', childrenIds: ['folder', 'p2'] },
-        { id: 'folder', title: 'Folder', childrenIds: ['p1'] },
-        arcTab('p1', 'https://p1.com', 'P1', 'My P1'),
-        arcTab('p2', 'https://p2.com', ''),
-        { id: 'unpin', childrenIds: ['t1', 'empty'] },
-        arcTab('t1', 'https://t1.com', 'T1', 'T1'),
-        { id: 'empty', data: { tab: {} } },
-      ],
-    })
-  );
-  assert.deepEqual(arc.favorites, [{ title: 'Fav', url: 'https://fav.com' }]);
-  assert.deepEqual(arc.spaces, [
-    {
-      name: 'Work',
-      pinned: [
-        { title: 'P1', url: 'https://p1.com', alias: 'My P1' },
-        { title: 'https://p2.com', url: 'https://p2.com' },
-      ],
-      tabs: [{ title: 'T1', url: 'https://t1.com' }],
-    },
-  ]);
-});
-
-test('parseArc:标记后面的不能用时取内容最多的窗口;不是 Arc 文件则报错', () => {
-  const small = { items: [], spaces: [] };
-  const big = { items: [arcTab('a', 'https://a.com', 'A')], spaces: [{ id: 's', containerIDs: ['pinned', 'a'] }] };
-  const arc = parseArc({ sidebar: { containers: [{ global: {} }, {}, small, big] } });
-  assert.deepEqual(arc.spaces, [{ name: 'Arc', pinned: [{ title: 'A', url: 'https://a.com' }], tabs: [] }]);
-  assert.throws(() => parseArc({}));
-  assert.throws(() => parseArc(null));
-});
-
 test('itemsAt:收藏夹加上指定空间的固定项,不看其他空间', () => {
   const state = {
     favorites: [{ id: 'f', url: 'https://x.com/#top' }, { id: 'g', url: 'https://y.com/' }],
@@ -182,4 +142,23 @@ test('buildLayout:空的空间不出现;没有状态时什么都不排', () => {
   const state = { activeSpaceId: 'a', favorites: [], spaces: [{ id: 'a', pinned: [] }, { id: 'b', pinned: [] }] };
   assert.deepEqual(buildLayout(state, { 't:1': 'a' }, [{ id: 1 }]), [{ spaceId: 'a', ids: [1] }]);
   assert.deepEqual(buildLayout(undefined, {}, [{ id: 1 }]), []);
+});
+
+test('文件夹:展开后的固定项、放项的数组、不记录历史的项', () => {
+  const f1 = { id: 'f1', folder: true, name: 'A', open: true, items: [{ id: 'b', url: 'https://b.com/' }, { id: 'c', url: 'https://c.com/' }] };
+  const f2 = { id: 'f2', folder: true, name: 'B', open: false, noHistory: true, items: [{ id: 'd', url: 'https://d.com/' }] };
+  const space = { id: 's', pinned: [{ id: 'a', url: 'https://a.com/' }, f1, { id: 'e', url: 'https://e.com/' }, f2] };
+  assert.equal(isFolder(f1), true);
+  assert.equal(isFolder(space.pinned[0]), false);
+  assert.deepEqual(pinnedItems(space).map((i) => i.id), ['a', 'b', 'c', 'e', 'd']);
+  assert.deepEqual(pinnedLists(space), [space.pinned, f1.items, f2.items]);
+  assert.deepEqual([...privateItemIds({ spaces: [space] })], ['d']);
+  assert.deepEqual(pinnedItems(undefined), []);
+});
+
+test('文件夹里的固定项照样参与查重和空间归属', () => {
+  const space = { id: 's', pinned: [{ id: 'f', folder: true, name: 'A', items: [{ id: 'x', url: 'https://x.com/' }] }] };
+  const state = { favorites: [], spaces: [space] };
+  assert.deepEqual(itemsAt(state, 'https://x.com/', 's').map(({ item }) => item.id), ['x']);
+  assert.equal(tabSpaces(state, { 'b:x': 7 }).get(7), 's');
 });

@@ -17,6 +17,16 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
+// 空间的固定区里可以有文件夹:{ id, folder: true, name, open, noHistory?, items: [项] },只在顶层,不嵌套
+export const isFolder = (x) => !!x?.folder;
+// 固定区里所有的固定项(展开文件夹),按显示顺序
+export const pinnedItems = (space) => (space?.pinned ?? []).flatMap((x) => (isFolder(x) ? x.items : [x]));
+// 固定区里放固定项的所有数组:顶层,和每个文件夹
+export const pinnedLists = (space) => [space.pinned, ...space.pinned.filter(isFolder).map((f) => f.items)];
+// 放在「不记录历史」文件夹里的固定项 id
+export const privateItemIds = (state) =>
+  new Set((state?.spaces ?? []).flatMap((s) => s.pinned.filter((x) => isFolder(x) && x.noHistory).flatMap((f) => f.items.map((i) => i.id))));
+
 // 收藏/固定项绑定的标签页是否已经离开了它的固定地址(点进了别的页面)。锚点的差别不算离开
 export function isAway(itemUrl, tabUrl) {
   if (!itemUrl || !tabUrl) return false;
@@ -25,7 +35,7 @@ export function isAway(itemUrl, tabUrl) {
 
 // 地址相同的收藏/固定项:收藏夹所有空间共用,固定项只看 spaceId 这个空间。返回 [{ item, spaceId? }],收藏在前
 export function itemsAt(state, address, spaceId) {
-  const pinned = state?.spaces?.find((s) => s.id === spaceId)?.pinned ?? [];
+  const pinned = pinnedItems(state?.spaces?.find((s) => s.id === spaceId));
   return [...(state?.favorites ?? []).map((item) => ({ item })), ...pinned.map((item) => ({ item, spaceId }))].filter(
     ({ item }) => addressOf(item.url) === address
   );
@@ -37,7 +47,7 @@ export const ANY_SPACE = '*';
 export function tabSpaces(state, session) {
   const itemSpace = new Map();
   for (const item of state?.favorites ?? []) itemSpace.set(item.id, ANY_SPACE);
-  for (const s of state?.spaces ?? []) for (const item of s.pinned) itemSpace.set(item.id, s.id);
+  for (const s of state?.spaces ?? []) for (const item of pinnedItems(s)) itemSpace.set(item.id, s.id);
   const out = new Map();
   for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.space)) out.set(+k.slice(2), v);
   for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.bind) && itemSpace.has(k.slice(2))) out.set(v, itemSpace.get(k.slice(2)));
@@ -94,38 +104,6 @@ export function dropInto(rects, y) {
   return rects.findIndex((r) => y > r.top + r.height * 0.28 && y < r.bottom - r.height * 0.28);
 }
 
-// 解析 Arc 的 StorableSidebar.json → { favorites: [项], spaces: [{ name, pinned: [项], tabs: [项] }] }
-// 项为 { title, url, alias? };Arc 里手动改过的名字当作别名,文件夹展开成平铺
-export function parseArc(json) {
-  const containers = json?.sidebar?.containers ?? [];
-  const usable = (c) => Array.isArray(c?.items) && Array.isArray(c?.spaces);
-  // Windows 版里窗口数据排在 { global } 标记后面;找不到就取内容最多的那个
-  const marked = containers[containers.findIndex((c) => c?.global) + 1];
-  const c = usable(marked) ? marked : containers.filter(usable).sort((a, b) => b.items.length - a.items.length)[0];
-  if (!c) throw new Error('not an Arc sidebar file');
-
-  // items / spaces 数组里对象和 id 字符串交替出现,只要对象
-  const items = new Map(c.items.filter((x) => x && typeof x === 'object').map((x) => [x.id, x]));
-  const leaves = (id) => {
-    const it = items.get(id);
-    const tab = it?.data?.tab;
-    if (!tab) return (it?.childrenIds ?? []).flatMap(leaves);
-    if (!tab.savedURL) return [];
-    const title = tab.savedTitle || tab.savedURL;
-    return [{ title, url: tab.savedURL, ...(it.title && it.title !== title && { alias: it.title }) }];
-  };
-  const favorites = (c.topAppsContainerIDs ?? []).filter((x) => typeof x === 'string').flatMap(leaves);
-  const spaces = c.spaces
-    .filter((x) => x && typeof x === 'object')
-    .map((s) => {
-      // containerIDs 形如 ['pinned', <id>, 'unpinned', <id>]
-      const ids = s.containerIDs ?? [];
-      const of = (key) => (ids.includes(key) ? leaves(ids[ids.indexOf(key) + 1]) : []);
-      return { name: s.title || 'Arc', pinned: of('pinned'), tabs: of('unpinned') };
-    });
-  return { favorites, spaces };
-}
-
 // 空间颜色 -> 最接近的 Chrome 标签页分组颜色(分组只支持这几种)
 const GROUP_COLORS = {
   grey: '#8a8f98',
@@ -168,7 +146,7 @@ export function buildLayout(state, session, tabs) {
   for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.parent)) parents.set(+k.slice(2), v);
 
   const chunks = [{ spaceId: null, ids: (state?.favorites ?? []).flatMap((item) => take(boundTab(item))) }];
-  const pinned = new Set((state?.spaces ?? []).flatMap((s) => s.pinned.map(boundTab)).filter((id) => id != null));
+  const pinned = new Set((state?.spaces ?? []).flatMap((s) => pinnedItems(s).map(boundTab)).filter((id) => id != null));
   const home = (t) => {
     const s = spaceOf.get(t.id);
     return spaceIds.has(s) ? s : state?.activeSpaceId;
@@ -177,7 +155,7 @@ export function buildLayout(state, session, tabs) {
     const listed = tabs.filter((t) => !used.has(t.id) && !pinned.has(t.id) && home(t) === space.id);
     chunks.push({
       spaceId: space.id,
-      ids: [...space.pinned.flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents).flatMap(({ tab }) => take(tab.id))],
+      ids: [...pinnedItems(space).flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents).flatMap(({ tab }) => take(tab.id))],
     });
   }
   return chunks.filter((c) => c.ids.length);

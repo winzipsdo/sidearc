@@ -1,6 +1,6 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
-import { addressOf, toUrl } from './logic.js';
+import { addressOf, pinnedItems, toUrl } from './logic.js';
 import { render, schedule } from './render.js';
 import {
   activeSpace,
@@ -71,7 +71,8 @@ export async function savePageAsItem(tab, zone) {
   const list = zone === 'fav' ? state.favorites : activeSpace().pinned;
   const where = zone === 'fav' ? '收藏夹' : '当前空间的固定标签';
   const address = addressOf(tab.url) ?? tab.url;
-  if (list.some((i) => (addressOf(i.url) ?? i.url) === address)) return toast(`这个页面已经在${where}里了`);
+  const existing = zone === 'fav' ? list : pinnedItems(activeSpace());
+  if (existing.some((i) => (addressOf(i.url) ?? i.url) === address)) return toast(`这个页面已经在${where}里了`);
   const item = { id: uid(), title: tab.title || tab.url, url: tab.url };
   list.push(item);
   await save();
@@ -104,7 +105,8 @@ export async function removeItem(id, openIfClosed) {
   if (!hit) return;
   const { item, kind } = hit;
   const spaceId = hit.space?.id;
-  const index = (kind === 'fav' ? state.favorites : hit.space.pinned).indexOf(item);
+  const folderId = hit.folder?.id;
+  const index = hit.list.indexOf(item);
   takeItem(id);
   let tabId = bind.get(id);
   if (tabId != null) {
@@ -119,7 +121,9 @@ export async function removeItem(id, openIfClosed) {
 
   // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
   pushUndo(`已${kind === 'fav' ? '从收藏夹移除' : '取消固定'}「${item.alias || item.title}」`, async () => {
-    const arr = kind === 'fav' ? state.favorites : state.spaces.find((s) => s.id === spaceId)?.pinned;
+    // 原来在文件夹里就放回文件夹;文件夹已经没了就放到固定区顶层
+    const space = state.spaces.find((s) => s.id === spaceId);
+    const arr = kind === 'fav' ? state.favorites : (space?.pinned.find((f) => f.id === folderId)?.items ?? space?.pinned);
     if (!arr || findItem(id)) return;
     arr.splice(Math.min(index, arr.length), 0, item);
     const tab = tabId != null && (await chrome.tabs.get(tabId).catch(() => null));

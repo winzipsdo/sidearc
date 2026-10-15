@@ -3,7 +3,7 @@
 //   tabs.js / items.js / spaces.js  对标签页、收藏/固定项、空间的操作
 //   menus.js   右键菜单的内容              ui.js      提示条、撤销、菜单外壳、对话框
 //   drag.js    拖拽                        events.js  事件绑定
-//   arc.js     从 Arc 导入                 dom.js     生成页面元素的小工具
+//   folders.js 固定标签里的文件夹          dom.js     生成页面元素的小工具
 //   logic.js   纯逻辑(有测试)              protocol.js 和 background.js 之间的约定
 
 import { bindEvents } from './src/events.js';

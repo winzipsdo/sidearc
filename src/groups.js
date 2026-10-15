@@ -2,7 +2,7 @@
 // 当前空间的分组展开、其他空间的折叠;收藏的标签页不进分组,放在最左边。
 // 顺序以侧边栏为准(见 logic.js 的 buildLayout);在顶部标签栏里拖进别的分组 = 移到那个空间。
 
-import { buildLayout, groupColor } from './logic.js';
+import { buildLayout, groupColor, pinnedItems } from './logic.js';
 import { hasPrefix, KEY, PREFIX } from './protocol.js';
 
 // 这之前发生的移动、分组变化是自己引起的,不当作用户操作
@@ -37,7 +37,7 @@ async function syncWindow(windowId, state, all) {
   }
 
   // 绑定到收藏/固定项的标签页
-  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap((s) => s.pinned)].map((i) => i.id));
+  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
   const bound = new Set(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.bind) && itemIds.has(k.slice(2))).map(([, v]) => v));
   for (const t of tabs) {
     const inGroup = groupSpace.get(t.groupId);

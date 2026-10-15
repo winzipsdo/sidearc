@@ -1,25 +1,26 @@
 // 把页面和浏览器的事件接到各个操作上。拖拽的事件在 drag.js。
 
-import { importArc } from './arc.js';
 import { $, FALLBACK_ICON } from './dom.js';
 import { bindDrag } from './drag.js';
-import { backToItem, closeItemTab, editItem, openItem, removeItem } from './items.js';
-import { itemMenu, spaceMenu, tabMenu } from './menus.js';
+import { backToItem, closeItemTab, openItem, removeItem } from './items.js';
+import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
+import { toggleFolder } from './folders.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
 import { applySession, bind, findItem, followSpace, normalize, setQuery, setState, state, tabs, windowId } from './store.js';
-import { clearTabs, closeTab, editTabAlias, submitSearch } from './tabs.js';
+import { clearTabs, closeTab, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
-// 列表里的行和磁贴:点击、双击、中键
+// 列表里的行和磁贴:点击、中键
 function bindRows(scroll) {
   scroll.addEventListener('click', (e) => {
     const el = e.target.closest('[data-kind]');
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
+    if (el.dataset.kind === 'folder') return toggleFolder(el.dataset.id);
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
       if (!tab) return;
@@ -36,21 +37,13 @@ function bindRows(scroll) {
     }
   });
 
-  // 双击设置别名
-  scroll.addEventListener('dblclick', (e) => {
-    const el = !e.target.closest('[data-act]') && e.target.closest('[data-kind]');
-    if (!el) return;
-    if (el.dataset.kind === 'tab') editTabAlias(+el.dataset.id);
-    else editItem(el.dataset.id);
-  });
-
   // 中键关闭
   scroll.addEventListener('mousedown', (e) => {
     if (e.button === 1 && e.target.closest('[data-kind]')) e.preventDefault();
   });
   scroll.addEventListener('auxclick', (e) => {
     const el = e.button === 1 && e.target.closest('[data-kind]');
-    if (!el) return;
+    if (!el || el.dataset.kind === 'folder') return;
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
       if (tab) closeTab(tab);
@@ -70,6 +63,7 @@ function bindMenus(scroll) {
     const dot = e.target.closest('[data-space]');
     if (dot) return spaceMenu(e, dot.dataset.space);
     if (!el) return hideMenu();
+    if (el.dataset.kind === 'folder') return folderMenu(e, el.dataset.id);
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
       if (tab) tabMenu(e, tab);
@@ -100,11 +94,6 @@ function bindControls() {
   $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
   $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
-  $('#arc-file').addEventListener('change', (e) => {
-    const [file] = e.target.files;
-    e.target.value = '';
-    if (file) importArc(file);
-  });
 }
 
 function bindSearch() {
