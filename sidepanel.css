@@ -397,18 +397,22 @@ header { padding: 12px 12px 8px; }
 }
 @keyframes pop { from { opacity: 0; transform: scale(0.96); } }
 #menu button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 9px;
   width: 100%;
   height: 30px;
-  padding: 0 10px;
+  padding: 0 10px 0 8px;
   border-radius: 8px;
   text-align: left;
   font-weight: 400;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
+#menu button > span:last-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#menu button .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
 #menu button:hover { background: var(--accent); color: #fff; }
+#menu button:hover .i { color: inherit; }
+#menu button.danger .i { color: inherit; }
+#menu .menu-head { padding: 6px 10px 3px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
 #menu button.danger { color: #e5484d; }
 #menu button.danger:hover { background: #e5484d; color: #fff; }
 #menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }

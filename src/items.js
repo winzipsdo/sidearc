@@ -1,6 +1,6 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
-import { toUrl } from './logic.js';
+import { addressOf, toUrl } from './logic.js';
 import { render, schedule } from './render.js';
 import {
   activeSpace,
@@ -22,7 +22,7 @@ import {
   windowId,
 } from './store.js';
 import { createTab, focusTab } from './tabs.js';
-import { ask, pushUndo } from './ui.js';
+import { ask, pushUndo, toast } from './ui.js';
 
 export async function openItem(item) {
   const boundId = bind.get(item.id);
@@ -64,6 +64,24 @@ export async function itemFromTab(tab) {
   await detachTab(tab.id);
   await setBind(item.id, tab.id);
   return item;
+}
+
+// 把标签页当前所在的页面另存为一个新的收藏/固定项。标签页本身不动:不绑定到新项,原来绑定的固定标签也照旧
+export async function savePageAsItem(tab, zone) {
+  const list = zone === 'fav' ? state.favorites : activeSpace().pinned;
+  const where = zone === 'fav' ? '收藏夹' : '当前空间的固定标签';
+  const address = addressOf(tab.url) ?? tab.url;
+  if (list.some((i) => (addressOf(i.url) ?? i.url) === address)) return toast(`这个页面已经在${where}里了`);
+  const item = { id: uid(), title: tab.title || tab.url, url: tab.url };
+  list.push(item);
+  await save();
+  render();
+  pushUndo(`已把「${item.title}」加入${where}`, async () => {
+    // 保存后状态会被存储同步替换成新对象,所以按 id 找,而不是用上面的 list
+    if (!takeItem(item.id)) return;
+    await save();
+    render();
+  });
 }
 
 export async function addItemFromTab(tab, zone) {

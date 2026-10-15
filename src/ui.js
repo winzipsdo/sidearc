@@ -1,6 +1,6 @@
 // 提示条、撤销栈、右键菜单的外壳和对话框。
 
-import { $, h } from './dom.js';
+import { $, h, icon } from './dom.js';
 import { COLORS } from './store.js';
 
 let toastTimer;
@@ -61,10 +61,16 @@ export function hideMenu() {
 export function showMenu(e, items) {
   e.preventDefault();
   const menu = $('#menu');
+  // 条件不满足的项是 false;分隔线不出现在开头、结尾,也不连着出现
+  const list = items.filter(Boolean).filter((it, i, all) => it !== '-' || (i > 0 && i < all.length - 1 && all[i + 1] !== '-'));
   menu.replaceChildren(
-    ...items
-      .filter(Boolean)
-      .map((it) => (it === '-' ? h('hr') : h('button', { class: it.danger && 'danger', onclick: () => (hideMenu(), it.run()) }, it.label)))
+    ...list.map((it) => {
+      if (it === '-') return h('hr');
+      if (it.header) return h('div', { class: 'menu-head' }, it.header);
+      const ico = it.icon && icon(it.icon);
+      if (ico && it.color) ico.style.color = it.color;
+      return h('button', { class: it.danger && 'danger', onclick: () => (hideMenu(), it.run()) }, ico || h('span', { class: 'i' }), h('span', {}, it.label));
+    })
   );
   menu.hidden = false;
   const r = menu.getBoundingClientRect();
