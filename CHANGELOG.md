@@ -8,14 +8,22 @@
 
 ### 新增
 
+- **每个空间在顶部标签栏里是一个分组,其他空间的分组自动折叠。** [`920514f`](https://github.com/winzipsdo/sidearc/commit/920514f)
+  - 顶部标签页的顺序和侧边栏一致;在顶部把标签页拖进别的分组就是移到那个空间,点开折叠的分组会切过去。
 - **打开收藏或固定过的网址时,直接用那个收藏或固定标签打开。** [`f461947`](https://github.com/winzipsdo/sidearc/commit/f461947)
   - 比如在地址栏输入了一个已经固定的网址:以前会在下面的列表里多开一个标签页,现在它会直接出现在固定标签的位置上。
   - 如果那个固定标签已经开着、但后来点到了别的页面,会切回它并打开你输入的网址,不再多开一个。
 - **固定标签没打开时,鼠标移上去可以直接取消固定。** [`6fa68c5`](https://github.com/winzipsdo/sidearc/commit/6fa68c5)
   - 打开着时仍是「−」,只关闭标签页、保留固定。
 
+### 变更
+
+- **空间切换圆点更好认。** 当前空间带一圈细环,悬停时显示空间名。 [`577e2a0`](https://github.com/winzipsdo/sidearc/commit/577e2a0)
+
 ### 修复
 
+- **在一个空间里打开的网址,会因为别的空间开着同一个网址而跳过去。** 现在各空间互不干扰,只有收藏夹是共用的。 [`113093b`](https://github.com/winzipsdo/sidearc/commit/113093b)
+- **在空的空间里新建标签页,标签页会跑到别的空间。** [`113093b`](https://github.com/winzipsdo/sidearc/commit/113093b)
 - **`Cmd+Z` 现在也能恢复在 Chrome 标签栏里关掉的标签页。** [`0da424d`](https://github.com/winzipsdo/sidearc/commit/0da424d)
   - 和侧边栏里的操作按时间先后一起撤销;恢复后不保留别名和子标签关系。
 
