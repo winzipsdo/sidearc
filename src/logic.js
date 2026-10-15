@@ -17,6 +17,12 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
+// 收藏/固定项绑定的标签页是否已经离开了它的固定地址(点进了别的页面)。锚点的差别不算离开
+export function isAway(itemUrl, tabUrl) {
+  if (!itemUrl || !tabUrl) return false;
+  return (addressOf(itemUrl) ?? itemUrl) !== (addressOf(tabUrl) ?? tabUrl);
+}
+
 // 地址相同的收藏/固定项:收藏夹所有空间共用,固定项只看 spaceId 这个空间。返回 [{ item, spaceId? }],收藏在前
 export function itemsAt(state, address, spaceId) {
   const pinned = state?.spaces?.find((s) => s.id === spaceId)?.pinned ?? [];

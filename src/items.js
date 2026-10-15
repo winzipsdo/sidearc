@@ -37,6 +37,13 @@ export async function openItem(item) {
   schedule();
 }
 
+// 绑定的标签页点进了别的页面:让它回到固定的地址
+export async function backToItem(item) {
+  const tabId = bind.get(item.id);
+  if (tabId == null) return;
+  await chrome.tabs.update(tabId, { url: item.url }).catch(() => {});
+}
+
 export async function closeItemTab(item) {
   const tabId = bind.get(item.id);
   if (tabId == null) return;

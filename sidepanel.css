@@ -240,6 +240,24 @@ header { padding: 12px 12px 8px; }
 #pins .row.open .title { color: var(--fg); }
 #pins .row:not(.open) .title { color: var(--fg-2); }
 #pins .row:not(.open) .alias { opacity: 0.65; }
+/* 固定标签点进了别的页面:前面是固定的名字,后面是当前页面,右边常驻「回到固定地址」 */
+#pins .row.away .pin-name {
+  flex: none;
+  max-width: 40%;
+  margin-right: -3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fill-hover);
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#pins .row.away .btn.back { color: var(--accent); }
+#pins .row.away .btn.back:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .row.loading .icon { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.35; transform: scale(0.85); } }
 

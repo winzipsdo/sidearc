@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, parseArc, tabSpaces, toUrl } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, parseArc, tabSpaces, toUrl } from '../src/logic.js';
+
+test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
+  assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
+  assert.equal(isAway('https://a.com/x', 'https://a.com/x#part'), false);
+  assert.equal(isAway('https://a.com/x', 'https://a.com/y'), true);
+  assert.equal(isAway('https://a.com/#/home', 'https://a.com/#/settings'), true);
+  assert.equal(isAway('https://a.com/x', ''), false);
+  assert.equal(isAway('chrome://settings', 'chrome://history'), true);
+});
 
 test('toUrl:网址补全,其余当作搜索词', () => {
   assert.equal(toUrl('https://a.com/x'), 'https://a.com/x');

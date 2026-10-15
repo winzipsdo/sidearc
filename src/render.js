@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns } from './logic.js';
+import { favColumns, isAway } from './logic.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
@@ -25,6 +25,17 @@ export function render() {
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
     if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img);
+    // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
+    if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
+      return h(
+        'div',
+        { class: cls + ' away', draggable: true, title: `当前:${tab.url}\n固定地址:${item.url}`, data: { kind, id: item.id } },
+        img,
+        h('span', { class: 'pin-name' }, item.alias || item.title),
+        h('span', { class: 'title' }, tab.title || tab.url),
+        h('button', { class: 'btn back', title: '回到固定地址', data: { act: 'back' } }, icon('back'))
+      );
+    }
     return h(
       'div',
       { class: cls, draggable: true, title: item.url, data: { kind, id: item.id } },
@@ -42,7 +53,8 @@ export function render() {
   $('#favs').replaceChildren(...(favs.length || query ? favs : [h('div', { class: 'hint' }, '把标签页拖到这里加入收藏夹')]));
   layoutFavs();
 
-  const pins = space.pinned.filter((i) => matches(i.alias, i.title, i.url)).map((i) => itemEl(i, 'pin'));
+  const pinTab = (i) => tabById.get(bind.get(i.id));
+  const pins = space.pinned.filter((i) => matches(i.alias, i.title, i.url, pinTab(i)?.title, pinTab(i)?.url)).map((i) => itemEl(i, 'pin'));
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, '把标签页拖到这里固定到此空间')]));
 
   $('#tabs').replaceChildren(

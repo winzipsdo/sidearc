@@ -1,7 +1,8 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { $ } from './dom.js';
-import { addItemFromTab, closeItemTab, editItem, moveItem, removeItem, syncItemToTab } from './items.js';
+import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, removeItem, syncItemToTab } from './items.js';
+import { isAway } from './logic.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, toggleNoHistory } from './spaces.js';
 import { bind, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, visibleTabs } from './store.js';
@@ -46,6 +47,7 @@ export function itemMenu(e, { item, kind }) {
   showMenu(e, [
     { label: '编辑别名…', run: () => editItem(item.id) },
     { label: '复制链接地址', run: () => copyText(tab?.url || item.url, '已复制链接地址') },
+    tab && isAway(item.url, tab.url) && { label: '回到固定地址', run: () => backToItem(item) },
     tab && { label: '将网址更新为当前页面', run: () => syncItemToTab(item.id, tab) },
     bind.has(item.id) && { label: '关闭标签页(保留固定)', run: () => closeItemTab(item) },
     kind === 'fav'

@@ -3,7 +3,7 @@
 import { importArc } from './arc.js';
 import { $, FALLBACK_ICON } from './dom.js';
 import { bindDrag } from './drag.js';
-import { closeItemTab, editItem, openItem, removeItem } from './items.js';
+import { backToItem, closeItemTab, editItem, openItem, removeItem } from './items.js';
 import { itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, render, schedule } from './render.js';
@@ -30,6 +30,7 @@ function bindRows(scroll) {
       const item = findItem(el.dataset.id)?.item;
       if (!item) return;
       if (act === 'close') closeItemTab(item);
+      else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
       else openItem(item);
     }
