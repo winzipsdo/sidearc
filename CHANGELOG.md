@@ -25,6 +25,7 @@
 
 - **在一个空间里打开的网址,会因为别的空间开着同一个网址而跳过去。** 现在各空间互不干扰,只有收藏夹是共用的。 [`113093b`](https://github.com/winzipsdo/sidearc/commit/113093b)
 - **在空的空间里新建标签页,标签页会跑到别的空间。** [`113093b`](https://github.com/winzipsdo/sidearc/commit/113093b)
+- **右键菜单打开后去点网页,菜单不会消失。** 现在鼠标离开侧边栏后菜单会自动收起。 [`d82c826`](https://github.com/winzipsdo/sidearc/commit/d82c826)
 - **`Cmd+Z` 现在也能恢复在 Chrome 标签栏里关掉的标签页。** [`0da424d`](https://github.com/winzipsdo/sidearc/commit/0da424d)
   - 和侧边栏里的操作按时间先后一起撤销;恢复后不保留别名和子标签关系。
 
