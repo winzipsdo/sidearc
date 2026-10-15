@@ -153,14 +153,14 @@ export function subtreeIds(tabId) {
 // 重新读取本窗口的标签页
 export async function refreshTabs() {
   setTabs(await chrome.tabs.query({ windowId }));
-  // 还没有归属的标签页(新开的、重启后恢复的)归入当前空间
+  // 还没有归属的标签页(新开的、重启后恢复的)归入当前空间。
+  // 不跟着 openerTabId 走:Ctrl+T 新建的标签页也带着它(值是当时的前台标签页,可能在别的空间);
+  // 网页里点开的链接由后台按来源标签页分好空间,到这里时已经有归属了
   const fresh = {};
   for (const t of tabs) {
     if (!tabSpace.has(t.id)) {
-      // 从别的标签页打开的,跟着来源标签页走
-      const sid = tabSpace.get(t.openerTabId) ?? state.activeSpaceId;
-      tabSpace.set(t.id, sid);
-      fresh[KEY.space(t.id)] = sid;
+      tabSpace.set(t.id, state.activeSpaceId);
+      fresh[KEY.space(t.id)] = state.activeSpaceId;
     }
   }
   if (Object.keys(fresh).length) await chrome.storage.session.set(fresh);

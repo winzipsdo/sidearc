@@ -1,6 +1,6 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, itemsAt } from './src/logic.js';
+import { addressOf, ANY_SPACE, itemsAt, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
@@ -13,10 +13,14 @@ const urlOf = (tab) => tab.url || tab.pendingUrl || '';
 // 最多两级:从子标签里打开的,和它并列挂在同一个父标签页下。
 // 不看 openerTabId:Ctrl+T 和从其他应用点开的链接也带着它(值是当时的前台标签页),
 // 只有页面里的链接或脚本开出的新标签页才会触发这个事件
+// 来源是收藏的标签页时(收藏所有空间共用)不指定空间,由侧边栏归入当前空间
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId: opener, tabId }) => {
-  const got = await chrome.storage.session.get([KEY.space(opener), KEY.parent(opener)]);
-  const space = got[KEY.space(opener)];
-  await chrome.storage.session.set({ [KEY.parent(tabId)]: got[KEY.parent(opener)] ?? opener, ...(space && { [KEY.space(tabId)]: space }) });
+  const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);
+  const space = tabSpaces(state, all).get(opener);
+  await chrome.storage.session.set({
+    [KEY.parent(tabId)]: all[KEY.parent(opener)] ?? opener,
+    ...(space && space !== ANY_SPACE && { [KEY.space(tabId)]: space }),
+  });
 });
 
 // 标签页关闭后清掉它的数据,并把它的子标签一并关闭
@@ -132,8 +136,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 // ---------- 相同地址只开一份 ----------
-// 新开的标签页载入网页时,如果本窗口已有同地址的标签页,就切过去并关掉新开的这个;
-// 地址和某个还没打开的收藏/固定项相同时,让它成为那个项的标签页。
+// 新开的标签页载入网页时,如果本窗口同一个空间里已有同地址的标签页,就切过去并关掉新开的这个;
+// 地址和某个还没打开的收藏/本空间固定项相同时,让它成为那个项的标签页。
 // 只管新开的标签页(带 fresh 标记),已有标签页里的跳转不干预。
 
 const NEW = KEY.fresh;
@@ -163,14 +167,20 @@ async function dedupe(nav, auto) {
   if (first) await chrome.storage.session.set({ [NEW(nav.tabId)]: Date.now() });
   const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
   if (!tab) return;
-  const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => t.id !== tab.id);
+  // 空间是隔离的:只和同一个空间里的标签页、固定项比,外加所有空间共用的收藏夹。
+  // 还没分到空间的(侧边栏没开着)按当前空间算
+  const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);
+  const spaceOf = tabSpaces(state, all);
+  const here = spaceOf.get(tab.id) ?? state?.activeSpaceId;
+  const others = (await chrome.tabs.query({ windowId: tab.windowId })).filter((t) => {
+    const space = spaceOf.get(t.id) ?? state?.activeSpaceId;
+    return t.id !== tab.id && (space === here || space === ANY_SPACE);
+  });
   let twin = others.find((t) => addressOf(t.url || '') === address);
   if (!twin) {
     // 没有打开着的同地址标签页,再看收藏/固定项
-    const { state } = await chrome.storage.local.get('state');
-    const items = itemsAt(state, address);
+    const items = itemsAt(state, address, here);
     if (!items.length) return;
-    const all = await chrome.storage.session.get(items.map(({ item }) => KEY.bind(item.id)));
     const boundTo = (item) => all[KEY.bind(item.id)];
     const free = items.find(({ item }) => boundTo(item) == null);
     // 项已经开着,但那个标签页后来去了别的页面:切过去并打开这个地址

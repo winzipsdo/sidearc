@@ -1,5 +1,7 @@
 // 不碰浏览器和页面的纯逻辑,可以直接用 node --test 测。
 
+import { hasPrefix, PREFIX } from './protocol.js';
+
 // 搜索栏里输入的文字如果是网址,补全成能打开的地址;否则返回 null(当作搜索词)
 export function toUrl(text) {
   if (/\s/.test(text)) return null;
@@ -15,13 +17,25 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
-// 地址相同的收藏/固定项,按收藏夹、当前空间、其他空间的顺序找。返回 [{ item, spaceId? }]
-export function itemsAt(state, address) {
-  const spaces = [...(state?.spaces ?? [])].sort((a, b) => (b.id === state.activeSpaceId) - (a.id === state.activeSpaceId));
-  return [
-    ...(state?.favorites ?? []).map((item) => ({ item })),
-    ...spaces.flatMap((s) => s.pinned.map((item) => ({ item, spaceId: s.id }))),
-  ].filter(({ item }) => addressOf(item.url) === address);
+// 地址相同的收藏/固定项:收藏夹所有空间共用,固定项只看 spaceId 这个空间。返回 [{ item, spaceId? }],收藏在前
+export function itemsAt(state, address, spaceId) {
+  const pinned = state?.spaces?.find((s) => s.id === spaceId)?.pinned ?? [];
+  return [...(state?.favorites ?? []).map((item) => ({ item })), ...pinned.map((item) => ({ item, spaceId }))].filter(
+    ({ item }) => addressOf(item.url) === address
+  );
+}
+
+// 每个标签页属于哪个空间:tabId -> 空间 id,所有空间共用的(绑定到收藏的)是 ANY_SPACE。
+// 绑定到固定项的属于固定项所在的空间,其余看会话存储里记的空间;都没有的不在结果里
+export const ANY_SPACE = '*';
+export function tabSpaces(state, session) {
+  const itemSpace = new Map();
+  for (const item of state?.favorites ?? []) itemSpace.set(item.id, ANY_SPACE);
+  for (const s of state?.spaces ?? []) for (const item of s.pinned) itemSpace.set(item.id, s.id);
+  const out = new Map();
+  for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.space)) out.set(+k.slice(2), v);
+  for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.bind) && itemSpace.has(k.slice(2))) out.set(v, itemSpace.get(k.slice(2)));
+  return out;
 }
 
 // 搜索词为空,或者任意一段文字包含它(不分大小写)
