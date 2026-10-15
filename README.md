@@ -112,7 +112,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `src/protocol.js` | 侧边栏和后台共用的约定:会话存储的键、消息格式 |
 | `test/` | `src/logic.js` 和 `src/protocol.js` 的测试 |
 | `icons/` | 扩展图标 |
-| `store/` | Chrome 应用商店的上架资料、截图和宣传图 |
+| `store/` | Chrome 应用商店的上架资料、截图和宣传图;`store/screenshots/make.js` 用来重新生成截图 |
 | `PRIVACY.md` | 隐私政策 |
 | `CHANGELOG.md` | 更新日志 |
 
@@ -124,4 +124,10 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 
 ```bash
 npm test
+```
+
+界面改动后,可以重新生成应用商店的三张截图(需要本机装有 Chrome,侧边栏部分直接套用 `sidepanel.css`):
+
+```bash
+npm run screenshots
 ```

@@ -6,7 +6,7 @@
 
 - 扩展包:`dist/sidearc-1.2.0.zip`(不在 git 里;重新打包见文末)
 - 商店图标:`icons/128.png`
-- 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`
+- 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`(用 `npm run screenshots` 重新生成)
 - 小型宣传图(440×280):`store/promo-small-440x280.jpg`
 
 ## 商品详情(Store listing)
