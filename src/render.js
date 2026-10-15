@@ -65,11 +65,11 @@ export function render() {
     ...state.spaces.map((s) =>
       h(
         'button',
-        { class: 'space-dot' + (s.id === space.id ? ' on' : ''), title: s.name, data: { space: s.id } },
+        { class: 'space-dot' + (s.id === space.id ? ' on' : ''), 'aria-label': s.name, data: { space: s.id, name: s.name } },
         h('i', { style: `color:${s.color}` })
       )
     ),
-    h('button', { class: 'space-dot', title: '新建空间', onclick: addSpace }, icon('plus'))
+    h('button', { class: 'space-dot', 'aria-label': '新建空间', data: { name: '新建空间' }, onclick: addSpace }, icon('plus'))
   );
 }
 
