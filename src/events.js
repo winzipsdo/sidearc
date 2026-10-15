@@ -82,6 +82,12 @@ function bindMenus(scroll) {
   });
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
+  // 右键时侧边栏不一定拿到了焦点,之后点网页也就不会触发 blur。所以鼠标离开侧边栏一会儿就收起菜单;
+  // 只是划出去又马上回来的,不收
+  let leaveTimer;
+  document.documentElement.addEventListener('mouseleave', () => (leaveTimer = setTimeout(hideMenu, 400)));
+  document.documentElement.addEventListener('mouseenter', () => clearTimeout(leaveTimer));
+  document.addEventListener('visibilitychange', () => document.hidden && hideMenu());
 }
 
 // 空间圆点、空间菜单按钮、新标签页、清理、Arc 文件选择
