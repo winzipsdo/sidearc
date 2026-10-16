@@ -8,6 +8,9 @@
 
 ### 新增
 
+- **左下角可以查看最近关闭的标签页。** [`02e26cf`](https://github.com/winzipsdo/sidearc/commit/02e26cf)
+  - 列出最近关闭的 10 个,点一下恢复,保留前进后退记录;列表底部可以打开 Chrome 的完整历史记录。
+  - 只包括本次启动 Chrome 以来关闭的,不分空间。
 - **收藏和固定标签也显示播放状态。** 收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了都能静音。 [`fc1c587`](https://github.com/winzipsdo/sidearc/commit/fc1c587)
 - **开着的固定标签点进了别的页面时,能看出它去了哪,并一键回到固定的地址。** [`19d0398`](https://github.com/winzipsdo/sidearc/commit/19d0398)
   - 这一行会显示当前页面的标题和图标,前面用灰色小标签标着原来固定的名字。
