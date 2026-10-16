@@ -8,6 +8,7 @@
 
 ### 新增
 
+- **开了 Keep Alive 的标签页显示一把小锁。** 收藏在图标右下角,固定标签和列表里的标签页在标题右边。 [`fcb9a3d`](https://github.com/winzipsdo/sidearc/commit/fcb9a3d)
 - **右键可以「释放内存」和「Keep Alive」。** [`8dff772`](https://github.com/winzipsdo/sidearc/commit/8dff772)
   - 释放内存:让 Chrome 把标签页从内存里卸掉,点回去会重新加载;右键文件夹或空间可以一次释放里面所有后台标签页。
   - Keep Alive:Chrome 的「节省内存」不会回收这个标签页,适合音乐、聊天;浏览器重启后恢复。
@@ -30,6 +31,7 @@
 
 ### 变更
 
+- **标签页右键菜单更精简。** 「静音」只在标签页有声音或已静音时出现;去掉了「重新加载」。 [`2e488ba`](https://github.com/winzipsdo/sidearc/commit/2e488ba)
 - **带别名的标签页,标题不再变灰。** 标题深浅只表示开没开:开着的都是正常颜色,没打开的固定标签才变淡。 [`ae886b8`](https://github.com/winzipsdo/sidearc/commit/ae886b8)
 - **子标签整行缩进。** 悬停和选中的底色也从缩进处开始,和文件夹里的项一致。 [`91703ac`](https://github.com/winzipsdo/sidearc/commit/91703ac)
 - **文件夹里的项整行缩进。** 选中和悬停的底色也从缩进处开始,图标前不再空出一块。 [`cc44681`](https://github.com/winzipsdo/sidearc/commit/cc44681)
