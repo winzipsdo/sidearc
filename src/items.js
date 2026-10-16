@@ -44,6 +44,12 @@ export async function backToItem(item) {
   await chrome.tabs.update(tabId, { url: item.url }).catch(() => {});
 }
 
+// 收藏/固定项绑定的标签页:切换静音
+export async function toggleItemMute(item) {
+  const tab = tabs.find((t) => t.id === bind.get(item.id));
+  if (tab) await chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }).catch(() => {});
+}
+
 export async function closeItemTab(item) {
   const tabId = bind.get(item.id);
   if (tabId == null) return;

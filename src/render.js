@@ -24,7 +24,10 @@ export function render() {
     const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active'].filter(Boolean).join(' ');
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
-    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img);
+    // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
+    const muted = tab?.mutedInfo?.muted;
+    const sound = (tab?.audible || muted) && h('button', { class: kind === 'fav' ? 'tile-sound' : 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound'));
+    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound);
     // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
     if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
       return h(
@@ -33,6 +36,7 @@ export function render() {
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
+        sound,
         h('button', { class: 'btn back', title: '回到固定地址', data: { act: 'back' } }, icon('back'))
       );
     }
@@ -42,6 +46,7 @@ export function render() {
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      sound,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
         ? h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))

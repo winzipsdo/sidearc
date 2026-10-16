@@ -2,7 +2,7 @@
 
 import { $, FALLBACK_ICON } from './dom.js';
 import { bindDrag } from './drag.js';
-import { backToItem, closeItemTab, openItem, removeItem } from './items.js';
+import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { toggleFolder } from './folders.js';
 import { MSG } from './protocol.js';
@@ -31,6 +31,7 @@ function bindRows(scroll) {
       const item = findItem(el.dataset.id)?.item;
       if (!item) return;
       if (act === 'close') closeItemTab(item);
+      else if (act === 'mute') toggleItemMute(item);
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
       else openItem(item);

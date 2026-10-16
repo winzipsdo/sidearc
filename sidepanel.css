@@ -110,6 +110,22 @@ header { padding: 12px 12px 8px; }
 .tile:active { transform: scale(0.95); }
 .tile.open { background: var(--card-soft); }
 .tile.active { background: var(--card); box-shadow: var(--shadow); }
+/* 收藏的标签页在发声:图标右上角的小喇叭,点了切换静音 */
+.tile .tile-sound {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-sound svg { width: 11px; height: 11px; }
+.tile .tile-sound:hover { color: var(--fg); }
 .tile .icon { width: 20px; height: 20px; border-radius: 5px; }
 .tile:not(.open) .icon { opacity: 0.85; }
 
