@@ -50,6 +50,8 @@
 
 ### 修复
 
+- **释放内存后,子标签丢了父子关系。** Chrome 释放内存时会给标签页换编号,现在父子关系、空间、别名和固定绑定都会跟过去。 [`af08dd8`](https://github.com/winzipsdo/sidearc/commit/af08dd8)
+- **释放内存时列表会跳一下。** 比如释放第一个子标签,第二个会先顶上来再换回去;现在顺序保持不变。 [`142a116`](https://github.com/winzipsdo/sidearc/commit/142a116)
 - **浏览器重启后还没加载的标签页没有变淡。** 现在和被回收的标签页一样显示为变淡。 [`8dff772`](https://github.com/winzipsdo/sidearc/commit/8dff772)
 - **右键菜单有时超出侧边栏,被裁掉一截。** 侧边栏太矮时菜单改为内部滚动。 [`e4ecb5f`](https://github.com/winzipsdo/sidearc/commit/e4ecb5f)
 - **固定标签的文件夹拖不准。** [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
