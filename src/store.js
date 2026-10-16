@@ -21,11 +21,14 @@ export let windowId;
 export let query = '';
 export let dragging = null;
 export let renderPending = false;
+// 暂停重画:释放内存时标签页会换编号,换完之前的中间状态不要画出来(否则子标签会先跳到别处再跳回来)
+export let renderHeld = false;
 
 export const setWindowId = (id) => (windowId = id);
 export const setQuery = (text) => (query = text);
 export const setDragging = (d) => (dragging = d);
 export const setRenderPending = (pending) => (renderPending = pending);
+export const setRenderHeld = (held) => (renderHeld = held);
 // state 和 tabs 被各处直接引用,所以原地换内容,不换对象
 export function setState(next) {
   for (const k of Object.keys(state)) delete state[k];
@@ -154,6 +157,16 @@ export function subtreeIds(tabId) {
   return out;
 }
 
+// 标签页换了编号(比如释放内存后):先在内存里把它的空间、别名、父标签,以及指向它的子标签和绑定挪到新编号上,
+// 这样重画时它还在原来的位置。存储里的数据由后台(background.js)同步挪,这里不写,免得两边同时改
+export function replaceTabId(added, removed) {
+  for (const map of [tabSpace, tabAlias, tabParent]) {
+    if (map.has(removed)) map.set(added, map.get(removed));
+    map.delete(removed);
+  }
+  for (const map of [tabParent, bind]) for (const [k, v] of map) if (v === removed) map.set(k, added);
+}
+
 // 重新读取本窗口的标签页(启动时已经读好的可以直接传进来)
 export async function refreshTabs(current) {
   setTabs(current ?? (await chrome.tabs.query({ windowId })));
@@ -162,7 +175,8 @@ export async function refreshTabs(current) {
   // 网页里点开的链接由后台按来源标签页分好空间,到这里时已经有归属了
   const fresh = {};
   for (const t of tabs) {
-    if (!tabSpace.has(t.id)) {
+    // 暂停重画期间出现的新编号多半是正在被替换的标签页,等换完再说,别把它错归到当前空间
+    if (!tabSpace.has(t.id) && !renderHeld) {
       tabSpace.set(t.id, state.activeSpaceId);
       fresh[KEY.space(t.id)] = state.activeSpaceId;
     }

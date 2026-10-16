@@ -4,13 +4,24 @@ import { $ } from './dom.js';
 import { canDiscard, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { render, schedule } from './render.js';
-import { listedTabs, query, setQuery, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
+import { listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
 import { ask, pushUndo, toast } from './ui.js';
 
 // 释放内存:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
 export async function discardTabs(list) {
   let n = 0;
-  for (const tab of list.filter(canDiscard)) if (await chrome.tabs.discard(tab.id).catch(() => null)) n++;
+  // 回收时 Chrome 会给标签页换编号:换完、把关系挪到新编号上之前先不重画,否则列表会跳一下
+  setRenderHeld(true);
+  try {
+    for (const tab of list.filter(canDiscard)) {
+      const done = await chrome.tabs.discard(tab.id).catch(() => null);
+      if (!done) continue;
+      n++;
+      if (done.id !== tab.id) replaceTabId(done.id, tab.id);
+    }
+  } finally {
+    setRenderHeld(false);
+  }
   toast(n ? `已释放 ${n} 个标签页的内存` : '没有可以释放的标签页');
   schedule();
 }

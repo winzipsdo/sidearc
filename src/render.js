@@ -4,14 +4,14 @@ import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { favColumns, isAway, isFolder, isUnloaded } from './logic.js';
 import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
 // 开了 Keep Alive(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: 'Keep Alive:不会被自动回收' }, icon('lock'));
 
 export function render() {
   // 拖拽过程中重画会打断拖拽,等松手后再画
-  if (dragging) {
+  if (dragging || renderHeld) {
     setRenderPending(true);
     return;
   }

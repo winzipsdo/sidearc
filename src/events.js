@@ -8,7 +8,7 @@ import { toggleFolder } from './folders.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, setQuery, setState, state, tabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, state, tabs, windowId } from './store.js';
 import { clearTabs, closeTab, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
@@ -150,6 +150,7 @@ function bindBrowser() {
   for (const ev of ['onCreated', 'onRemoved', 'onUpdated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced']) {
     chrome.tabs[ev].addListener(schedule);
   }
+  chrome.tabs.onReplaced.addListener(replaceTabId);
   chrome.tabs.onActivated.addListener((info) => {
     if (info.windowId === windowId) followSpace(info.tabId);
     schedule();
