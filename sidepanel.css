@@ -231,7 +231,7 @@ header { padding: 12px 12px 8px; }
   mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
 }
 /* 子标签:按层级缩进 */
-#tabs .row { padding-left: calc(10px + var(--depth, 0) * 18px); }
+#tabs .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
 
 /* 别名:标题左侧的小标签 */
 .row .alias {
@@ -257,7 +257,7 @@ header { padding: 12px 12px 8px; }
 #pins .row:not(.open) .title { color: var(--fg-2); }
 #pins .row:not(.open) .alias { opacity: 0.65; }
 /* 固定标签里的文件夹 */
-/* 文件夹里的项:整行一起缩进(而不是只缩进内容),选中和悬停的底色也从缩进处开始 */
+/* 文件夹里的项:整行一起缩进(而不是只缩进内容),选中和悬停的底色也从缩进处开始;子标签也一样 */
 #pins .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
 #pins .row.folder .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
 #pins .row.folder .title { color: var(--fg); }
@@ -310,14 +310,9 @@ header { padding: 12px 12px 8px; }
 /* 插入线:圆头细线,起点是一个空心小圆点。从内容的起点画起,
    文件夹里的项、子标签会跟着缩进,一眼看出会落在哪一级 */
 .list :is(.row, .folder-empty) { position: relative; }
-.list :is(.drop-before, .drop-after) {
-  --drop-x: calc(8px + var(--depth, 0) * 18px);
-}
-/* 放到列表末尾时线画在最后一行下面,但落点是顶层,所以不跟最后一行缩进 */
-.list .drop-after.drop-top { --drop-x: 8px; }
-/* 固定区的行本身已经整行缩进,插入线从行内的固定位置画起;放到末尾时再退回顶层 */
-#pins :is(.drop-before, .drop-after) { --drop-x: 8px; }
-#pins .drop-after.drop-top { --drop-x: calc(8px - var(--depth, 0) * 18px); }
+.list :is(.drop-before, .drop-after) { --drop-x: 8px; }
+/* 行本身已经整行缩进,插入线从行内的固定位置画起;放到列表末尾时落点是顶层,线再退回顶层 */
+.list .drop-after.drop-top { --drop-x: calc(8px - var(--depth, 0) * 18px); }
 .list :is(.drop-before, .drop-after)::before,
 .list :is(.drop-before, .drop-after)::after {
   content: "";
