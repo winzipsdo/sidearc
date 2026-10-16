@@ -23,6 +23,7 @@
 
 ### 变更
 
+- **拖拽的插入线更好认。** 线从要落到的那一级开始画,前面带一个小圆点;拖到列表末尾也显示插入线,不再高亮整块区域。 [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
 - **收起再打开侧边栏时不再先空一下。** 会先显示上次的画面,再换成最新的;第一次打开也快了不少。 [`649a6fe`](https://github.com/winzipsdo/sidearc/commit/649a6fe)
 - **右键菜单都加上了图标,收藏和固定标签的菜单重新分组。** [`f3176bd`](https://github.com/winzipsdo/sidearc/commit/f3176bd)
   - 「移到空间」前面是该空间颜色的小圆点。
@@ -37,6 +38,10 @@
 
 ### 修复
 
+- **固定标签的文件夹拖不准。** [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
+  - 拖到文件夹最后一项的下半部分,会放进文件夹末尾;以前只能掉到文件夹外面。
+  - 文件夹排在最后时,把里面的项拖到下面的分隔线上,就能移到文件夹外面。
+  - 拖着某一项在原地松手不会再移动它。
 - **扩展错误列表里不再出现「ResizeObserver loop completed with undelivered notifications」。** 收藏夹宽度变化时重排列数会引发这条警告,不影响使用。 [`7b6431d`](https://github.com/winzipsdo/sidearc/commit/7b6431d)
 
 ## 2026-10-15
