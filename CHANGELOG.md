@@ -24,6 +24,7 @@
 
 ### 变更
 
+- **子标签整行缩进。** 悬停和选中的底色也从缩进处开始,和文件夹里的项一致。 [`91703ac`](https://github.com/winzipsdo/sidearc/commit/91703ac)
 - **文件夹里的项整行缩进。** 选中和悬停的底色也从缩进处开始,图标前不再空出一块。 [`cc44681`](https://github.com/winzipsdo/sidearc/commit/cc44681)
 - **拖拽的插入线更好认。** 线从要落到的那一级开始画,前面带一个小圆点;拖到列表末尾也显示插入线,不再高亮整块区域。 [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
 - **收起再打开侧边栏时不再先空一下。** 会先显示上次的画面,再换成最新的;第一次打开也快了不少。 [`649a6fe`](https://github.com/winzipsdo/sidearc/commit/649a6fe)
@@ -48,6 +49,7 @@
 
 ### 文档
 
+- **功能介绍写明和顶部标签栏同步。** README、应用商店说明和第 3 张截图都写上「顶部标签栏的顺序和侧边栏一致」;商店说明也补上了文件夹、少开重复标签页等新功能。 [`9d6eb8a`](https://github.com/winzipsdo/sidearc/commit/9d6eb8a)
 - **应用商店截图更新。** 加入固定标签文件夹,收藏夹换成常见网站的图标。 [`39842ac`](https://github.com/winzipsdo/sidearc/commit/39842ac)
 
 ## 2026-10-15
