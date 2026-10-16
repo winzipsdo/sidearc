@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { BRAND_ICONS } from './brand-icons.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const CHROME =
@@ -44,12 +45,23 @@ const ICON = {
   A: badge('A', '#f0913f'),
   D: badge('M', '#1b1b1b'),
   H: badge('H', '#ff6600'),
+  T: badge('T', '#1a73e8'),
+  K: badge('K', '#0f9d58'),
   globe: GLOBE,
 };
+// 流行网站的图标(见 brand-icons.js);深色模式下 GitHub 的黑色图标换成浅色,和真实网站图标一致
+const brand = (name, dark) => {
+  const { color, path } = BRAND_ICONS[name];
+  const fill = dark && name === 'github' ? '#f0f0f3' : color;
+  return svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fill}" d="${path}"/></svg>`);
+};
+// 图标:ICON 里的字母徽标,或者直接给的图片地址
+const iconSrc = (icon) => ICON[icon] ?? icon;
 const svgIcon = (d) =>
   `<span class="i"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg></span>`;
 const SOUND = svgIcon('<path d="M2.5 6.2v3.6h2.3L8 12.5v-9L4.8 6.2z"/><path d="M10.5 5.8a3 3 0 010 4.4M12.3 4a5.5 5.5 0 010 8"/>');
 const PLUS = svgIcon('<path d="M8 3.5v9M3.5 8h9"/>');
+const FOLDER_OPEN = svgIcon('<path d="M2.5 12V4.5a1 1 0 011-1h3l1.5 1.5h4a1 1 0 011 1v1"/><path d="M2.5 12l1.6-4.3a1 1 0 01.9-.7h8.6l-1.7 5z"/>');
 const SEARCH = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>';
 const MORE = '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>';
 
@@ -62,24 +74,31 @@ const SPACES = [
 ];
 
 const row = (icon, title, { alias, cls = '', child, sound } = {}) =>
-  `<div class="row ${cls}"${child ? ' style="--depth:1"' : ''}><img class="icon" src="${ICON[icon]}">` +
+  `<div class="row ${cls}"${child ? ' style="--depth:1"' : ''}><img class="icon" src="${iconSrc(icon)}">` +
   (alias ? `<span class="alias">${esc(alias)}</span>` : '') +
   `<span class="title">${esc(title)}</span>` +
   (sound ? `<button class="btn">${SOUND}</button>` : '') +
   '</div>';
 
 // 侧边栏:和真实界面同样的结构和样式
-function panel(active, dark) {
+// 固定标签:folder 为真时放一个展开的文件夹(和真实界面同样的结构)
+function panel(active, dark, folder) {
   const space = SPACES[active];
-  const favs = [['M', 'open'], ['G', 'open'], ['Y', ''], ['F', ''], ['globe', '']]
-    .map(([k, c]) => `<div class="tile ${c}"><img class="icon" src="${ICON[k]}"></div>`)
+  // 收藏夹(所有空间共用):用流行网站的图标
+  const favs = [['gmail', 'open'], ['github', 'open'], ['youtube', ''], ['figma', ''], ['spotify', '']]
+    .map(([k, c]) => `<div class="tile ${c}"><img class="icon" src="${brand(k, dark)}"></div>`)
     .join('');
-  const pins = row('N', 'Notion – 项目规划', { alias: '规划', cls: 'open' }) + row('L', 'Linear – 我的任务', { cls: 'open' }) + row('globe', '日历');
+  const pins = folder
+    ? row('N', 'Notion – 项目规划', { alias: '规划', cls: 'open' }) +
+      `<div class="row folder expanded">${FOLDER_OPEN}<span class="title">旅行计划</span></div>` +
+      row('T', '东京五日游行程表', { alias: '行程', cls: 'open', child: true }) +
+      row('K', '京都民宿比价清单', { alias: '住宿', child: true })
+    : row('N', 'Notion – 项目规划', { alias: '规划', cls: 'open' }) + row('L', 'Linear – 我的任务', { cls: 'open' }) + row('globe', '日历');
   const tabs =
     row('C', 'chrome.sidePanel | API | Chrome for Developers', { alias: '文档', cls: 'active' }) +
     row('A', '十个让浏览器更顺手的小技巧(附快捷键清单)', { child: true }) +
     row('D', 'MDN Web Docs – color-mix()', { child: true }) +
-    row('Y', 'lofi hip hop radio – beats to relax/study to', { alias: 'BGM', sound: true }) +
+    row(brand('youtube', dark), 'lofi hip hop radio – beats to relax/study to', { alias: 'BGM', sound: true }) +
     row('H', 'Hacker News', { cls: 'discarded' });
   const dots = SPACES.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
   return `<!doctype html><html style="--accent:${space.color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
@@ -95,29 +114,29 @@ function panel(active, dark) {
 }
 
 // 顶部标签栏(示意):收藏的标签页在最左边,然后每个空间一个分组,当前空间展开,其他折叠
-function strip(active, dark) {
-  const tab = (icon, title, cls = '') => `<div class="tab ${cls}"><img src="${ICON[icon]}"><span>${esc(title)}</span></div>`;
-  let out = tab('M', 'Gmail', 'fav') + tab('G', 'GitHub', 'fav');
+function strip(active, dark, folder) {
+  const tab = (icon, title, cls = '') => `<div class="tab ${cls}"><img src="${iconSrc(icon)}"><span>${esc(title)}</span></div>`;
+  let out = tab(brand('gmail', dark), 'Gmail', 'fav') + tab(brand('github', dark), 'GitHub', 'fav');
   SPACES.forEach((s, i) => {
     const g = s.group[dark ? 1 : 0];
     if (i !== active) return (out += `<div class="chip" style="--g:${g}">${s.name}</div>`);
     out +=
       `<div class="chip" style="--g:${g}">${s.name}</div><div class="group" style="--g:${g}">` +
       tab('N', 'Notion – 项目规划') +
-      tab('L', 'Linear – 我的任务') +
+      (folder ? tab('T', '东京五日游行程表') : tab('L', 'Linear – 我的任务')) +
       tab('C', 'chrome.sidePanel', 'on') +
       tab('A', '十个让浏览器更顺手的小技巧') +
       tab('D', 'MDN Web Docs') +
-      tab('Y', 'lofi hip hop radio') +
+      tab(brand('youtube', dark), 'lofi hip hop radio') +
       tab('H', 'Hacker News') +
       '</div>';
   });
   return out + '<div class="newtab">+</div>';
 }
 
-function page({ file, active, dark, title, sub, bullets }) {
+function page({ file, active, dark, folder, title, sub, bullets }) {
   const n = file;
-  writeFileSync(join(OUT, `panel-${n}.html`), panel(active, dark));
+  writeFileSync(join(OUT, `panel-${n}.html`), panel(active, dark, folder));
   const { color } = SPACES[active];
   const c = dark
     ? { bg: 'linear-gradient(135deg,#1c1c22,#24212a 60%,#2a2027)', fg: '#f3f3f7', fg2: '#a9a9b5', win: '#232327', bar: '#2b2b30', line: 'rgba(255,255,255,.08)', ph: '#333338', tab: '#3a3a40', tabFg: '#e8e8ee', toolbar: '#2f2f35', lights: '#55555c', chipFg: '#202124', shadow: '.45' }
@@ -146,7 +165,7 @@ li::before{content:"";position:absolute;left:0;top:7px;width:10px;height:10px;bo
 .content{flex:1;padding:34px 28px} .content i{display:block;height:14px;border-radius:7px;background:${c.ph};margin-bottom:14px}
 </style></head><body>
 <div class="copy"><div class="brand"><img src="logo.png">Sidearc</div><h1>${title}</h1><p class="sub">${esc(sub)}</p><ul>${bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul></div>
-<div class="win"><div class="strip"><div class="lights"><i></i><i></i><i></i></div>${strip(active, dark)}</div>
+<div class="win"><div class="strip"><div class="lights"><i></i><i></i><i></i></div>${strip(active, dark, folder)}</div>
 <div class="toolbar"><div class="url"></div></div>
 <div class="body"><iframe src="panel-${n}.html"></iframe><div class="content">
 <i style="width:42%;height:26px;border-radius:8px;margin-bottom:24px"></i><i></i><i style="width:92%"></i><i style="width:80%"></i>
@@ -171,9 +190,10 @@ page({
   file: '1-tabs',
   active: 0,
   dark: false,
+  folder: true,
   title: '把标签页<br>放到侧边',
   sub: '垂直排列,支持子标签和空间,常用的固定在顶部。',
-  bullets: ['标签页竖着排,标题完整可见', '收藏夹和固定标签,一点即达', '同一个网址只开一份', '搜索标签页,或直接输入网址'],
+  bullets: ['标签页竖着排,标题完整可见', '收藏夹和固定标签,一点即达', '固定标签可以分文件夹', '同一个网址只开一份'],
 });
 page({
   file: '2-child-tabs',
