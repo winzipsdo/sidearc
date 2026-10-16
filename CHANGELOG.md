@@ -24,6 +24,7 @@
 
 ### 变更
 
+- **带别名的标签页,标题不再变灰。** 标题深浅只表示开没开:开着的都是正常颜色,没打开的固定标签才变淡。 [`ae886b8`](https://github.com/winzipsdo/sidearc/commit/ae886b8)
 - **子标签整行缩进。** 悬停和选中的底色也从缩进处开始,和文件夹里的项一致。 [`91703ac`](https://github.com/winzipsdo/sidearc/commit/91703ac)
 - **文件夹里的项整行缩进。** 选中和悬停的底色也从缩进处开始,图标前不再空出一块。 [`cc44681`](https://github.com/winzipsdo/sidearc/commit/cc44681)
 - **拖拽的插入线更好认。** 线从要落到的那一级开始画,前面带一个小圆点;拖到列表末尾也显示插入线,不再高亮整块区域。 [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
@@ -49,6 +50,7 @@
 
 ### 文档
 
+- **新增英文版 README,采用 MIT 开源许可证。** [`3e59d3c`](https://github.com/winzipsdo/sidearc/commit/3e59d3c)
 - **功能介绍写明和顶部标签栏同步。** README、应用商店说明和第 3 张截图都写上「顶部标签栏的顺序和侧边栏一致」;商店说明也补上了文件夹、少开重复标签页等新功能。 [`9d6eb8a`](https://github.com/winzipsdo/sidearc/commit/9d6eb8a)
 - **应用商店截图更新。** 加入固定标签文件夹,收藏夹换成常见网站的图标。 [`39842ac`](https://github.com/winzipsdo/sidearc/commit/39842ac)
 
