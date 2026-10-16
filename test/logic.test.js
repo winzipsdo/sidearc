@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, favColumns, groupColor, itemsAt, matchesQuery, tabSpaces, toUrl } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -161,4 +161,19 @@ test('文件夹里的固定项照样参与查重和空间归属', () => {
   const state = { favorites: [], spaces: [space] };
   assert.deepEqual(itemsAt(state, 'https://x.com/', 's').map(({ item }) => item.id), ['x']);
   assert.equal(tabSpaces(state, { 'b:x': 7 }).get(7), 's');
+});
+
+test('isUnloaded:被回收的,和重启后还没加载的,都算不在内存里', () => {
+  assert.equal(isUnloaded({ discarded: true, status: 'unloaded' }), true);
+  assert.equal(isUnloaded({ discarded: false, status: 'unloaded' }), true);
+  assert.equal(isUnloaded({ discarded: false, status: 'complete' }), false);
+  assert.equal(isUnloaded(undefined), false);
+});
+
+test('canDiscard:当前标签页和已经不在内存里的不能释放', () => {
+  assert.equal(canDiscard({ active: false, status: 'complete' }), true);
+  assert.equal(canDiscard({ active: true, status: 'complete' }), false);
+  assert.equal(canDiscard({ active: false, discarded: true }), false);
+  assert.equal(canDiscard({ active: false, status: 'unloaded' }), false);
+  assert.equal(canDiscard(null), false);
 });

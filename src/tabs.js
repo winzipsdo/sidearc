@@ -1,11 +1,28 @@
 // 对标签页的操作:打开、关闭、撤销关闭、别名、移到别的空间、搜索栏回车。
 
 import { $ } from './dom.js';
-import { toUrl } from './logic.js';
+import { canDiscard, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { render, schedule } from './render.js';
 import { listedTabs, query, setQuery, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
-import { ask, pushUndo } from './ui.js';
+import { ask, pushUndo, toast } from './ui.js';
+
+// 释放内存:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
+export async function discardTabs(list) {
+  let n = 0;
+  for (const tab of list.filter(canDiscard)) if (await chrome.tabs.discard(tab.id).catch(() => null)) n++;
+  toast(n ? `已释放 ${n} 个标签页的内存` : '没有可以释放的标签页');
+  schedule();
+}
+
+// 开关自动回收:关掉后 Chrome 的「节省内存」不会回收这个标签页(适合音乐、聊天等要在后台一直运行的页面)。
+// 这是 Chrome 记在标签页上的设置,浏览器重启后会恢复成允许
+export async function toggleAutoDiscard(tab) {
+  const keep = tab.autoDiscardable !== false;
+  await chrome.tabs.update(tab.id, { autoDiscardable: !keep }).catch(() => {});
+  toast(keep ? '已开启 Keep Alive,这个标签页不会被自动回收' : '已取消 Keep Alive,这个标签页恢复自动回收');
+  schedule();
+}
 
 // 扩展自己要开的标签页(固定项、撤销、导入):告诉后台不要按相同地址查重
 export async function createTab(props) {

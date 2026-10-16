@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder } from './logic.js';
+import { favColumns, isAway, isFolder, isUnloaded } from './logic.js';
 import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
@@ -86,7 +86,7 @@ export function render() {
   $('#tabs').replaceChildren(
     ...visibleTabs().map(({ tab: t, depth }) => {
       const muted = t.mutedInfo?.muted;
-      const cls = ['row', t.active && 'active', t.discarded && 'discarded', t.status === 'loading' && 'loading'].filter(Boolean).join(' ');
+      const cls = ['row', t.active && 'active', isUnloaded(t) && 'discarded', t.status === 'loading' && 'loading'].filter(Boolean).join(' ');
       return h(
         'div',
         { class: cls, draggable: true, title: t.url, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: t.id } },
