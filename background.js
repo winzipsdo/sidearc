@@ -26,6 +26,27 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId:
   });
 });
 
+// 标签页被替换成了新编号(比如释放内存后 Chrome 会换一个新 id):把它自己的数据,
+// 以及指向它的引用(挂在它下面的子标签、绑定到它的收藏/固定项)都挪到新编号上,
+// 否则父子关系、所属空间、别名和固定绑定都会丢
+chrome.tabs.onReplaced.addListener((addedId, removedId) =>
+  serial(async () => {
+    const all = await chrome.storage.session.get(null);
+    const set = {};
+    const remove = [];
+    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh]) {
+      if (!(key(removedId) in all)) continue;
+      set[key(addedId)] = all[key(removedId)];
+      remove.push(key(removedId));
+    }
+    for (const [k, v] of Object.entries(all)) {
+      if (v === removedId && (hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent))) set[k] = addedId;
+    }
+    if (Object.keys(set).length) await chrome.storage.session.set(set);
+    if (remove.length) await chrome.storage.session.remove(remove);
+  })
+);
+
 // 标签页关闭后清掉它的数据,并把它的子标签一并关闭
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
