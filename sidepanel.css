@@ -290,8 +290,43 @@ header { padding: 12px 12px 8px; }
 
 /* 拖拽 */
 .dragging { opacity: 0.3; }
-.list .drop-before { box-shadow: 0 -2px 0 -0.5px var(--accent); }
-.list .drop-before.active { box-shadow: var(--shadow), 0 -2px 0 -0.5px var(--accent); }
+/* 插入线:圆头细线,起点是一个空心小圆点。从内容的起点画起,
+   文件夹里的项、子标签会跟着缩进,一眼看出会落在哪一级 */
+.list :is(.row, .folder-empty) { position: relative; }
+.list :is(.drop-before, .drop-after) {
+  --drop-x: calc(8px + var(--depth, 0) * 18px);
+}
+/* 放到列表末尾时线画在最后一行下面,但落点是顶层,所以不跟最后一行缩进 */
+.list .drop-after.drop-top { --drop-x: 8px; }
+.list :is(.drop-before, .drop-after)::before,
+.list :is(.drop-before, .drop-after)::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+/* 线:从圆点右边开始,往右逐渐变淡 */
+.list :is(.drop-before, .drop-after)::after {
+  left: calc(var(--drop-x) + 6px);
+  right: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) 70%, color-mix(in srgb, var(--accent) 30%, transparent));
+}
+/* 圆点 */
+.list :is(.drop-before, .drop-after)::before {
+  left: var(--drop-x);
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg2);
+}
+.list .drop-before::after { top: -2px; }
+.list .drop-before::before { top: -5px; }
+.list .drop-after::after { bottom: -2px; }
+.list .drop-after::before { bottom: -5px; }
 .grid .drop-before { box-shadow: -4px 0 0 -1.5px var(--accent); }
 .list .drop-into, .list .drop-into.active {
   background: color-mix(in srgb, var(--accent) 16%, transparent);

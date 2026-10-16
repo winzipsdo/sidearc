@@ -8,7 +8,8 @@ import { moveTabToSpace } from './tabs.js';
 import { hideMenu } from './ui.js';
 
 function clearMarks() {
-  for (const el of document.querySelectorAll('.drop-before, .drop-end, .drop-on, .drop-into')) el.classList.remove('drop-before', 'drop-end', 'drop-on', 'drop-into');
+  for (const el of document.querySelectorAll('.drop-before, .drop-after, .drop-end, .drop-on, .drop-into'))
+    el.classList.remove('drop-before', 'drop-after', 'drop-top', 'drop-end', 'drop-on', 'drop-into');
 }
 
 function finishDrag() {
@@ -19,6 +20,16 @@ function finishDrag() {
 }
 
 const rectsOf = (els) => els.map((el) => el.getBoundingClientRect());
+const isDragged = (el) => el?.dataset.id === dragging.id && el.dataset.kind === dragging.kind;
+
+// 指针还在被拖的那一项自己身上:原地不动。
+// 否则它会被当成不存在,落点算到下一项去,拖文件夹最后一项时就会掉到文件夹外面
+function overSelf(zone, e) {
+  const self = [...zone.querySelectorAll('[data-kind]')].find(isDragged);
+  if (!self) return false;
+  const r = self.getBoundingClientRect();
+  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+}
 
 // 拖标签页时,指针落在某一行的中间部分 = 要成为它的子标签;上下边缘仍是排序
 function nestElement(zone, e) {
@@ -30,6 +41,30 @@ function nestElement(zone, e) {
   if (dragging.kind !== 'tab' || zone.dataset.zone !== 'tab') return null;
   const els = [...zone.querySelectorAll('[data-kind="tab"]')].filter((el) => el.dataset.id !== dragging.id);
   return els[dropInto(rectsOf(els), e.clientY)] ?? null;
+}
+
+// 展开的文件夹里,最后一项的下半部分 = 放到这个文件夹的末尾。
+// 这个位置和「文件夹后面」在界面上是同一处,不单独判断的话就只能落到文件夹外面。
+// 返回 { folder: 文件夹那一行, last: 最后一项 },不是这种情况返回 null
+function folderEnd(zone, e) {
+  if (zone.dataset.zone !== 'pin' || dragging.kind === 'folder') return null;
+  const inFolder = (el) => el && (el.style.getPropertyValue('--depth') || el.classList.contains('folder-empty'));
+  // 被拖的那一项不算:拖的正是最后一项时,它上面那一项才是「最后一项」
+  const next = (el) => {
+    let n = el.nextElementSibling;
+    while (n && isDragged(n)) n = n.nextElementSibling;
+    return n;
+  };
+  let folder = null;
+  for (const el of zone.children) {
+    if (el.dataset.kind === 'folder') folder = el.classList.contains('expanded') ? el : null;
+    if (!folder || isDragged(el) || !inFolder(el) || inFolder(next(el))) continue;
+    // 空文件夹的提示整行都算,有内容时只算最后一项的下半部分
+    const r = el.getBoundingClientRect();
+    const top = el.classList.contains('folder-empty') ? r.top : r.top + r.height / 2;
+    if (e.clientY >= top && e.clientY <= r.bottom + 2) return { folder, last: el };
+  }
+  return null;
 }
 
 // 拖到 zone 里时,应插在哪个元素之前(null = 末尾)
@@ -133,6 +168,13 @@ async function performDrop(d, zone, refId, intoId) {
   render();
 }
 
+// 落点所在的区域。拖固定项时,固定区下面的分隔线(「清理」那一行)也算固定区的末尾:
+// 文件夹排在最后时,它下面没有别的位置能表示「放到文件夹外面」。
+// 从下面列表拖上来的标签页不算,免得拖过分隔线就被意外固定
+const dropTarget = (e) =>
+  e.target.closest?.('.zone, [data-space]') ??
+  (dragging.kind !== 'tab' && e.target.closest?.('.divider') ? document.getElementById('pins') : null);
+
 export function bindDrag() {
   document.addEventListener('dragstart', (e) => {
     const el = e.target.closest?.('[data-kind]');
@@ -146,7 +188,7 @@ export function bindDrag() {
   document.addEventListener('dragover', (e) => {
     if (!dragging) return;
     clearMarks();
-    const target = e.target.closest?.('.zone, [data-space]');
+    const target = dropTarget(e);
     if (!target) return;
     if (target.dataset.space) {
       if (dragging.kind !== 'tab') return;
@@ -156,15 +198,23 @@ export function bindDrag() {
     }
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    if (overSelf(target, e)) return;
+    const end = folderEnd(target, e);
+    if (end) return end.last.classList.add(end.last.dataset.kind ? 'drop-after' : 'drop-into');
     const into = nestElement(target, e);
     const ref = !into && refElement(target, e);
     if (into) into.classList.add('drop-into');
     else if (ref) ref.classList.add('drop-before');
-    else target.classList.add('drop-end');
+    else {
+      // 放到列表末尾:在最后一行下面画顶层的插入线;区域是空的(或是收藏夹网格)才高亮整个区域
+      const last = target.classList.contains('list') && [...target.children].filter((el) => el.matches('.row, .folder-empty')).at(-1);
+      if (last) last.classList.add('drop-after', 'drop-top');
+      else target.classList.add('drop-end');
+    }
   });
   document.addEventListener('drop', async (e) => {
     if (!dragging) return;
-    const target = e.target.closest?.('.zone, [data-space]');
+    const target = dropTarget(e);
     if (!target) return;
     e.preventDefault();
     const d = dragging;
@@ -173,8 +223,9 @@ export function bindDrag() {
       if (d.kind === 'tab') await moveTabToSpace(+d.id, target.dataset.space);
       return;
     }
+    if (overSelf(target, e)) return finishDrag();
     const zone = target.dataset.zone;
-    const intoId = nestElement(target, e)?.dataset.id;
+    const intoId = (folderEnd(target, e)?.folder ?? nestElement(target, e))?.dataset.id;
     const refId = refElement(target, e)?.dataset.id;
     finishDrag();
     await performDrop(d, zone, refId, intoId);
