@@ -45,6 +45,10 @@
   - 拖着某一项在原地松手不会再移动它。
 - **扩展错误列表里不再出现「ResizeObserver loop completed with undelivered notifications」。** 收藏夹宽度变化时重排列数会引发这条警告,不影响使用。 [`7b6431d`](https://github.com/winzipsdo/sidearc/commit/7b6431d)
 
+### 文档
+
+- **应用商店截图更新。** 加入固定标签文件夹,收藏夹换成常见网站的图标。 [`39842ac`](https://github.com/winzipsdo/sidearc/commit/39842ac)
+
 ## 2026-10-15
 
 ### 新增
