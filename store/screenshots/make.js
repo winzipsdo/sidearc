@@ -1,9 +1,12 @@
-// 重新生成应用商店的三张截图(store/screenshot-*.jpg,1280×800)。
-// 侧边栏部分直接套用 sidepanel.css,界面改了重新运行即可:npm run screenshots
+// 重新生成应用商店的截图(1280×800)和小宣传图(440×280),中英文各一套:
+//   中文 → store/screenshot-*.jpg、store/promo-small-440x280.jpg
+//   英文 → store/en/ 下同名文件
+// 侧边栏部分直接套用 sidepanel.css,界面改了重新运行即可:npm run screenshots。
+// 扩展界面本身只有中文,所以英文截图里侧边栏的按钮文字(搜索框、新标签页、清理)仍是中文,示例内容和文案是英文
 // 需要本机装有 Chrome(路径可用环境变量 CHROME 指定);macOS 上用自带的 sips 转成高质量 JPEG。
 
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BRAND_ICONS } from './brand-icons.js';
@@ -65,13 +68,57 @@ const FOLDER_OPEN = svgIcon('<path d="M2.5 12V4.5a1 1 0 011-1h3l1.5 1.5h4a1 1 0 
 const SEARCH = '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>';
 const MORE = '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>';
 
-// 空间:名字、颜色,以及顶部分组在浅色 / 深色下的颜色(Chrome 的分组配色)
-const SPACES = [
-  { name: '个人', color: '#6b7cff', group: ['#1a73e8', '#8ab4f8'] },
-  { name: '工作', color: '#4fae6e', group: ['#1e8e3e', '#81c995'] },
-  { name: '学习', color: '#f0913f', group: ['#e8710a', '#fcad70'] },
-  { name: '生活', color: '#e5687a', group: ['#d93025', '#f28b82'] },
+// 空间的颜色,以及顶部分组在浅色 / 深色下的颜色(Chrome 的分组配色);名字在下面的文案里
+const SPACE_COLORS = [
+  { color: '#6b7cff', group: ['#1a73e8', '#8ab4f8'] },
+  { color: '#4fae6e', group: ['#1e8e3e', '#81c995'] },
+  { color: '#f0913f', group: ['#e8710a', '#fcad70'] },
+  { color: '#e5687a', group: ['#d93025', '#f28b82'] },
 ];
+
+// 两种语言的文案:示例内容(空间名、标签页标题、别名)、左侧介绍、小宣传图的副标题。示例内容都是编的
+const TEXT = {
+  zh: {
+    dir: 'store',
+    font: '"PingFang SC",system-ui,sans-serif',
+    spaces: ['个人', '工作', '学习', '生活'],
+    notion: ['Notion – 项目规划', '规划'],
+    linear: 'Linear – 我的任务',
+    calendar: '日历',
+    folder: '旅行计划',
+    trip: ['东京五日游行程表', '行程'],
+    stay: ['京都民宿比价清单', '住宿'],
+    docs: '文档',
+    tips: '十个让浏览器更顺手的小技巧(附快捷键清单)',
+    tipsShort: '十个让浏览器更顺手的小技巧',
+    promo: '侧边标签栏 · 子标签 · 空间',
+    pages: [
+      { title: '把标签页<br>放到侧边', sub: '垂直排列,支持子标签和空间,常用的固定在顶部。', bullets: ['标签页竖着排,标题完整可见', '收藏夹和固定标签,一点即达', '固定标签可以分文件夹', '同一个网址只开一份'] },
+      { title: '子标签与别名', sub: '从网页里点开的链接自动归到它下面,再给重要的标签页起个名字。', bullets: ['网页里打开的链接自动成为子标签', '拖拽即可归组或移出', '别名显示在标题前,搜索也能搜到', '关错了,Ctrl/⌘+Z 撤销'] },
+      { title: '用空间分开<br>工作与生活', sub: '每个空间有自己的主题色、固定标签和标签页。', bullets: ['顶部标签栏的顺序和侧边栏一致', '按空间分组,其他空间自动折叠', '在顶部拖进别的分组,就是换空间', '重启浏览器后自动恢复'] },
+    ],
+  },
+  en: {
+    dir: 'store/en',
+    font: 'system-ui,-apple-system,"Segoe UI",sans-serif',
+    spaces: ['Personal', 'Work', 'Study', 'Life'],
+    notion: ['Notion – Project plan', 'Plan'],
+    linear: 'Linear – My issues',
+    calendar: 'Calendar',
+    folder: 'Trip planning',
+    trip: ['Tokyo 5-day itinerary', 'Itinerary'],
+    stay: ['Kyoto stays – price comparison', 'Stays'],
+    docs: 'Docs',
+    tips: '10 small tricks for a smoother browser (with shortcuts)',
+    tipsShort: '10 small browser tricks',
+    promo: 'Vertical tabs · Child tabs · Spaces',
+    pages: [
+      { title: 'Your tabs,<br>in the sidebar', sub: 'Vertical tabs with child tabs and spaces, and your favorites pinned on top.', bullets: ['Tabs stacked vertically, full titles', 'Favorites and pinned tabs, one click away', 'Organize pinned tabs in folders', 'One tab per address, no duplicates'] },
+      { title: 'Child tabs<br>and aliases', sub: 'Links you open land under the page they came from. Give important tabs your own names.', bullets: ['Links from a page become its child tabs', 'Drag to nest or un-nest', 'Aliases show before the title and are searchable', 'Closed by mistake? Ctrl/⌘+Z'] },
+      { title: 'Spaces for<br>work and life', sub: 'Each space has its own color and its own tabs.', bullets: ["Chrome's tab strip follows the sidebar order", 'Grouped by space, other spaces collapsed', 'Drag into another group to switch spaces', 'Restored after a browser restart'] },
+    ],
+  },
+};
 
 const row = (icon, title, { alias, cls = '', child, sound } = {}) =>
   `<div class="row ${cls}"${child ? ' style="--depth:1"' : ''}><img class="icon" src="${iconSrc(icon)}">` +
@@ -80,32 +127,33 @@ const row = (icon, title, { alias, cls = '', child, sound } = {}) =>
   (sound ? `<button class="btn">${SOUND}</button>` : '') +
   '</div>';
 
-// 侧边栏:和真实界面同样的结构和样式
-// 固定标签:folder 为真时放一个展开的文件夹(和真实界面同样的结构)
-function panel(active, dark, folder) {
-  const space = SPACES[active];
+// 侧边栏:和真实界面同样的结构和样式。folder 为真时固定标签里放一个展开的文件夹。
+// 界面自带的文字(搜索框、清理、新标签页)只有中文,两种语言都照实显示
+function panel(t, active, dark, folder) {
+  const color = SPACE_COLORS[active].color;
   // 收藏夹(所有空间共用):用流行网站的图标
   const favs = [['gmail', 'open'], ['github', 'open'], ['youtube', ''], ['figma', ''], ['spotify', '']]
     .map(([k, c]) => `<div class="tile ${c}"><img class="icon" src="${brand(k, dark)}"></div>`)
     .join('');
+  const notion = row('N', t.notion[0], { alias: t.notion[1], cls: 'open' });
   const pins = folder
-    ? row('N', 'Notion – 项目规划', { alias: '规划', cls: 'open' }) +
-      `<div class="row folder expanded">${FOLDER_OPEN}<span class="title">旅行计划</span></div>` +
-      row('T', '东京五日游行程表', { alias: '行程', cls: 'open', child: true }) +
-      row('K', '京都民宿比价清单', { alias: '住宿', child: true })
-    : row('N', 'Notion – 项目规划', { alias: '规划', cls: 'open' }) + row('L', 'Linear – 我的任务', { cls: 'open' }) + row('globe', '日历');
+    ? notion +
+      `<div class="row folder expanded">${FOLDER_OPEN}<span class="title">${esc(t.folder)}</span></div>` +
+      row('T', t.trip[0], { alias: t.trip[1], cls: 'open', child: true }) +
+      row('K', t.stay[0], { alias: t.stay[1], child: true })
+    : notion + row('L', t.linear, { cls: 'open' }) + row('globe', t.calendar);
   const tabs =
-    row('C', 'chrome.sidePanel | API | Chrome for Developers', { alias: '文档', cls: 'active' }) +
-    row('A', '十个让浏览器更顺手的小技巧(附快捷键清单)', { child: true }) +
+    row('C', 'chrome.sidePanel | API | Chrome for Developers', { alias: t.docs, cls: 'active' }) +
+    row('A', t.tips, { child: true }) +
     row('D', 'MDN Web Docs – color-mix()', { child: true }) +
     row(brand('youtube', dark), 'lofi hip hop radio – beats to relax/study to', { alias: 'BGM', sound: true }) +
     row('H', 'Hacker News', { cls: 'discarded' });
-  const dots = SPACES.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
-  return `<!doctype html><html style="--accent:${space.color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
+  const dots = SPACE_COLORS.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
+  return `<!doctype html><html style="--accent:${color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
 <link rel="stylesheet" href="sidepanel.css">${dark ? `<style>${darkVars}</style>` : ''}</head><body>
 <header><label class="search">${SEARCH}<input id="search" placeholder="搜索标签页或输入网址"></label></header>
 <main id="scroll"><section id="favs" class="zone grid" style="--cols:5">${favs}</section>
-<div class="space-head"><span id="space-name">${space.name}</span><button class="ghost">${MORE}</button></div>
+<div class="space-head"><span id="space-name">${esc(t.spaces[active])}</span><button class="ghost">${MORE}</button></div>
 <section id="pins" class="zone list">${pins}</section>
 <div class="divider"><span></span><button class="ghost">清理</button></div>
 <button class="row new">${PLUS}<span class="title">新标签页</span></button>
@@ -114,18 +162,20 @@ function panel(active, dark, folder) {
 }
 
 // 顶部标签栏(示意):收藏的标签页在最左边,然后每个空间一个分组,当前空间展开,其他折叠
-function strip(active, dark, folder) {
+function strip(t, active, dark, folder) {
   const tab = (icon, title, cls = '') => `<div class="tab ${cls}"><img src="${iconSrc(icon)}"><span>${esc(title)}</span></div>`;
   let out = tab(brand('gmail', dark), 'Gmail', 'fav') + tab(brand('github', dark), 'GitHub', 'fav');
-  SPACES.forEach((s, i) => {
+  SPACE_COLORS.forEach((s, i) => {
     const g = s.group[dark ? 1 : 0];
-    if (i !== active) return (out += `<div class="chip" style="--g:${g}">${s.name}</div>`);
+    const chip = `<div class="chip" style="--g:${g}">${esc(t.spaces[i])}</div>`;
+    if (i !== active) return (out += chip);
     out +=
-      `<div class="chip" style="--g:${g}">${s.name}</div><div class="group" style="--g:${g}">` +
-      tab('N', 'Notion – 项目规划') +
-      (folder ? tab('T', '东京五日游行程表') : tab('L', 'Linear – 我的任务')) +
+      chip +
+      `<div class="group" style="--g:${g}">` +
+      tab('N', t.notion[0]) +
+      (folder ? tab('T', t.trip[0]) : tab('L', t.linear)) +
       tab('C', 'chrome.sidePanel', 'on') +
-      tab('A', '十个让浏览器更顺手的小技巧') +
+      tab('A', t.tipsShort) +
       tab('D', 'MDN Web Docs') +
       tab(brand('youtube', dark), 'lofi hip hop radio') +
       tab('H', 'Hacker News') +
@@ -134,18 +184,32 @@ function strip(active, dark, folder) {
   return out + '<div class="newtab">+</div>';
 }
 
-function page({ file, active, dark, folder, title, sub, bullets }) {
-  const n = file;
-  writeFileSync(join(OUT, `panel-${n}.html`), panel(active, dark, folder));
-  const { color } = SPACES[active];
+// 把 OUT 里的一个 HTML 截成 JPEG:先出 PNG 再用 sips 转(画质好);没有 sips(非 macOS)就直接让 Chrome 出 JPEG
+function capture(html, file, [w, h]) {
+  const png = join(OUT, html.replace(/\.html$/, '.png'));
+  const flags = ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1', `--window-size=${w},${h}`];
+  const shoot = (to) => execFileSync(CHROME, [...flags, `--screenshot=${to}`, 'file://' + join(OUT, html)], { stdio: 'ignore' });
+  try {
+    shoot(png);
+    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '90', png, '--out', file], { stdio: 'ignore' });
+  } catch {
+    shoot(file);
+  }
+  console.log('已生成', file.slice(ROOT.length));
+}
+
+function page(t, { file, active, dark, folder }, { title, sub, bullets }) {
+  const n = `${t.dir.replace(/\W/g, '-')}-${file}`;
+  writeFileSync(join(OUT, `panel-${n}.html`), panel(t, active, dark, folder));
+  const { color } = SPACE_COLORS[active];
   const c = dark
     ? { bg: 'linear-gradient(135deg,#1c1c22,#24212a 60%,#2a2027)', fg: '#f3f3f7', fg2: '#a9a9b5', win: '#232327', bar: '#2b2b30', line: 'rgba(255,255,255,.08)', ph: '#333338', tab: '#3a3a40', tabFg: '#e8e8ee', toolbar: '#2f2f35', lights: '#55555c', chipFg: '#202124', shadow: '.45' }
     : { bg: 'linear-gradient(135deg,#eef0ff,#f4f2fb 55%,#f7eef3)', fg: '#1d1d24', fg2: '#5f6170', win: '#fff', bar: '#f1f1f4', line: 'rgba(0,0,0,.08)', ph: '#ececef', tab: '#fff', tabFg: '#2a2a30', toolbar: '#fff', lights: '#d7d7dc', chipFg: '#fff', shadow: '.16' };
   writeFileSync(
     join(OUT, `shot-${n}.html`),
     `<!doctype html><html><head><meta charset="utf-8"><style>
-*{box-sizing:border-box;margin:0} body{width:1280px;height:800px;overflow:hidden;background:${c.bg};font-family:"PingFang SC","Segoe UI",system-ui,sans-serif;color:${c.fg};-webkit-font-smoothing:antialiased}
-.copy{position:absolute;left:64px;top:50%;transform:translateY(-50%);width:400px}
+*{box-sizing:border-box;margin:0} body{width:1280px;height:800px;overflow:hidden;background:${c.bg};font-family:${t.font};color:${c.fg};-webkit-font-smoothing:antialiased}
+.copy{position:absolute;left:64px;top:50%;transform:translateY(-50%);width:410px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px;margin-bottom:28px} .brand img{width:40px;height:40px}
 h1{font-size:46px;line-height:1.22;font-weight:800;letter-spacing:.5px} .sub{margin:16px 0 26px;font-size:18px;line-height:1.65;color:${c.fg2}}
 ul{list-style:none;padding:0;font-size:17px;line-height:1.5} li{position:relative;padding-left:20px;margin:9px 0}
@@ -165,49 +229,39 @@ li::before{content:"";position:absolute;left:0;top:7px;width:10px;height:10px;bo
 .content{flex:1;padding:34px 28px} .content i{display:block;height:14px;border-radius:7px;background:${c.ph};margin-bottom:14px}
 </style></head><body>
 <div class="copy"><div class="brand"><img src="logo.png">Sidearc</div><h1>${title}</h1><p class="sub">${esc(sub)}</p><ul>${bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul></div>
-<div class="win"><div class="strip"><div class="lights"><i></i><i></i><i></i></div>${strip(active, dark, folder)}</div>
+<div class="win"><div class="strip"><div class="lights"><i></i><i></i><i></i></div>${strip(t, active, dark, folder)}</div>
 <div class="toolbar"><div class="url"></div></div>
 <div class="body"><iframe src="panel-${n}.html"></iframe><div class="content">
 <i style="width:42%;height:26px;border-radius:8px;margin-bottom:24px"></i><i></i><i style="width:92%"></i><i style="width:80%"></i>
 <i style="height:150px;border-radius:14px;margin:24px 0"></i><i></i><i style="width:88%"></i><i style="width:60%"></i></div></div></div>
 </body></html>`
   );
-
-  const png = join(OUT, `shot-${n}.png`);
-  const jpg = join(ROOT, `store/screenshot-${n}.jpg`);
-  const flags = ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1', '--window-size=1280,800'];
-  const shoot = (to) => execFileSync(CHROME, [...flags, `--screenshot=${to}`, 'file://' + join(OUT, `shot-${n}.html`)], { stdio: 'ignore' });
-  try {
-    shoot(png);
-    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '90', png, '--out', jpg], { stdio: 'ignore' });
-  } catch {
-    shoot(jpg); // 没有 sips(非 macOS):直接用 Chrome 输出 JPEG,画质稍低
-  }
-  console.log('已生成', jpg.slice(ROOT.length));
+  capture(`shot-${n}.html`, join(ROOT, t.dir, `screenshot-${file}.jpg`), [1280, 800]);
 }
 
-page({
-  file: '1-tabs',
-  active: 0,
-  dark: false,
-  folder: true,
-  title: '把标签页<br>放到侧边',
-  sub: '垂直排列,支持子标签和空间,常用的固定在顶部。',
-  bullets: ['标签页竖着排,标题完整可见', '收藏夹和固定标签,一点即达', '固定标签可以分文件夹', '同一个网址只开一份'],
-});
-page({
-  file: '2-child-tabs',
-  active: 2,
-  dark: false,
-  title: '子标签与别名',
-  sub: '从网页里点开的链接自动归到它下面,再给重要的标签页起个名字。',
-  bullets: ['网页里打开的链接自动成为子标签', '拖拽即可归组或移出', '别名显示在标题前,搜索也能搜到', '关错了,Ctrl/⌘+Z 撤销'],
-});
-page({
-  file: '3-spaces-dark',
-  active: 1,
-  dark: true,
-  title: '用空间分开<br>工作与生活',
-  sub: '每个空间有自己的主题色、固定标签和标签页。',
-  bullets: ['顶部标签栏的顺序和侧边栏一致', '按空间分组,其他空间自动折叠', '在顶部拖进别的分组,就是换空间', '重启浏览器后自动恢复'],
-});
+// 小宣传图(440×280):渐变底,半透明方块里是白色的侧边栏图形,下面是名字和一句副标题
+function promo(t) {
+  const n = `promo-${t.dir.replace(/\W/g, '-')}.html`;
+  writeFileSync(
+    join(OUT, n),
+    `<!doctype html><html><head><meta charset="utf-8"><style>
+*{margin:0;box-sizing:border-box} body{width:440px;height:280px;overflow:hidden;display:flex;flex-direction:column;align-items:center;
+background:linear-gradient(135deg,#6b7cff 0%,#a06be0 50%,#e5687a 100%);font-family:${t.font};color:#fff;-webkit-font-smoothing:antialiased}
+.mark{margin-top:32px;width:112px;height:112px;border-radius:24px;background:rgba(255,255,255,.18);display:flex;gap:7px;padding:17px 15px}
+.mark i{border-radius:6px;background:#fff} .mark i:first-child{width:18px} .mark i:last-child{flex:1;background:rgba(255,255,255,.62)}
+h1{margin-top:22px;font-family:system-ui,-apple-system,sans-serif;font-size:40px;font-weight:800;letter-spacing:.5px} p{margin-top:12px;font-size:15px;opacity:.88}
+</style></head><body><div class="mark"><i></i><i></i></div><h1>Sidearc</h1><p>${esc(t.promo)}</p></body></html>`
+  );
+  capture(n, join(ROOT, t.dir, 'promo-small-440x280.jpg'), [440, 280]);
+}
+
+const SHOTS = [
+  { file: '1-tabs', active: 0, dark: false, folder: true },
+  { file: '2-child-tabs', active: 2, dark: false },
+  { file: '3-spaces-dark', active: 1, dark: true },
+];
+for (const t of Object.values(TEXT)) {
+  mkdirSync(join(ROOT, t.dir), { recursive: true });
+  SHOTS.forEach((shot, i) => page(t, shot, t.pages[i]));
+  promo(t);
+}

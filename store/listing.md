@@ -6,8 +6,10 @@
 
 - 扩展包:`dist/sidearc-1.2.0.zip`(不在 git 里;重新打包见文末)
 - 商店图标:`icons/128.png`
-- 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`(用 `npm run screenshots` 重新生成)
+- 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`
 - 小型宣传图(440×280):`store/promo-small-440x280.jpg`
+- 英文版截图和小型宣传图在 `store/en/` 下,文件名相同。在开发者信息中心给英文(English)语言单独上传,商店会按用户的语言显示对应的图
+- 以上图片都用 `npm run screenshots` 重新生成
 
 ## 商品详情(Store listing)
 

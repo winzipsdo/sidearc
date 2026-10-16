@@ -8,11 +8,11 @@ Built on Manifest V3 and `chrome.sidePanel` with plain JS/CSS — no build step,
 
 > The interface is currently in Simplified Chinese.
 
-![Vertical tabs, favorites and pinned tabs](store/screenshot-1-tabs.jpg)
+![Vertical tabs, favorites and pinned tabs](store/en/screenshot-1-tabs.jpg)
 
 | Child tabs and aliases | Spaces and dark mode |
 | --- | --- |
-| ![Child tabs and aliases](store/screenshot-2-child-tabs.jpg) | ![Spaces and dark mode](store/screenshot-3-spaces-dark.jpg) |
+| ![Child tabs and aliases](store/en/screenshot-2-child-tabs.jpg) | ![Spaces and dark mode](store/en/screenshot-3-spaces-dark.jpg) |
 
 ## Features
 
@@ -101,7 +101,7 @@ No build step: the code is plain ES modules — edit, then reload the extension 
 npm test
 ```
 
-Tests use Node's built-in test runner (Node 20+), no dependencies. `npm run screenshots` regenerates the store screenshots (needs Chrome installed).
+Tests use Node's built-in test runner (Node 20+), no dependencies. `npm run screenshots` regenerates the store screenshots and promo tiles in Chinese and English (needs Chrome installed).
 
 See [CHANGELOG.md](CHANGELOG.md) for changes.
 

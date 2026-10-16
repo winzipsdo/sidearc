@@ -136,7 +136,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 npm test
 ```
 
-界面改动后,可以重新生成应用商店的三张截图(需要本机装有 Chrome,侧边栏部分直接套用 `sidepanel.css`):
+界面改动后,可以重新生成应用商店的截图和小宣传图,中英文各一套(英文版在 `store/en/`;需要本机装有 Chrome,侧边栏部分直接套用 `sidepanel.css`):
 
 ```bash
 npm run screenshots
