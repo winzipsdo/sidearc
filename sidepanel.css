@@ -126,6 +126,23 @@ header { padding: 12px 12px 8px; }
 }
 .tile .tile-sound svg { width: 11px; height: 11px; }
 .tile .tile-sound:hover { color: var(--fg); }
+/* Keep Alive:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
+.tile .tile-keep {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-keep svg { width: 10px; height: 10px; }
+.row .keep { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); }
+.row .keep svg { width: 12px; height: 12px; }
 .tile .icon { width: 20px; height: 20px; border-radius: 5px; }
 .tile:not(.open) .icon { opacity: 0.85; }
 

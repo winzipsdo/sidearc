@@ -6,6 +6,9 @@ import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
+// 开了 Keep Alive(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
+const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: 'Keep Alive:不会被自动回收' }, icon('lock'));
+
 export function render() {
   // 拖拽过程中重画会打断拖拽,等松手后再画
   if (dragging) {
@@ -28,7 +31,9 @@ export function render() {
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
     const muted = tab?.mutedInfo?.muted;
     const sound = (tab?.audible || muted) && h('button', { class: kind === 'fav' ? 'tile-sound' : 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound'));
-    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound);
+    // 开了 Keep Alive:收藏在图标右下角、固定标签在标题右边显示一把小锁
+    const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
+    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep);
     // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
     if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
       return h(
@@ -37,6 +42,7 @@ export function render() {
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
+        keep,
         sound,
         h('button', { class: 'btn back', title: '回到固定地址', data: { act: 'back' } }, icon('back'))
       );
@@ -47,6 +53,7 @@ export function render() {
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      keep,
       sound,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
@@ -93,6 +100,7 @@ export function render() {
         h('img', { class: 'icon', src: tabIcon(t), alt: '', draggable: false }),
         tabAlias.has(t.id) && h('span', { class: 'alias' }, tabAlias.get(t.id)),
         h('span', { class: 'title' }, t.title || t.url || '新标签页'),
+        keepAlive(t, 'keep'),
         (t.audible || muted) && h('button', { class: 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
         h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
       );
