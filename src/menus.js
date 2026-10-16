@@ -5,8 +5,9 @@ import { isAway, isFolder } from './logic.js';
 import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, visibleTabs } from './store.js';
+import { activeSpace, bind, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, editTabAlias, moveTabToSpace } from './tabs.js';
+import { $, faviconFor } from './dom.js';
 import { copyText, showMenu } from './ui.js';
 
 export function tabMenu(e, tab) {
@@ -95,4 +96,45 @@ export function spaceMenu(e, id) {
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { icon: 'trash', label: '删除空间', danger: true, run: () => deleteSpace(id) },
   ]);
+}
+
+// 「多久以前」:Chrome 记的关闭时间是秒
+function ago(seconds) {
+  const min = Math.floor((Date.now() / 1000 - seconds) / 60);
+  if (min < 1) return '刚刚';
+  if (min < 60) return `${min} 分钟前`;
+  if (min < 60 * 24) return `${Math.floor(min / 60)} 小时前`;
+  return `${Math.floor(min / 60 / 24)} 天前`;
+}
+
+// 最近关闭的标签页:用 Chrome 自己的记录(只有本次启动以来的),不分空间;整个窗口的关闭记录跳过。
+// 点一下用 Chrome 的方式恢复(保留前进后退记录),恢复出来的标签页归入当前空间
+export async function recentMenu(e) {
+  // 列表贴着按钮上方、左对齐弹出,不盖住底部这一行(按钮的位置要在等待之前记下)
+  const anchor = e.currentTarget.getBoundingClientRect();
+  const pos = { clientX: anchor.left, clientY: anchor.top, preventDefault() {} };
+  const closed = (await chrome.sessions.getRecentlyClosed({ maxResults: 25 }).catch(() => [])).filter((s) => s.tab).slice(0, 10);
+  showMenu(pos, [
+    { header: closed.length ? '最近关闭' : '没有最近关闭的标签页' },
+    ...closed.map(({ tab, lastModified }) => ({
+      img: tab.favIconUrl && /^(https?|data):/.test(tab.favIconUrl) ? tab.favIconUrl : faviconFor(tab.url || 'about:blank'),
+      label: tab.title || tab.url,
+      title: tab.url,
+      note: ago(lastModified),
+      run: () => chrome.sessions.restore(tab.sessionId).catch(() => {}),
+    })),
+    '-',
+    // 完整的浏览历史:Chrome 自己的历史记录页,右边标上它的快捷键
+    {
+      icon: 'external',
+      link: true,
+      label: '打开完整历史记录',
+      note: /Mac/i.test(navigator.platform) ? '⌘Y' : 'Ctrl+H',
+      run: () => chrome.tabs.create({ url: 'chrome://history', windowId }),
+    },
+  ]);
+  // 用 offsetWidth/Height:弹出动画还在缩放时,getBoundingClientRect 量到的尺寸偏小
+  const menu = $('#menu');
+  menu.style.left = Math.max(4, Math.min(anchor.left, innerWidth - menu.offsetWidth - 4)) + 'px';
+  menu.style.top = Math.max(4, anchor.top - menu.offsetHeight - 6) + 'px';
 }

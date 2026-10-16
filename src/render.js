@@ -2,6 +2,7 @@
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { favColumns, isAway, isFolder } from './logic.js';
+import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
@@ -106,7 +107,8 @@ export function render() {
         h('i', { style: `color:${s.color}` })
       )
     ),
-    h('button', { class: 'space-dot', 'aria-label': '新建空间', data: { name: '新建空间' }, onclick: addSpace }, icon('plus'))
+    h('button', { class: 'space-dot', 'aria-label': '新建空间', data: { name: '新建空间' }, onclick: addSpace }, icon('plus')),
+    h('button', { class: 'space-dot recent', 'aria-label': '最近关闭', data: { name: '最近关闭' }, onclick: recentMenu }, icon('recent'))
   );
   saveSnapshot();
 }

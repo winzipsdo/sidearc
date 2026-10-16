@@ -45,6 +45,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 ### Also
 
 - **Undo**: closing tabs, Clear, unpinning and more can be undone from the toast or with `Ctrl/⌘+Z`, step by step. Tabs closed from Chrome's own tab strip can be restored the same way.
+- **Recently closed**: the clock button at the bottom left lists the last 10 closed tabs; click one to restore it (with its back/forward history) into the current space. The bottom of the list opens Chrome's full history. It uses Chrome's own list, so it covers this browser session only and isn't split by space.
 - **Context menus** on tabs, favorites, pinned items and space dots.
 - **Light and dark mode**, following the system.
 

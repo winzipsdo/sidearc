@@ -67,9 +67,16 @@ export function showMenu(e, items) {
     ...list.map((it) => {
       if (it === '-') return h('hr');
       if (it.header) return h('div', { class: 'menu-head' }, it.header);
-      const ico = it.icon && icon(it.icon);
+      // 图标:icon 是内置图标名,img 是图片地址(比如网站图标);note 是右侧的灰色小字
+      const ico = it.img ? h('img', { class: 'i', src: it.img, alt: '' }) : it.icon && icon(it.icon);
       if (ico && it.color) ico.style.color = it.color;
-      return h('button', { class: it.danger && 'danger', onclick: () => (hideMenu(), it.run()) }, ico || h('span', { class: 'i' }), h('span', {}, it.label));
+      return h(
+        'button',
+        { class: it.danger ? 'danger' : it.link && 'link', title: it.title, onclick: () => (hideMenu(), it.run()) },
+        ico || h('span', { class: 'i' }),
+        h('span', { class: 'label' }, it.label),
+        it.note && h('span', { class: 'note' }, it.note)
+      );
     })
   );
   menu.hidden = false;

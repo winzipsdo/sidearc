@@ -406,6 +406,12 @@ header { padding: 12px 12px 8px; }
   transition: opacity 0.12s, transform 0.12s;
 }
 .space-dot:hover::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.2s; }
+/* 最近关闭:底部这一行的最左边;提示文字靠左对齐,免得超出侧边栏 */
+#spaces { position: relative; }
+#spaces .space-dot.recent { position: absolute; left: 10px; top: 6px; }
+#spaces .space-dot.recent svg { width: 18px; height: 18px; stroke-width: 1.5; }
+#spaces .space-dot.recent::after { left: 0; transform: translate(0, 3px); }
+#spaces .space-dot.recent:hover::after { transform: translate(0, 0); }
 
 /* 提示条 */
 #toast {
@@ -463,13 +469,20 @@ header { padding: 12px 12px 8px; }
   text-align: left;
   font-weight: 400;
 }
-#menu button > span:last-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#menu button > .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#menu button > .note { flex: none; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+#menu button:hover > .note { color: inherit; opacity: 0.8; }
+#menu button img.i { border-radius: 3px; }
 #menu button .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
 #menu button:hover { background: var(--accent); color: #fff; }
 #menu button:hover .i { color: inherit; }
 #menu button.danger .i { color: inherit; }
 #menu .menu-head { padding: 6px 10px 3px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
 #menu button.danger { color: #e5484d; }
+/* 跳到别处的入口(比如完整历史记录):文字加粗、图标用正文颜色,和上面的列表项区分开 */
+#menu button.link { font-weight: 600; }
+#menu button.link .i { color: var(--fg); }
+#menu button.link:hover .i { color: inherit; }
 #menu button.danger:hover { background: #e5484d; color: #fff; }
 #menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
 
