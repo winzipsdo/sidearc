@@ -42,8 +42,8 @@ export function tabMenu(e, tab) {
     '-',
     { icon: 'link', label: '复制链接地址', run: () => copyText(tab.url, '已复制链接地址') },
     { icon: 'copy', label: '复制标签页', run: () => chrome.tabs.duplicate(tab.id) },
-    { icon: 'reload', label: '重新加载', run: () => chrome.tabs.reload(tab.id) },
-    { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? '取消静音' : '静音', run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
+    // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
+    (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? '取消静音' : '静音', run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
     state.spaces.length > 1 && '-',
     ...state.spaces
