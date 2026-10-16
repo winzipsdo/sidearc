@@ -50,6 +50,7 @@
 
 ### 文档
 
+- **应用商店截图和小宣传图有了英文版。** 放在 `store/en/`,和中文版一起由 `npm run screenshots` 生成;英文 README 也改用英文截图。 [`de892ce`](https://github.com/winzipsdo/sidearc/commit/de892ce)
 - **新增英文版 README,采用 MIT 开源许可证。** [`3e59d3c`](https://github.com/winzipsdo/sidearc/commit/3e59d3c)
 - **功能介绍写明和顶部标签栏同步。** README、应用商店说明和第 3 张截图都写上「顶部标签栏的顺序和侧边栏一致」;商店说明也补上了文件夹、少开重复标签页等新功能。 [`9d6eb8a`](https://github.com/winzipsdo/sidearc/commit/9d6eb8a)
 - **应用商店截图更新。** 加入固定标签文件夹,收藏夹换成常见网站的图标。 [`39842ac`](https://github.com/winzipsdo/sidearc/commit/39842ac)
