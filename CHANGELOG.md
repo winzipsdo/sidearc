@@ -8,6 +8,9 @@
 
 ### 新增
 
+- **右键可以「释放内存」和「Keep Alive」。** [`8dff772`](https://github.com/winzipsdo/sidearc/commit/8dff772)
+  - 释放内存:让 Chrome 把标签页从内存里卸掉,点回去会重新加载;右键文件夹或空间可以一次释放里面所有后台标签页。
+  - Keep Alive:Chrome 的「节省内存」不会回收这个标签页,适合音乐、聊天;浏览器重启后恢复。
 - **左下角可以查看最近关闭的标签页。** [`02e26cf`](https://github.com/winzipsdo/sidearc/commit/02e26cf)
   - 列出最近关闭的 10 个,点一下恢复,保留前进后退记录;列表底部可以打开 Chrome 的完整历史记录。
   - 只包括本次启动 Chrome 以来关闭的,不分空间。
@@ -45,6 +48,8 @@
 
 ### 修复
 
+- **浏览器重启后还没加载的标签页没有变淡。** 现在和被回收的标签页一样显示为变淡。 [`8dff772`](https://github.com/winzipsdo/sidearc/commit/8dff772)
+- **右键菜单有时超出侧边栏,被裁掉一截。** 侧边栏太矮时菜单改为内部滚动。 [`e4ecb5f`](https://github.com/winzipsdo/sidearc/commit/e4ecb5f)
 - **固定标签的文件夹拖不准。** [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
   - 拖到文件夹最后一项的下半部分,会放进文件夹末尾;以前只能掉到文件夹外面。
   - 文件夹排在最后时,把里面的项拖到下面的分隔线上,就能移到文件夹外面。
