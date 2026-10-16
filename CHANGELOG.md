@@ -23,6 +23,7 @@
 
 ### 变更
 
+- **文件夹里的项整行缩进。** 选中和悬停的底色也从缩进处开始,图标前不再空出一块。 [`cc44681`](https://github.com/winzipsdo/sidearc/commit/cc44681)
 - **拖拽的插入线更好认。** 线从要落到的那一级开始画,前面带一个小圆点;拖到列表末尾也显示插入线,不再高亮整块区域。 [`4d2775d`](https://github.com/winzipsdo/sidearc/commit/4d2775d)
 - **收起再打开侧边栏时不再先空一下。** 会先显示上次的画面,再换成最新的;第一次打开也快了不少。 [`649a6fe`](https://github.com/winzipsdo/sidearc/commit/649a6fe)
 - **右键菜单都加上了图标,收藏和固定标签的菜单重新分组。** [`f3176bd`](https://github.com/winzipsdo/sidearc/commit/f3176bd)
