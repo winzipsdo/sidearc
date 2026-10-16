@@ -249,11 +249,9 @@ header { padding: 12px 12px 8px; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.row .alias + .title { color: var(--fg-2); }
 .row.discarded .title { color: var(--fg-2); }
 .row.discarded .icon, #pins .row:not(.open) .icon { opacity: 0.6; filter: saturate(0.6); }
-/* 固定标签靠标题深浅区分开没开:开着的(即使有别名)和下面列表里一样深,没开的变淡 */
-#pins .row.open .title { color: var(--fg); }
+/* 标题深浅表示开没开:开着的标签页(有没有别名都一样)用正常颜色,没开的固定标签变淡 */
 #pins .row:not(.open) .title { color: var(--fg-2); }
 #pins .row:not(.open) .alias { opacity: 0.65; }
 /* 固定标签里的文件夹 */
