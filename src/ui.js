@@ -80,9 +80,9 @@ export function showMenu(e, items) {
     })
   );
   menu.hidden = false;
-  const r = menu.getBoundingClientRect();
-  menu.style.left = Math.max(4, Math.min(e.clientX, innerWidth - r.width - 4)) + 'px';
-  menu.style.top = Math.max(4, Math.min(e.clientY, innerHeight - r.height - 4)) + 'px';
+  // 用 offsetWidth/Height:弹出动画还在缩放时,getBoundingClientRect 量到的尺寸偏小,菜单会超出侧边栏被裁掉
+  menu.style.left = Math.max(4, Math.min(e.clientX, innerWidth - menu.offsetWidth - 4)) + 'px';
+  menu.style.top = Math.max(4, Math.min(e.clientY, innerHeight - menu.offsetHeight - 4)) + 'px';
 }
 
 // fields: [{key,label,value}];color 非空时显示颜色选择。取消返回 null
