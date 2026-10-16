@@ -1,5 +1,7 @@
 # Sidearc
 
+简体中文 | [English](README.en.md)
+
 把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。
 
 Arc 风格的 Chrome 侧边标签栏。基于 Manifest V3 和 `chrome.sidePanel`,纯原生 JS/CSS,无构建步骤、无依赖;不联网,数据只存在本机。
@@ -119,7 +121,9 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `test/` | `src/logic.js` 和 `src/protocol.js` 的测试 |
 | `icons/` | 扩展图标 |
 | `store/` | Chrome 应用商店的上架资料、截图和宣传图;`store/screenshots/make.js` 用来重新生成截图 |
+| `README.en.md` | 英文版说明 |
 | `PRIVACY.md` | 隐私政策 |
+| `LICENSE` | 开源许可证(MIT) |
 | `CHANGELOG.md` | 更新日志 |
 
 ## 开发
@@ -137,3 +141,7 @@ npm test
 ```bash
 npm run screenshots
 ```
+
+## 许可证
+
+[MIT](LICENSE)
