@@ -100,6 +100,32 @@ export async function addItemFromTab(tab, zone) {
   render();
 }
 
+// 把固定标签移到另一个空间的固定区,放在最后。开着的标签页跟着一起过去(它属于固定标签所在的空间)
+export async function moveItemToSpace(id, spaceId) {
+  const hit = findItem(id);
+  const target = state.spaces.find((s) => s.id === spaceId);
+  if (!hit || hit.kind !== 'pin' || !target) return;
+  const from = { spaceId: hit.space.id, folderId: hit.folder?.id, index: hit.list.indexOf(hit.item) };
+  const item = takeItem(id);
+  target.pinned.push(item);
+  // 会话里记的空间也改过去,免得以后取消固定时标签页回到原来的空间
+  const tabId = bind.get(id);
+  if (tabId != null) await setTabSpace(tabId, spaceId);
+  await save();
+  render();
+  pushUndo(`已把「${item.alias || item.title}」移到空间「${target.name}」`, async () => {
+    // 放回原来的空间和位置(原来在文件夹里就放回文件夹;文件夹没了就放顶层)
+    const space = state.spaces.find((s) => s.id === from.spaceId);
+    const arr = space?.pinned.find((f) => f.id === from.folderId)?.items ?? space?.pinned;
+    const back = arr && takeItem(id);
+    if (!back) return;
+    arr.splice(Math.min(from.index, arr.length), 0, back);
+    if (tabId != null) await setTabSpace(tabId, from.spaceId);
+    await save();
+    render();
+  });
+}
+
 export async function moveItem(id, zone) {
   const item = takeItem(id);
   if (!item) return;

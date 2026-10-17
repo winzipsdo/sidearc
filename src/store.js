@@ -14,7 +14,9 @@ export const tabSpace = new Map();
 export const bind = new Map();
 export const tabAlias = new Map();
 export const tabParent = new Map();
-const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent };
+// 标签页开始休眠的时间:tabId -> 毫秒
+export const tabSlept = new Map();
+const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept };
 
 export const tabs = [];
 export let windowId;
@@ -160,7 +162,7 @@ export function subtreeIds(tabId) {
 // 标签页换了编号(比如休眠后):先在内存里把它的空间、别名、父标签,以及指向它的子标签和绑定挪到新编号上,
 // 这样重画时它还在原来的位置。存储里的数据由后台(background.js)同步挪,这里不写,免得两边同时改
 export function replaceTabId(added, removed) {
-  for (const map of [tabSpace, tabAlias, tabParent]) {
+  for (const map of [tabSpace, tabAlias, tabParent, tabSlept]) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }

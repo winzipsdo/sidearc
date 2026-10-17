@@ -164,5 +164,15 @@ export function buildLayout(state, session, tabs) {
 // 标签页不在内存里:被 Chrome 回收了(discarded),或者重启后恢复出来还没加载(status 为 unloaded)。点进去都要重新加载
 export const isUnloaded = (tab) => !!tab && (tab.discarded || tab.status === 'unloaded');
 
+// 休眠了多久,简短说法:「刚刚」「12 分钟」「3 小时」「2 天」。since 是开始休眠的时间(毫秒)
+export function sleptFor(since, now = Date.now()) {
+  const min = Math.floor((now - since) / 60000);
+  if (min < 1) return '刚刚';
+  if (min < 60) return `${min} 分钟`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} 小时`;
+  return `${Math.floor(hours / 24)} 天`;
+}
+
 // 能手动休眠:在内存里,而且不是当前正在看的标签页(Chrome 不允许回收当前标签页)
 export const canDiscard = (tab) => !!tab && !tab.active && !isUnloaded(tab);

@@ -72,7 +72,13 @@ export function showMenu(e, items) {
       if (ico && it.color) ico.style.color = it.color;
       return h(
         'button',
-        { class: it.danger ? 'danger' : it.link && 'link', title: it.title, onclick: () => (hideMenu(), it.run()) },
+        // disabled:显示但点不了,置灰;不用原生 disabled 属性,否则鼠标提示(说明为什么不能用)出不来
+        {
+          class: it.disabled ? 'disabled' : it.danger ? 'danger' : it.link && 'link',
+          title: it.title,
+          'aria-disabled': it.disabled ? 'true' : null,
+          onclick: () => it.disabled || (hideMenu(), it.run()),
+        },
         ico || h('span', { class: 'i' }),
         h('span', { class: 'label' }, it.label),
         it.note && h('span', { class: 'note' }, it.note)

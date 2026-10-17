@@ -1,16 +1,35 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { canDiscard, favColumns, isAway, isFolder, isUnloaded } from './logic.js';
+import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor } from './logic.js';
 import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, tabSlept, visibleTabs } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: '保持唤醒:不会被自动休眠' }, icon('lock'));
 
 // 行右侧的「休眠」按钮,和关闭按钮一样只在鼠标移上去时出现
 const freeButton = () => h('button', { class: 'btn x', title: '休眠', data: { act: 'discard' } }, icon('sleep'));
+
+// 标签页列表里休眠的标签页:行尾显示休眠了多久(收藏和固定标签不显示),鼠标提示里写完整的时间。重启后还没加载的没有记录,只提示「还没加载」
+const sleptAt = (tab) => (isUnloaded(tab) ? tabSlept.get(tab.id) : undefined);
+const sleptLabel = (tab) => {
+  const since = sleptAt(tab);
+  return since != null && h('span', { class: 'slept', data: { since } }, sleptFor(since));
+};
+function sleptTip(tab) {
+  if (!isUnloaded(tab)) return '';
+  const since = sleptAt(tab);
+  if (since == null) return '\n还没加载,点开时加载';
+  const at = new Date(since).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return `\n休眠了 ${sleptFor(since)}(${at} 开始),点开时重新加载`;
+}
+
+// 只更新行尾「休眠了多久」的文字,不整体重画(标签页很多时整体重画要几十毫秒)
+export function refreshSleptLabels() {
+  for (const el of document.querySelectorAll('.slept')) el.textContent = sleptFor(+el.dataset.since);
+}
 
 export function render() {
   // 拖拽过程中重画会打断拖拽,等松手后再画
@@ -38,7 +57,11 @@ export function render() {
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
     // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
     const free = canDiscard(tab) && freeButton();
-    if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep);
+    if (kind === 'fav') {
+      // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭
+      const close = open && h('button', { class: 'tile-close', title: '关闭标签页', data: { act: 'close' } }, icon('close'));
+      return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep, close);
+    }
     // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
     if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
       return h(
@@ -64,7 +87,7 @@ export function render() {
       free,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
-        ? h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))
+        ? h('button', { class: 'btn x', title: '关闭标签页', data: { act: 'close' } }, icon('minus'))
         : h('button', { class: 'btn x', title: '取消固定', data: { act: 'unpin' } }, icon('unpin'))
     );
   };
@@ -103,14 +126,15 @@ export function render() {
       const cls = ['row', t.active && 'active', isUnloaded(t) && 'discarded', t.status === 'loading' && 'loading'].filter(Boolean).join(' ');
       return h(
         'div',
-        { class: cls, draggable: true, title: t.url, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: t.id } },
+        { class: cls, draggable: true, title: t.url + sleptTip(t), style: depth ? '--depth:1' : null, data: { kind: 'tab', id: t.id } },
         h('img', { class: 'icon', src: tabIcon(t), alt: '', draggable: false }),
         tabAlias.has(t.id) && h('span', { class: 'alias' }, tabAlias.get(t.id)),
         h('span', { class: 'title' }, t.title || t.url || '新标签页'),
+        sleptLabel(t),
         keepAlive(t, 'keep'),
         (t.audible || muted) && h('button', { class: 'btn' + (t.audible && !muted ? ' playing' : ''), title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
         canDiscard(t) && freeButton(),
-        h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
+        h('button', { class: 'btn x', title: '关闭标签页', data: { act: 'close' } }, icon('close'))
       );
     })
   );

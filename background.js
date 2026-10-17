@@ -34,7 +34,7 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     const all = await chrome.storage.session.get(null);
     const set = {};
     const remove = [];
-    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh]) {
+    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept]) {
       if (!(key(removedId) in all)) continue;
       set[key(addedId)] = all[key(removedId)];
       remove.push(key(removedId));
@@ -47,11 +47,22 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
   })
 );
 
+// 记下标签页是什么时候开始休眠的(手动休眠和 Chrome「节省内存」自动回收都算),醒来后删掉。
+// Chrome 本身不记这个时间,侧边栏要靠它显示「休眠了多久」。浏览器重启后恢复出来还没加载的标签页没有这个时间
+chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if ('discarded' in info) {
+    serial(() => (info.discarded ? chrome.storage.session.set({ [KEY.slept(tabId)]: Date.now() }) : chrome.storage.session.remove(KEY.slept(tabId))));
+  } else if (info.status === 'loading') {
+    // 重启后恢复出来、还没加载的标签页醒来时不会有 discarded 事件,开始加载就算醒了
+    serial(() => chrome.storage.session.remove(KEY.slept(tabId)));
+  }
+});
+
 // 标签页关闭后清掉它的数据,并把它的子标签一并关闭
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
-  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId)];
+  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId)];
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
@@ -94,7 +105,11 @@ const serial = (fn) => (queue = queue.then(fn, fn));
 async function restoreStep() {
   let r = (await chrome.storage.session.get(RESTORE))[RESTORE];
   if (r && Date.now() > r.boot + RESTORE_WINDOW) return r;
-  r ??= { boot: Date.now(), tabs: (await chrome.storage.local.get('snapshot')).snapshot?.tabs ?? [], claimed: {} };
+  if (!r) {
+    const { snapshot } = await chrome.storage.local.get('snapshot');
+    // time:快照最后保存的时间,约等于上次关浏览器前最后一次使用的时间
+    r = { boot: Date.now(), tabs: snapshot?.tabs ?? [], time: snapshot?.time, claimed: {} };
+  }
 
   const taken = new Set(Object.values(r.claimed));
   const set = {};
@@ -116,6 +131,10 @@ async function restoreStep() {
     if (e.s) set[KEY.space(tab.id)] = e.s;
     if (e.a) set[KEY.alias(tab.id)] = e.a;
     for (const item of e.b ?? []) set[KEY.bind(item)] = tab.id;
+    // 休眠时间:关浏览器前就在休眠的,接着用原来的时间;关之前还醒着、重启后还没加载的,
+    // 从上次关浏览器前最后一次使用时算起
+    const asleep = tab.discarded || tab.status === 'unloaded';
+    if (asleep && (e.z ?? r.time)) set[KEY.slept(tab.id)] = e.z ?? r.time;
   }
   // 父子关系要等两头都对上
   r.tabs.forEach((e, pos) => {
@@ -140,7 +159,17 @@ async function saveSnapshot() {
     if (hasPrefix(k, PREFIX.bind)) binds.set(v, [...(binds.get(v) ?? []), k.slice(2)]);
   }
   const snapshot = {
-    tabs: tabs.map((t) => ({ id: t.id, i: t.index, u: urlOf(t), s: all[KEY.space(t.id)], a: all[KEY.alias(t.id)], p: pos.get(all[KEY.parent(t.id)]), b: binds.get(t.id) })),
+    time: Date.now(),
+    tabs: tabs.map((t) => ({
+      id: t.id,
+      i: t.index,
+      u: urlOf(t),
+      s: all[KEY.space(t.id)],
+      a: all[KEY.alias(t.id)],
+      p: pos.get(all[KEY.parent(t.id)]),
+      b: binds.get(t.id),
+      z: all[KEY.slept(t.id)],
+    })),
   };
   await chrome.storage.local.set({ snapshot });
 }
@@ -155,6 +184,8 @@ serial(restoreStep);
 chrome.tabs.onCreated.addListener(() => (serial(restoreStep), touch()));
 chrome.tabs.onUpdated.addListener((_, info) => info.url && (serial(restoreStep), touch()));
 chrome.tabs.onMoved.addListener(touch);
+// 切换标签页也存一次:快照的时间要尽量接近关浏览器前最后一次使用的时间(重启后算休眠时间要用)
+chrome.tabs.onActivated.addListener(touch);
 chrome.tabs.onAttached.addListener(touch);
 chrome.tabs.onDetached.addListener(touch);
 chrome.tabs.onRemoved.addListener((_, info) => {

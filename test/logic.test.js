@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -176,4 +176,15 @@ test('canDiscard:当前标签页和已经不在内存里的不能休眠', () => 
   assert.equal(canDiscard({ active: false, discarded: true }), false);
   assert.equal(canDiscard({ active: false, status: 'unloaded' }), false);
   assert.equal(canDiscard(null), false);
+});
+
+test('sleptFor:休眠了多久的简短说法', () => {
+  const now = 1_000_000_000_000;
+  assert.equal(sleptFor(now - 20_000, now), '刚刚');
+  assert.equal(sleptFor(now - 60_000, now), '1 分钟');
+  assert.equal(sleptFor(now - 59 * 60_000, now), '59 分钟');
+  assert.equal(sleptFor(now - 60 * 60_000, now), '1 小时');
+  assert.equal(sleptFor(now - 23 * 3600_000 - 59 * 60_000, now), '23 小时');
+  assert.equal(sleptFor(now - 24 * 3600_000, now), '1 天');
+  assert.equal(sleptFor(now - 10 * 86400_000, now), '10 天');
 });

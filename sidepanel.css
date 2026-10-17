@@ -110,6 +110,24 @@ header { padding: 12px 12px 8px; }
 .tile:active { transform: scale(0.95); }
 .tile.open { background: var(--card-soft); }
 .tile.active { background: var(--card); box-shadow: var(--shadow); }
+/* 开着的收藏:鼠标移上去时右上角的小关闭按钮,出现时盖住发声的小喇叭 */
+.tile .tile-close {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-close svg { width: 10px; height: 10px; }
+.tile:hover .tile-close { display: grid; }
+.tile:hover .tile-sound { display: none; }
+.tile .tile-close:hover { color: var(--fg); background: var(--card); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
 /* 收藏的标签页在发声:图标右上角的小喇叭,点了切换静音 */
 .tile .tile-sound {
   position: absolute;
@@ -137,6 +155,9 @@ header { padding: 12px 12px 8px; }
 @media (prefers-reduced-motion: reduce) {
   .playing svg path { animation: none; }
 }
+/* 休眠了多久:变淡的行尾的一小段灰字 */
+.row .slept { flex: none; margin-left: 2px; color: var(--fg-3); font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
 /* 保持唤醒:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
 .tile .tile-keep {
   position: absolute;
@@ -510,6 +531,9 @@ header { padding: 12px 12px 8px; }
 #menu button.danger .i { color: inherit; }
 #menu .menu-head { padding: 6px 10px 3px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
 #menu button.danger { color: #e5484d; }
+/* 暂时不能用的项:置灰,悬停也不高亮 */
+#menu button.disabled, #menu button.disabled:hover { background: none; color: var(--fg-3); cursor: default; }
+#menu button.disabled .i, #menu button.disabled:hover .i { color: var(--fg-3); opacity: 0.7; }
 /* 跳到别处的入口(比如完整历史记录):文字加粗、图标用正文颜色,和上面的列表项区分开 */
 #menu button.link { font-weight: 600; }
 #menu button.link .i { color: var(--fg); }

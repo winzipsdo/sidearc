@@ -6,7 +6,7 @@ import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from '
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { toggleFolder } from './folders.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, render, schedule } from './render.js';
+import { layoutFavs, refreshSleptLabels, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
 import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, state, tabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
@@ -186,6 +186,8 @@ function bindBrowser() {
 }
 
 export function bindEvents() {
+  // 「休眠了多久」每分钟更新一次文字
+  setInterval(refreshSleptLabels, 60000);
   const scroll = $('#scroll');
   bindRows(scroll);
   bindMenus(scroll);
