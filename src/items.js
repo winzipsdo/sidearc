@@ -53,6 +53,8 @@ export async function toggleItemMute(item) {
 export async function closeItemTab(item) {
   const tabId = bind.get(item.id);
   if (tabId == null) return;
+  // 先解绑再关,后台就认不出它是固定项的标签页了:它的子标签要在这里先放开,免得被连带关闭
+  for (const [child, parent] of [...tabParent]) if (parent === tabId) await setTabParent(child, null);
   await unbind(item.id);
   await chrome.tabs.remove(tabId).catch(() => {});
   render();

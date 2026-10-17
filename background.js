@@ -54,8 +54,11 @@ chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId)];
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
+  // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
+  // 关掉它时不连带关闭,子标签变成普通标签页
+  const bound = keys.some((k) => hasPrefix(k, PREFIX.bind));
   if (keys.length) await chrome.storage.session.remove(keys);
-  if (children.length && !info.isWindowClosing) await chrome.tabs.remove(children).catch(() => {});
+  if (children.length && !bound && !info.isWindowClosing) await chrome.tabs.remove(children).catch(() => {});
 });
 
 // ---------- 不记录历史的空间 ----------
