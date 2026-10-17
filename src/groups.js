@@ -128,7 +128,8 @@ async function syncAll() {
 async function userMoved(tabId, { windowId, toIndex }) {
   const parent = (await chrome.storage.session.get(KEY.parent(tabId)))[KEY.parent(tabId)];
   if (parent == null) return;
-  const [left] = await chrome.tabs.query({ windowId, index: toIndex - 1 });
+  // 拖到了最左边(toIndex 为 0):左边没有标签页,当然也就离开了父标签页。index 不能传负数,否则 tabs.query 会报错
+  const [left] = toIndex > 0 ? await chrome.tabs.query({ windowId, index: toIndex - 1 }) : [];
   const leftParent = left && (await chrome.storage.session.get(KEY.parent(left.id)))[KEY.parent(left.id)];
   if (left?.id !== parent && leftParent !== parent) await chrome.storage.session.remove(KEY.parent(tabId));
 }
