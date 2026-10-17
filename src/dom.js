@@ -13,7 +13,8 @@ const ICONS = {
   close: svg('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>'),
   minus: svg('<path d="M4 8h8"/>'),
   plus: svg('<path d="M8 3.5v9M3.5 8h9"/>'),
-  sound: svg(SPEAKER + '<path d="M10.5 5.8a3 3 0 010 4.4M12.3 4a5.5 5.5 0 010 8"/>'),
+  // 两道声波分成两条 path:正在播放时 CSS 让它们一前一后闪动
+  sound: svg(SPEAKER + '<path d="M10.5 5.8a3 3 0 010 4.4"/><path d="M12.3 4a5.5 5.5 0 010 8"/>'),
   muted: svg(SPEAKER + '<path d="M10.8 6.3l3 3.4M13.8 6.3l-3 3.4"/>'),
   // 右键菜单用
   edit: svg('<path d="M10.5 3l2.5 2.5L6 12.5H3.5V10z"/>'),

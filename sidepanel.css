@@ -126,6 +126,17 @@ header { padding: 12px 12px 8px; }
 }
 .tile .tile-sound svg { width: 11px; height: 11px; }
 .tile .tile-sound:hover { color: var(--fg); }
+/* 正在发出声音:喇叭变成主题色,两道声波一前一后闪动,让人注意到是哪个标签页在响 */
+.playing { color: var(--accent) !important; }
+.playing svg path:nth-child(2) { animation: sound-wave 1.2s ease-in-out infinite; }
+.playing svg path:nth-child(3) { animation: sound-wave 1.2s ease-in-out 0.2s infinite; }
+@keyframes sound-wave {
+  0%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playing svg path { animation: none; }
+}
 /* 保持唤醒:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
 .tile .tile-keep {
   position: absolute;

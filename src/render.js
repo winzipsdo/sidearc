@@ -33,7 +33,7 @@ export function render() {
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
     const muted = tab?.mutedInfo?.muted;
-    const sound = (tab?.audible || muted) && h('button', { class: kind === 'fav' ? 'tile-sound' : 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound'));
+    const sound = (tab?.audible || muted) && h('button', { class: (kind === 'fav' ? 'tile-sound' : 'btn') + (tab.audible && !muted ? ' playing' : ''), title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound'));
     // 开了保持唤醒:收藏在图标右下角、固定标签在标题右边显示一把小锁
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
     // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
@@ -108,7 +108,7 @@ export function render() {
         tabAlias.has(t.id) && h('span', { class: 'alias' }, tabAlias.get(t.id)),
         h('span', { class: 'title' }, t.title || t.url || '新标签页'),
         keepAlive(t, 'keep'),
-        (t.audible || muted) && h('button', { class: 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
+        (t.audible || muted) && h('button', { class: 'btn' + (t.audible && !muted ? ' playing' : ''), title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
         canDiscard(t) && freeButton(),
         h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
       );
