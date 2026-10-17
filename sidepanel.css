@@ -126,7 +126,7 @@ header { padding: 12px 12px 8px; }
 }
 .tile .tile-sound svg { width: 11px; height: 11px; }
 .tile .tile-sound:hover { color: var(--fg); }
-/* Keep Alive:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
+/* 保持唤醒:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
 .tile .tile-keep {
   position: absolute;
   right: -4px;

@@ -1,13 +1,16 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder, isUnloaded } from './logic.js';
+import { canDiscard, favColumns, isAway, isFolder, isUnloaded } from './logic.js';
 import { recentMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, visibleTabs } from './store.js';
 
-// 开了 Keep Alive(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
-const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: 'Keep Alive:不会被自动回收' }, icon('lock'));
+// 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
+const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: '保持唤醒:不会被自动休眠' }, icon('lock'));
+
+// 行右侧的「休眠」按钮,和关闭按钮一样只在鼠标移上去时出现
+const freeButton = () => h('button', { class: 'btn x', title: '休眠', data: { act: 'discard' } }, icon('sleep'));
 
 export function render() {
   // 拖拽过程中重画会打断拖拽,等松手后再画
@@ -31,8 +34,10 @@ export function render() {
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
     const muted = tab?.mutedInfo?.muted;
     const sound = (tab?.audible || muted) && h('button', { class: kind === 'fav' ? 'tile-sound' : 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound'));
-    // 开了 Keep Alive:收藏在图标右下角、固定标签在标题右边显示一把小锁
+    // 开了保持唤醒:收藏在图标右下角、固定标签在标题右边显示一把小锁
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
+    // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
+    const free = canDiscard(tab) && freeButton();
     if (kind === 'fav') return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep);
     // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
     if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
@@ -44,6 +49,7 @@ export function render() {
         h('span', { class: 'title' }, tab.title || tab.url),
         keep,
         sound,
+        free,
         h('button', { class: 'btn back', title: '回到固定地址', data: { act: 'back' } }, icon('back'))
       );
     }
@@ -55,6 +61,7 @@ export function render() {
       h('span', { class: 'title' }, item.title),
       keep,
       sound,
+      free,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
         ? h('button', { class: 'btn x', title: '关闭标签页(保留固定)', data: { act: 'close' } }, icon('minus'))
@@ -102,6 +109,7 @@ export function render() {
         h('span', { class: 'title' }, t.title || t.url || '新标签页'),
         keepAlive(t, 'keep'),
         (t.audible || muted) && h('button', { class: 'btn', title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
+        canDiscard(t) && freeButton(),
         h('button', { class: 'btn x', title: '关闭', data: { act: 'close' } }, icon('close'))
       );
     })

@@ -7,7 +7,7 @@ import { render, schedule } from './render.js';
 import { listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
 import { ask, pushUndo, toast } from './ui.js';
 
-// 释放内存:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
+// 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
 export async function discardTabs(list) {
   let n = 0;
   // 回收时 Chrome 会给标签页换编号:换完、把关系挪到新编号上之前先不重画,否则列表会跳一下
@@ -22,7 +22,7 @@ export async function discardTabs(list) {
   } finally {
     setRenderHeld(false);
   }
-  toast(n ? `已释放 ${n} 个标签页的内存` : '没有可以释放的标签页');
+  toast(n ? `已让 ${n} 个标签页休眠` : '没有可以休眠的标签页');
   schedule();
 }
 
@@ -31,7 +31,7 @@ export async function discardTabs(list) {
 export async function toggleAutoDiscard(tab) {
   const keep = tab.autoDiscardable !== false;
   await chrome.tabs.update(tab.id, { autoDiscardable: !keep }).catch(() => {});
-  toast(keep ? '已开启 Keep Alive,这个标签页不会被自动回收' : '已取消 Keep Alive,这个标签页恢复自动回收');
+  toast(keep ? '已开启保持唤醒,这个标签页不会被自动休眠' : '已取消保持唤醒,这个标签页恢复自动休眠');
   schedule();
 }
 

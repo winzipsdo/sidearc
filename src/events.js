@@ -9,7 +9,7 @@ import { MSG } from './protocol.js';
 import { layoutFavs, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
 import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, state, tabs, windowId } from './store.js';
-import { clearTabs, closeTab, submitSearch } from './tabs.js';
+import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
@@ -25,12 +25,14 @@ function bindRows(scroll) {
       const tab = tabOf(el);
       if (!tab) return;
       if (act === 'close') closeTab(tab);
+      else if (act === 'discard') discardTabs([tab]);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
       else chrome.tabs.update(tab.id, { active: true });
     } else {
       const item = findItem(el.dataset.id)?.item;
       if (!item) return;
       if (act === 'close') closeItemTab(item);
+      else if (act === 'discard') discardTabs(tabs.filter((t) => t.id === bind.get(item.id)));
       else if (act === 'mute') toggleItemMute(item);
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);

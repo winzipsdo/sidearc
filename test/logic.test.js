@@ -170,7 +170,7 @@ test('isUnloaded:被回收的,和重启后还没加载的,都算不在内存里'
   assert.equal(isUnloaded(undefined), false);
 });
 
-test('canDiscard:当前标签页和已经不在内存里的不能释放', () => {
+test('canDiscard:当前标签页和已经不在内存里的不能休眠', () => {
   assert.equal(canDiscard({ active: false, status: 'complete' }), true);
   assert.equal(canDiscard({ active: true, status: 'complete' }), false);
   assert.equal(canDiscard({ active: false, discarded: true }), false);

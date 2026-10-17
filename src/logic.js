@@ -164,5 +164,5 @@ export function buildLayout(state, session, tabs) {
 // 标签页不在内存里:被 Chrome 回收了(discarded),或者重启后恢复出来还没加载(status 为 unloaded)。点进去都要重新加载
 export const isUnloaded = (tab) => !!tab && (tab.discarded || tab.status === 'unloaded');
 
-// 能手动释放内存:在内存里,而且不是当前正在看的标签页(Chrome 不允许回收当前标签页)
+// 能手动休眠:在内存里,而且不是当前正在看的标签页(Chrome 不允许回收当前标签页)
 export const canDiscard = (tab) => !!tab && !tab.active && !isUnloaded(tab);

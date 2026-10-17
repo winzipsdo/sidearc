@@ -10,13 +10,13 @@ import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, tog
 import { $, faviconFor } from './dom.js';
 import { copyText, showMenu } from './ui.js';
 
-// 内存相关的两项:释放内存(手动回收),以及开关自动回收。tab 为空(项没开着)时不显示
+// 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {
   if (!tab) return [];
   const keep = tab.autoDiscardable === false;
   return [
-    canDiscard(tab) && { icon: 'sleep', label: '释放内存', run: () => discardTabs([tab]) },
-    { icon: keep ? 'unlock' : 'lock', label: keep ? '取消 Keep Alive' : 'Keep Alive', run: () => toggleAutoDiscard(tab) },
+    canDiscard(tab) && { icon: 'sleep', label: '休眠', run: () => discardTabs([tab]) },
+    { icon: keep ? 'unlock' : 'lock', label: keep ? '取消保持唤醒' : '保持唤醒', run: () => toggleAutoDiscard(tab) },
   ];
 }
 
@@ -93,7 +93,7 @@ export function folderMenu(e, id) {
   const folderTabs = folder.items.map((i) => tabs.find((t) => t.id === bind.get(i.id))).filter(Boolean);
   showMenu(e, [
     { icon: 'edit', label: '重命名…', run: () => renameFolder(id) },
-    folderTabs.some(canDiscard) && { icon: 'sleep', label: '释放文件夹里的内存', run: () => discardTabs(folderTabs) },
+    folderTabs.some(canDiscard) && { icon: 'sleep', label: '休眠文件夹里的标签页', run: () => discardTabs(folderTabs) },
     { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleFolderNoHistory(id) },
     '-',
     { icon: 'trash', label: '删除文件夹(保留里面的固定标签)', danger: true, run: () => deleteFolder(id) },
@@ -109,7 +109,7 @@ export function spaceMenu(e, id) {
   showMenu(e, [
     { icon: 'edit', label: '编辑空间…', run: () => editSpace(id) },
     { icon: 'plus', label: '新建空间…', run: addSpace },
-    spaceTabs.some(canDiscard) && { icon: 'sleep', label: '释放这个空间的内存', run: () => discardTabs(spaceTabs) },
+    spaceTabs.some(canDiscard) && { icon: 'sleep', label: '休眠这个空间的标签页', run: () => discardTabs(spaceTabs) },
     id === activeSpace().id && { icon: 'folderPlus', label: '新建文件夹…', run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleNoHistory(id) },
     state.spaces.length > 1 && '-',

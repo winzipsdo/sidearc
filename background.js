@@ -26,7 +26,7 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId:
   });
 });
 
-// 标签页被替换成了新编号(比如释放内存后 Chrome 会换一个新 id):把它自己的数据,
+// 标签页被替换成了新编号(比如休眠后 Chrome 会换一个新 id):把它自己的数据,
 // 以及指向它的引用(挂在它下面的子标签、绑定到它的收藏/固定项)都挪到新编号上,
 // 否则父子关系、所属空间、别名和固定绑定都会丢
 chrome.tabs.onReplaced.addListener((addedId, removedId) =>

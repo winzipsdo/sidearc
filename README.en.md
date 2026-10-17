@@ -46,8 +46,8 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 
 - **Undo**: closing tabs, Clear, unpinning and more can be undone from the toast or with `Ctrl/⌘+Z`, step by step. Tabs closed from Chrome's own tab strip can be restored the same way.
 - **Recently closed**: the clock button at the bottom left lists the last 10 closed tabs; click one to restore it (with its back/forward history) into the current space. The bottom of the list opens Chrome's full history. It uses Chrome's own list, so it covers this browser session only and isn't split by space.
-- **Free up memory**: right-click a tab, favorite or pinned tab to unload it from memory (the tab stays; it reloads when you return). Folders and spaces can unload all their background tabs at once. Unloaded tabs appear dimmed.
-- **Keep Alive**: right-click and choose "Keep Alive" to stop Chrome's Memory Saver from unloading a tab — handy for music or chat. Resets after a browser restart.
+- **Sleep**: hover a tab or an open pinned tab and click the moon button left of the close button, or right-click a tab, favorite or pinned tab and choose "Sleep", to unload it from memory (the tab stays; it reloads when you return). Folders and spaces can put all their background tabs to sleep at once. Sleeping tabs (including ones not yet loaded after a restart) appear dimmed.
+- **Keep awake**: right-click and choose "Keep awake" to stop Chrome's Memory Saver from unloading a tab — handy for music or chat. Resets after a browser restart.
 - **Context menus** on tabs, favorites, pinned items and space dots.
 - **Light and dark mode**, following the system.
 

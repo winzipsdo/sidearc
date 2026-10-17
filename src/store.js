@@ -21,7 +21,7 @@ export let windowId;
 export let query = '';
 export let dragging = null;
 export let renderPending = false;
-// 暂停重画:释放内存时标签页会换编号,换完之前的中间状态不要画出来(否则子标签会先跳到别处再跳回来)
+// 暂停重画:休眠时标签页会换编号,换完之前的中间状态不要画出来(否则子标签会先跳到别处再跳回来)
 export let renderHeld = false;
 
 export const setWindowId = (id) => (windowId = id);
@@ -157,7 +157,7 @@ export function subtreeIds(tabId) {
   return out;
 }
 
-// 标签页换了编号(比如释放内存后):先在内存里把它的空间、别名、父标签,以及指向它的子标签和绑定挪到新编号上,
+// 标签页换了编号(比如休眠后):先在内存里把它的空间、别名、父标签,以及指向它的子标签和绑定挪到新编号上,
 // 这样重画时它还在原来的位置。存储里的数据由后台(background.js)同步挪,这里不写,免得两边同时改
 export function replaceTabId(added, removed) {
   for (const map of [tabSpace, tabAlias, tabParent]) {
