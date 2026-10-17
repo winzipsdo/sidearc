@@ -1,0 +1,275 @@
+<!doctype html>
+<!-- 项目主页,发布在 GitHub Pages。中英文写在一起,data-l 标明语言,main.js 按选择的语言显示其中一种 -->
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sidearc · Chrome 侧边标签栏</title>
+<meta name="description" content="Arc 风格的 Chrome 侧边标签栏:子标签、空间、固定标签和收藏夹,和顶部标签栏保持同步。An Arc-style vertical tabs sidebar for Chrome.">
+<meta name="theme-color" content="#6b7cff">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sidearc · Arc-style vertical tabs for Chrome">
+<meta property="og:description" content="把标签页放到侧边栏:子标签、空间、固定标签和收藏夹。Vertical tabs with child tabs, spaces, pinned tabs and favorites.">
+<meta property="og:url" content="https://winzipsdo.github.io/sidearc/">
+<meta property="og:image" content="https://winzipsdo.github.io/sidearc/assets/intro-poster.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/128.png">
+<link rel="stylesheet" href="style.css">
+<script>
+  // 在页面画出来之前先定好语言:地址里的 ?lang= 优先,其次是上次的选择,再次看浏览器语言
+  (() => {
+    let lang = new URLSearchParams(location.search).get('lang');
+    try {
+      lang = ['zh', 'en'].includes(lang) ? lang : localStorage.getItem('lang');
+    } catch {}
+    if (!['zh', 'en'].includes(lang)) lang = /^zh\b/i.test(navigator.language) ? 'zh' : 'en';
+    document.documentElement.dataset.lang = lang;
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  })();
+</script>
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top"><img src="assets/logo.svg" alt="" width="28" height="28">Sidearc</a>
+    <nav class="links">
+      <a href="#features"><span data-l="zh">功能</span><span data-l="en">Features</span></a>
+      <a href="#install"><span data-l="zh">安装</span><span data-l="en">Install</span></a>
+      <a href="#shortcuts"><span data-l="zh">快捷键</span><span data-l="en">Shortcuts</span></a>
+      <a href="#privacy"><span data-l="zh">隐私</span><span data-l="en">Privacy</span></a>
+    </nav>
+    <button class="lang" id="lang" type="button" aria-label="Switch language"><span data-l="zh">EN</span><span data-l="en">中文</span></button>
+    <a class="gh" href="https://github.com/winzipsdo/sidearc" aria-label="GitHub">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <p class="pill"><span class="dot"></span><span data-l="zh">Chrome 扩展 · 免费开源</span><span data-l="en">Chrome extension · Free and open source</span></p>
+      <h1><span data-l="zh">把标签页<span class="grad">放到侧边栏</span></span><span data-l="en">Your tabs, <span class="grad">in the sidebar</span></span></h1>
+      <p class="lead">
+        <span data-l="zh">Arc 风格的 Chrome 垂直标签栏:子标签、空间、固定标签和收藏夹,和 Chrome 自己的顶部标签栏保持同步。不联网,数据只在本机。</span>
+        <span data-l="en">An Arc-style vertical tabs sidebar for Chrome: child tabs, spaces, pinned tabs and favorites, kept in sync with Chrome's own tab strip. No network requests, and your data stays on your machine.</span>
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#install"><span data-l="zh">安装方法</span><span data-l="en">How to install</span></a>
+        <a class="btn" href="https://github.com/winzipsdo/sidearc/archive/refs/heads/main.zip">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></svg>
+          <span data-l="zh">下载 ZIP</span><span data-l="en">Download ZIP</span>
+        </a>
+        <a class="btn" href="https://github.com/winzipsdo/sidearc">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l1.8 3.7 4 .6-2.9 2.8.7 4L8 11.2 4.4 13.1l.7-4-2.9-2.8 4-.6z"/></svg>
+          <span data-l="zh">在 GitHub 上查看</span><span data-l="en">View on GitHub</span>
+        </a>
+      </div>
+      <p class="meta">Chrome 116+ · Manifest V3 · <span data-l="zh">无依赖 · 无网络请求</span><span data-l="en">No dependencies · No network requests</span> · MIT</p>
+
+      <figure class="player" id="player">
+        <video id="video" src="assets/intro.mp4" poster="assets/intro-poster.jpg" controls playsinline preload="none" width="1920" height="1080"></video>
+        <button class="play" id="play" type="button" hidden>
+          <span class="circle"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg></span>
+          <span class="label"><span data-l="zh">观看介绍视频</span><span data-l="en">Watch the intro</span> · 0:54</span>
+        </button>
+      </figure>
+    </div>
+  </section>
+
+  <section id="features" class="features">
+    <div class="wrap">
+      <article class="feature">
+        <div class="text">
+          <p class="eyebrow"><span data-l="zh">垂直标签栏</span><span data-l="en">Vertical tabs</span></p>
+          <h2><span data-l="zh">标题完整可见,常用的一点即达</span><span data-l="en">Full titles, favorites one click away</span></h2>
+          <p>
+            <span data-l="zh">标签页竖着排:点击切换、中键关闭、拖拽排序。顶部的收藏夹所有空间共用;固定标签关了也留着入口,再点就重新打开,还能分文件夹。</span>
+            <span data-l="en">Tabs stack vertically: click to switch, middle-click to close, drag to reorder. Favorites at the top are shared by every space. Pinned tabs keep their spot when closed, reopen with a click, and can live in folders.</span>
+          </p>
+          <ul>
+            <li><span data-l="zh">搜索栏:输入即过滤,回车打开网址或用默认搜索引擎搜索</span><span data-l="en">Search box: type to filter, press Enter to open a URL or search</span></li>
+            <li><span data-l="zh">相同网址只开一份,已经开着的直接切过去</span><span data-l="en">One tab per address: an open address just switches to its tab</span></li>
+            <li><span data-l="zh">正在发声的标签页,点喇叭就能静音</span><span data-l="en">Tabs playing sound show a speaker you can click to mute</span></li>
+          </ul>
+        </div>
+        <div class="shot">
+          <img data-l="zh" src="store/screenshot-1-tabs.jpg" alt="垂直标签栏、收藏夹与固定标签" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="store/en/screenshot-1-tabs.jpg" alt="Vertical tabs, favorites and pinned tabs" width="1280" height="800" loading="lazy">
+        </div>
+      </article>
+
+      <article class="feature flip">
+        <div class="text">
+          <p class="eyebrow"><span data-l="zh">子标签与别名</span><span data-l="en">Child tabs and aliases</span></p>
+          <h2><span data-l="zh">从哪打开,就挂在哪下面</span><span data-l="en">Links land under the page they came from</span></h2>
+          <p>
+            <span data-l="zh">在网页里点开的链接,自动缩进到原标签页下面;把标签页拖到另一个标签页上也能手动归组,最多两级。给重要的标签页起个别名,显示在标题前,搜索也能搜到。</span>
+            <span data-l="en">Links you open from a page are indented under it. Drag a tab onto another to nest it by hand, up to two levels. Give important tabs an alias: it shows before the title and matches in search.</span>
+          </p>
+          <ul>
+            <li><span data-l="zh">关闭父标签页,子标签一起关闭</span><span data-l="en">Closing a parent closes its children</span></li>
+            <li><span data-l="zh">关错了?按 Ctrl/⌘+Z 一步步撤销</span><span data-l="en">Closed by mistake? Undo step by step with Ctrl/⌘+Z</span></li>
+          </ul>
+        </div>
+        <div class="shot">
+          <img data-l="zh" src="store/screenshot-2-child-tabs.jpg" alt="子标签与别名" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="store/en/screenshot-2-child-tabs.jpg" alt="Child tabs and aliases" width="1280" height="800" loading="lazy">
+        </div>
+      </article>
+
+      <article class="feature">
+        <div class="text">
+          <p class="eyebrow"><span data-l="zh">空间与同步</span><span data-l="en">Spaces and tab strip sync</span></p>
+          <h2><span data-l="zh">用空间分开工作与生活</span><span data-l="en">Spaces keep work and life apart</span></h2>
+          <p>
+            <span data-l="zh">每个空间有自己的主题色、固定标签和标签页,底部圆点一键切换。Chrome 顶部的标签栏始终和侧边栏顺序一致:每个空间是一个标签页分组,当前空间展开,其他空间折叠。</span>
+            <span data-l="en">Each space has its own color, pinned tabs and tabs; switch with the dots at the bottom. Chrome's tab strip always matches the sidebar: each space is a tab group, the current one expanded and the others collapsed.</span>
+          </p>
+          <ul>
+            <li><span data-l="zh">在哪边拖动,另一边都跟着变</span><span data-l="en">Drag on either side and the other one follows</span></li>
+            <li><span data-l="zh">浅色、深色模式,跟随系统</span><span data-l="en">Light and dark mode, following the system</span></li>
+            <li><span data-l="zh">浏览器重启后,空间、子标签、别名自动恢复</span><span data-l="en">Spaces, child tabs and aliases come back after a restart</span></li>
+          </ul>
+        </div>
+        <div class="shot">
+          <img data-l="zh" src="store/screenshot-3-spaces-dark.jpg" alt="空间与深色模式" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="store/en/screenshot-3-spaces-dark.jpg" alt="Spaces and dark mode" width="1280" height="800" loading="lazy">
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="more">
+    <div class="wrap">
+      <h2 class="title"><span data-l="zh">还有这些细节</span><span data-l="en">And the small things</span></h2>
+      <div class="grid">
+        <div class="item" style="--c:#6b7cff">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M6 3.5L3 6.5l3 3"/><path d="M3 6.5h6.5a3.5 3.5 0 010 7H8"/></svg></span>
+          <h3><span data-l="zh">撤销</span><span data-l="en">Undo</span></h3>
+          <p><span data-l="zh">关闭标签页、清理、取消固定都能撤销,Ctrl/⌘+Z 可以连续撤销多步;在顶部标签栏关掉的也能恢复。</span><span data-l="en">Closing tabs, Clear, unpinning and more can be undone step by step with Ctrl/⌘+Z, even tabs closed from the tab strip.</span></p>
+        </div>
+        <div class="item" style="--c:#4fae6e">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/></svg></span>
+          <h3><span data-l="zh">最近关闭</span><span data-l="en">Recently closed</span></h3>
+          <p><span data-l="zh">左下角的时钟按钮列出最近关闭的 10 个标签页,点一下就恢复,前进后退记录也还在。</span><span data-l="en">The clock at the bottom left lists the last 10 closed tabs. Click one to restore it, back/forward history included.</span></p>
+        </div>
+        <div class="item" style="--c:#f0913f">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/></svg></span>
+          <h3><span data-l="zh">释放内存</span><span data-l="en">Free up memory</span></h3>
+          <p><span data-l="zh">右键把标签页从内存里卸掉,标签还在,点回去重新加载;文件夹和空间可以一次释放。</span><span data-l="en">Unload a tab from memory without closing it; it reloads when you return. Folders and spaces can unload all at once.</span></p>
+        </div>
+        <div class="item" style="--c:#e5687a">
+          <span class="ic"><svg viewBox="0 0 16 16"><rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg></span>
+          <h3>Keep Alive</h3>
+          <p><span data-l="zh">不让 Chrome 的「节省内存」回收音乐、聊天这类要在后台一直运行的页面。</span><span data-l="en">Stop Chrome's Memory Saver from unloading tabs that should keep running, like music or chat.</span></p>
+        </div>
+        <div class="item" style="--c:#8a63d2">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/><path d="M3 13L13 3"/></svg></span>
+          <h3><span data-l="zh">不记录历史</span><span data-l="en">No-history spaces</span></h3>
+          <p><span data-l="zh">在这样的空间或文件夹里访问的网址,会立刻从浏览历史中删除。它不是无痕模式,登录状态照常保留。</span><span data-l="en">Pages visited from these spaces or folders are removed from history right away. Not incognito: logins and cookies are kept.</span></p>
+        </div>
+        <div class="item" style="--c:#2f9bd6">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M3 3.5h10"/><path d="M5.5 7.5l5 5M10.5 7.5l-5 5"/></svg></span>
+          <h3><span data-l="zh">批量关闭</span><span data-l="en">Close in bulk</span></h3>
+          <p><span data-l="zh">「清理」一键关闭当前空间里除当前页以外的未固定标签页;也可以右键关闭下方所有标签页。</span><span data-l="en">"Clear" closes every unpinned tab in the space except the active one; or right-click to close all tabs below.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="install">
+    <div class="wrap">
+      <h2 class="title"><span data-l="zh">三步安装</span><span data-l="en">Install in three steps</span></h2>
+      <p class="sub"><span data-l="zh">需要 Chrome 116 或更高版本。界面目前是简体中文。</span><span data-l="en">Requires Chrome 116 or later. The interface is currently in Simplified Chinese.</span></p>
+      <ol class="steps">
+        <li>
+          <h3><span data-l="zh">打开扩展程序页面</span><span data-l="en">Open the extensions page</span></h3>
+          <p><span data-l="zh">在地址栏打开下面的地址,开启右上角的「开发者模式」。</span><span data-l="en">Open this address and turn on Developer mode (top right).</span></p>
+          <div class="code"><code>chrome://extensions</code><button class="copy" type="button" data-copy="chrome://extensions"><span data-l="zh">复制</span><span data-l="en">Copy</span></button></div>
+        </li>
+        <li>
+          <h3><span data-l="zh">加载这个文件夹</span><span data-l="en">Load the folder</span></h3>
+          <p><span data-l="zh"><a href="https://github.com/winzipsdo/sidearc/archive/refs/heads/main.zip">下载 ZIP</a> 并解压,或者用 git 克隆;点「加载已解压的扩展程序」,选择这个文件夹。</span><span data-l="en"><a href="https://github.com/winzipsdo/sidearc/archive/refs/heads/main.zip">Download the ZIP</a> and unzip it, or clone it with git; click "Load unpacked" and choose the folder.</span></p>
+          <div class="code"><code>git clone https://github.com/winzipsdo/sidearc.git</code><button class="copy" type="button" data-copy="git clone https://github.com/winzipsdo/sidearc.git"><span data-l="zh">复制</span><span data-l="en">Copy</span></button></div>
+        </li>
+        <li>
+          <h3><span data-l="zh">打开侧边栏</span><span data-l="en">Open the sidebar</span></h3>
+          <p><span data-l="zh">点工具栏上的 Sidearc 图标,或者按快捷键:</span><span data-l="en">Click the Sidearc toolbar icon, or press:</span></p>
+          <div class="keys"><kbd>Alt+S</kbd><span>Windows / Linux</span><kbd>⌥ Option+S</kbd><span>Mac</span></div>
+        </li>
+      </ol>
+      <div class="tip">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10"/></svg>
+        <p>
+          <span data-l="zh"><b>想让侧边栏像 Arc 一样在左边?</b> 打开 <code>chrome://settings/appearance</code>,把「侧边栏位置」改为「显示在左侧」。这是 Chrome 自己的设置,扩展无法代为修改。</span>
+          <span data-l="en"><b>Want the sidebar on the left, like Arc?</b> Open <code>chrome://settings/appearance</code> and set the side panel position to left. It's Chrome's own setting, so the extension can't change it for you.</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="shortcuts" class="shortcuts">
+    <div class="wrap">
+      <h2 class="title"><span data-l="zh">快捷键</span><span data-l="en">Shortcuts</span></h2>
+      <div class="table">
+        <table>
+          <thead><tr><th><span data-l="zh">操作</span><span data-l="en">Action</span></th><th>Windows / Linux</th><th>Mac</th></tr></thead>
+          <tbody>
+            <tr><td><span data-l="zh">打开 / 关闭侧边栏</span><span data-l="en">Toggle the sidebar</span></td><td><kbd>Alt+S</kbd></td><td><kbd>⌥ Option+S</kbd></td></tr>
+            <tr><td><span data-l="zh">撤销(焦点在侧边栏时)</span><span data-l="en">Undo (sidebar focused)</span></td><td><kbd>Ctrl+Z</kbd></td><td><kbd>⌘+Z</kbd></td></tr>
+            <tr><td><span data-l="zh">搜索栏:跳过匹配项,直接打开网址或搜索</span><span data-l="en">Search box: skip matches, open the URL or search</span></td><td><kbd>Ctrl+Enter</kbd></td><td><kbd>⌘+Enter</kbd></td></tr>
+            <tr><td><span data-l="zh">搜索栏:清空</span><span data-l="en">Search box: clear</span></td><td><kbd>Esc</kbd></td><td><kbd>Esc</kbd></td></tr>
+            <tr><td><span data-l="zh">关闭标签页</span><span data-l="en">Close a tab</span></td><td><span data-l="zh">鼠标中键或 ✕</span><span data-l="en">Middle-click or ✕</span></td><td><span data-l="zh">鼠标中键或 ✕</span><span data-l="en">Middle-click or ✕</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="sub"><span data-l="zh">打开侧边栏的快捷键可以在 <code>chrome://extensions/shortcuts</code> 里修改。</span><span data-l="en">The sidebar shortcut can be changed at <code>chrome://extensions/shortcuts</code>.</span></p>
+    </div>
+  </section>
+
+  <section id="privacy" class="privacy">
+    <div class="wrap">
+      <div class="panel">
+        <span class="shield"><svg viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/><path d="M6 8l1.5 1.5L10.5 6.5"/></svg></span>
+        <h2><span data-l="zh">不联网,数据只在本机</span><span data-l="en">No network. Your data stays local.</span></h2>
+        <p>
+          <span data-l="zh">Sidearc 不收集、不上传任何数据,代码里没有网络请求,也没有统计或第三方脚本。空间、收藏夹、固定标签和别名都保存在浏览器本地,卸载扩展即删除。</span>
+          <span data-l="en">Sidearc collects and uploads nothing: the code makes no network requests and has no analytics or third-party scripts. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall.</span>
+        </p>
+        <details>
+          <summary><span data-l="zh">每项权限用来做什么</span><span data-l="en">What each permission is for</span></summary>
+          <dl class="perms">
+            <dt>sidePanel</dt><dd><span data-l="zh">全部界面都显示在浏览器侧边栏里。</span><span data-l="en">The whole interface lives in the side panel.</span></dd>
+            <dt>tabs</dt><dd><span data-l="zh">读取标签页的标题、网址和图标来列出它们,并执行切换、移动、关闭、新建。</span><span data-l="en">Listing tabs (title, URL, icon) and switching, moving, closing and opening them.</span></dd>
+            <dt>storage</dt><dd><span data-l="zh">在本地保存空间、收藏夹、固定标签、别名,以及重启后恢复用的标签页状态。</span><span data-l="en">Saving spaces, favorites, pinned tabs, aliases and tab state for restoring after a restart.</span></dd>
+            <dt>favicon</dt><dd><span data-l="zh">显示收藏夹和固定标签的网站图标。</span><span data-l="en">Showing site icons for favorites and pinned tabs.</span></dd>
+            <dt>search</dt><dd><span data-l="zh">在搜索栏输入关键词回车时,用浏览器的默认搜索引擎搜索。</span><span data-l="en">Searching with your default engine from the search box.</span></dd>
+            <dt>clipboardWrite</dt><dd><span data-l="zh">「复制链接地址」时把网址写入剪贴板,不读取剪贴板。</span><span data-l="en">"Copy link address". The clipboard is never read.</span></dd>
+            <dt>sessions</dt><dd><span data-l="zh">撤销「关闭标签页」时,从最近关闭的记录里恢复它。</span><span data-l="en">Restoring closed tabs on undo.</span></dd>
+            <dt>history</dt><dd><span data-l="zh">只用于「不记录历史」的空间和文件夹:删除刚在里面访问的网址,不读取其他历史。</span><span data-l="en">Only for no-history spaces and folders: deleting the pages just visited from them.</span></dd>
+            <dt>webNavigation</dt><dd><span data-l="zh">判断新标签页是不是从某个页面里的链接打开的(子标签),以及它的地址是否已经打开(相同地址只开一份)。</span><span data-l="en">Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs).</span></dd>
+            <dt>tabGroups</dt><dd><span data-l="zh">把每个空间显示成顶部标签栏里的一个标签页分组,切换空间时折叠其他空间的分组。</span><span data-l="en">Showing each space as a tab group in Chrome's tab strip and collapsing the other spaces.</span></dd>
+          </dl>
+        </details>
+        <a class="more-link" href="https://github.com/winzipsdo/sidearc/blob/main/PRIVACY.md"><span data-l="zh">阅读完整的隐私政策 →</span><span data-l="en">Read the full privacy policy →</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <span class="brand"><img src="assets/logo.svg" alt="" width="22" height="22">Sidearc</span>
+    <nav>
+      <a href="https://github.com/winzipsdo/sidearc">GitHub</a>
+      <a href="https://github.com/winzipsdo/sidearc/blob/main/CHANGELOG.md"><span data-l="zh">更新日志</span><span data-l="en">Changelog</span></a>
+      <a href="https://github.com/winzipsdo/sidearc/issues"><span data-l="zh">问题反馈</span><span data-l="en">Issues</span></a>
+      <a href="https://github.com/winzipsdo/sidearc/blob/main/LICENSE">MIT License</a>
+    </nav>
+  </div>
+</footer>
+<script src="main.js"></script>
+</body>
+</html>
