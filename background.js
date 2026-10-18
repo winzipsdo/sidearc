@@ -14,14 +14,17 @@ const urlOf = (tab) => tab.url || tab.pendingUrl || '';
 // 最多两级:从子标签里打开的,和它并列挂在同一个父标签页下。
 // 不看 openerTabId:Ctrl+T 和从其他应用点开的链接也带着它(值是当时的前台标签页),
 // 只有页面里的链接或脚本开出的新标签页才会触发这个事件
+// 来源是收藏或固定标签的标签页时,新标签页不做任何标签页的子标签:收藏和固定标签不在列表里,
+// 挂在它们下面既看不出来,还会把再往下打开的页面挤成同级(最多两级)。
 // 来源是收藏的标签页时(收藏所有空间共用)不指定空间,由侧边栏归入当前空间。
 // 这类标签页是用户在网页里特意新开的(Ctrl/⌘+点击、中键、在新标签页打开的链接),地址重复也不合并
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async ({ sourceTabId: opener, tabId }) => {
   keep(tabId);
   const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);
   const space = tabSpaces(state, all).get(opener);
+  const fromItem = Object.keys(all).some((k) => hasPrefix(k, PREFIX.bind) && all[k] === opener);
   await chrome.storage.session.set({
-    [KEY.parent(tabId)]: all[KEY.parent(opener)] ?? opener,
+    ...(!fromItem && { [KEY.parent(tabId)]: all[KEY.parent(opener)] ?? opener }),
     ...(space && space !== ANY_SPACE && { [KEY.space(tabId)]: space }),
   });
 });

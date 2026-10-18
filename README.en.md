@@ -26,7 +26,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
   - Dragging a tab into another space's group in the tab strip moves it to that space; dragging a child tab away from its parent un-nests it.
 - **Child tabs**: links you open from a page are indented under the page they came from.
   - Nest manually by dragging a tab onto another tab; drag it elsewhere, or right-click, to un-nest.
-  - Two levels at most; closing a parent closes its children — except tabs opened from a favorite or pinned tab, which stay open when that tab is closed.
+  - Two levels at most; closing a parent closes its children. Tabs opened from a favorite or pinned tab are not nested under anything; pages opened from them nest under them as usual.
   - Links opened from other apps and brand-new tabs are not nested.
 - **Aliases**: give a tab or pinned item your own short name, shown before the title and matched by search.
 - **No duplicate tabs**: opening an address that is already open in the current space switches to the existing tab instead. Opening the address of a favorite or pinned tab that isn't open yet opens it as that favorite or pinned tab. Tabs you deliberately open in a new tab (`Ctrl/⌘+click`, middle-click) are left alone.
