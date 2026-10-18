@@ -25,7 +25,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
   - Drag in the sidebar and the tab strip follows; drag in the tab strip and the sidebar follows.
   - Dragging a tab into another space's group in the tab strip moves it to that space; dragging a child tab away from its parent un-nests it.
 - **Child tabs**: links you open from a page are indented under the page they came from.
-  - Nest manually by dragging a tab onto another tab; drag it elsewhere, or right-click, to un-nest.
+  - Nest manually by dragging a tab onto another tab; drag it elsewhere, hover a child tab and click the button left of close, or right-click, to un-nest.
   - Two levels at most; closing a parent closes its children. Tabs opened from a favorite or pinned tab are not nested under anything; pages opened from them nest under them as usual.
   - Links opened from other apps and brand-new tabs are not nested.
 - **Aliases**: give a tab or pinned item your own short name, shown before the title and matched by search.

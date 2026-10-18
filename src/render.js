@@ -133,6 +133,8 @@ export function render() {
         sleptLabel(t),
         keepAlive(t, 'keep'),
         (t.audible || muted) && h('button', { class: 'btn' + (t.audible && !muted ? ' playing' : ''), title: muted ? '取消静音' : '静音', data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
+        // 子标签多一个「移出为顶级标签页」;按钮顺序:移出、休眠、关闭,都只在鼠标移上去时出现
+        depth > 0 && h('button', { class: 'btn x', title: '移出为顶级标签页', data: { act: 'unnest' } }, icon('outdent')),
         canDiscard(t) && freeButton(),
         h('button', { class: 'btn x', title: '关闭标签页', data: { act: 'close' } }, icon('close'))
       );

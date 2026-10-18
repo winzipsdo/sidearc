@@ -8,7 +8,7 @@ import { toggleFolder } from './folders.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, refreshSleptLabels, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, state, tabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, setTabParent, state, tabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
@@ -26,6 +26,7 @@ function bindRows(scroll) {
       if (!tab) return;
       if (act === 'close') closeTab(tab);
       else if (act === 'discard') discardTabs([tab]);
+      else if (act === 'unnest') setTabParent(tab.id, null).then(render);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
       else chrome.tabs.update(tab.id, { active: true });
     } else {
