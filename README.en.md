@@ -48,7 +48,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 - **Keep awake**: right-click and choose "Keep awake" to stop Chrome's Memory Saver from unloading a tab — handy for music or chat. Resets after a browser restart.
 - **Context menus** on tabs, favorites, pinned items and space dots.
 - **Light and dark mode**, following the system.
-- **English / 中文**: follows Chrome's UI language by default (Simplified Chinese shows Chinese, anything else English); pick one manually from the gear (Settings) button at the bottom right.
+- **English / 中文**: follows Chrome's UI language by default (Simplified Chinese shows Chinese, anything else English); pick one manually from the Settings button at the bottom right (it appears when you hover the bottom bar).
 
 ## Install
 

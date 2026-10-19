@@ -8,7 +8,7 @@
 
 ### 新增
 
-- **英文界面。** 默认跟随 Chrome 的界面语言(简体中文显示中文,其他显示英文);鼠标移到底部时右下角会出现齿轮,可以手动选语言。 [`fd901b4`](https://github.com/winzipsdo/sidearc/commit/fd901b4)
+- **英文界面。** 默认跟随 Chrome 的界面语言(简体中文显示中文,其他显示英文);鼠标移到底部时右下角会出现设置按钮,可以手动选语言。 [`fd901b4`](https://github.com/winzipsdo/sidearc/commit/fd901b4) [`9e7e0a6`](https://github.com/winzipsdo/sidearc/commit/9e7e0a6)
 
 ### 修复
 
