@@ -82,7 +82,8 @@ header { padding: 12px 12px 8px; }
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 4px 12px 12px;
+  /* 底部多留一截:滚到最下面时,最后几行不会被底部的提示条挡住 */
+  padding: 4px 12px 56px;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
