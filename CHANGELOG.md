@@ -8,11 +8,17 @@
 
 ### 新增
 
+- **多选后右键可以一起操作。** 右键选中的任意一个,可以把这一批一起关闭(可撤销)、休眠或移到别的空间。 [`f0a5bc8`](https://github.com/winzipsdo/sidearc/commit/f0a5bc8)
 - **多选标签页。** `Ctrl/⌘+点击`选中多个标签页(和顶部标签栏的多选同步),拖动其中一个就一起移动;点空白处或按 Esc 取消。 [`3e548d4`](https://github.com/winzipsdo/sidearc/commit/3e548d4)
 - **英文界面。** 默认跟随 Chrome 的界面语言(简体中文显示中文,其他显示英文);鼠标移到底部时右下角会出现设置按钮,可以手动选语言。 [`fd901b4`](https://github.com/winzipsdo/sidearc/commit/fd901b4) [`9e7e0a6`](https://github.com/winzipsdo/sidearc/commit/9e7e0a6)
 
+### 变更
+
+- **右键菜单的文案和 Chrome 自己的标签页菜单对齐。** 「关闭」「复制」「固定」「关闭下方标签页」(英文是 Close、Duplicate、Pin);行上关闭按钮的提示也叫「关闭」。 [`f0a5bc8`](https://github.com/winzipsdo/sidearc/commit/f0a5bc8)
+
 ### 修复
 
+- **列表滚到最下面时,最后几行会被底部的提示条挡住。** 现在底部多留了一截空白。 [`7eb3a53`](https://github.com/winzipsdo/sidearc/commit/7eb3a53)
 - **书签栏上同名的标签页分组越积越多。** 窗口里只有一个空间的标签页时不再建分组,临时开的窗口关掉后就不会留下分组。 [`7e9ce8f`](https://github.com/winzipsdo/sidearc/commit/7e9ce8f)
 - **把标签页拖到地址栏上松手后,那一行一直是半透明的,列表也不再更新。** 现在鼠标回到侧边栏就恢复。 [`8a25235`](https://github.com/winzipsdo/sidearc/commit/8a25235)
 - **Sidearc 会拆掉别人建的标签页分组。** 你自己或别的扩展(比如 Claude)建的分组现在原样保留,整组排在空间分组后面。 [`9a2d129`](https://github.com/winzipsdo/sidearc/commit/9a2d129)
