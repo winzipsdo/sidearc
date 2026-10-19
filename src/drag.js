@@ -183,7 +183,8 @@ export function bindDrag() {
     setDragging({ kind: el.dataset.kind, id: el.dataset.id });
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', el.title || '');
-    requestAnimationFrame(() => el.classList.add('dragging'));
+    // 下一帧再变半透明(否则拖拽的影子也是半透明的);那时拖拽要是已经结束了就不加
+    requestAnimationFrame(() => dragging && isDragged(el) && el.classList.add('dragging'));
   });
   document.addEventListener('dragover', (e) => {
     if (!dragging) return;
@@ -230,5 +231,8 @@ export function bindDrag() {
     finishDrag();
     await performDrop(d, zone, refId, intoId);
   });
+  // 拖到 Chrome 自己的界面(比如地址栏)上松手时,侧边栏收不到 dragend,会一直停在拖拽中:被拖的行一直是半透明,列表也一直不重画。
+  // 拖拽过程中页面收不到鼠标移动和点击,所以拖完之后鼠标再在侧边栏里动一下或点一下,就说明拖拽早已结束
+  for (const type of ['mousemove', 'mousedown']) document.addEventListener(type, () => dragging && finishDrag());
   document.addEventListener('dragend', finishDrag);
 }
