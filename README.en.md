@@ -92,7 +92,7 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 
 ## Known limitations
 
-- Sidearc manages the order and groups of Chrome's tab strip: tab groups you created yourself are reorganized into space groups. Chrome's natively pinned tabs are left alone on the far left. Tab groups support only 9 colors, so each space uses the closest one.
+- Sidearc manages the order of its space groups in Chrome's tab strip. Tab groups created by you or by other extensions (such as Claude) are left alone — they're kept intact and placed after the space groups. Chrome's natively pinned tabs stay on the far left. Tab groups support only 9 colors, so each space uses the closest one.
 - Spaces, child tabs, aliases and pins are matched back to tabs by URL and position after a restart, so Chrome has to restore your previous tabs on startup.
 - "No duplicate tabs" can only decide once the new tab's address is known, so a duplicate may flash briefly before closing.
 

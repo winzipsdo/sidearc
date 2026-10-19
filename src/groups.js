@@ -1,6 +1,8 @@
 // 后台:让顶部标签栏和侧边栏保持一致。每个空间在每个窗口里对应一个标签页分组,
 // 当前空间的分组展开、其他空间的折叠;收藏的标签页不进分组,放在最左边。
 // 顺序以侧边栏为准(见 logic.js 的 buildLayout);在顶部标签栏里拖进别的分组 = 移到那个空间。
+// 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
+// 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
 import { buildLayout, groupColor, pinnedItems } from './logic.js';
 import { hasPrefix, KEY, PREFIX } from './protocol.js';
@@ -22,7 +24,6 @@ async function syncWindow(windowId, state, all) {
   const remove = [];
   const allTabs = await chrome.tabs.query({ windowId });
   const nativePinned = allTabs.filter((t) => t.pinned).length;
-  const tabs = allTabs.filter((t) => !t.pinned);
   const groups = await chrome.tabGroups.query({ windowId });
 
   // 分组 -> 空间:记过的;或者和某个空间同名的(浏览器重启后分组 id 会变,标题还在)
@@ -35,6 +36,9 @@ async function syncWindow(windowId, state, all) {
       if (all[KEY.group(g.id)] !== sid) set[KEY.group(g.id)] = sid;
     }
   }
+  // 要管的标签页:不是原生固定的,也不在别人的分组里
+  const foreign = (t) => t.groupId !== -1 && !groupSpace.has(t.groupId);
+  const tabs = allTabs.filter((t) => !t.pinned && !foreign(t));
 
   // 绑定到收藏/固定项的标签页
   const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
@@ -60,13 +64,15 @@ async function syncWindow(windowId, state, all) {
   const groupOfSpace = new Map([...groupSpace].map(([g, s]) => [s, g]));
   const wantGroup = (c) => (c.spaceId == null ? -1 : groupOfSpace.get(c.spaceId));
   const byId = new Map(tabs.map((t) => [t.id, t]));
+  // 排好了 = 要管的标签页按顺序排在前面,别人的分组整组在最后面
+  const strip = allTabs.filter((t) => !t.pinned).map((t) => t.id);
   const settled =
-    order.join() === tabs.map((t) => t.id).join() &&
+    strip.slice(0, order.length).join() === order.join() &&
     layout.every((c) => c.ids.every((id) => byId.get(id).groupId === (wantGroup(c) ?? NaN)));
 
   if (!settled) {
     own(2000);
-    // 先把分组不对的拿出来,再从左到右一块块放好、分好组
+    // 先把分组不对的拿出来,再从左到右一块块放好、分好组。别人的分组会被挤到最后面,但不会被拆开
     const wrong = layout.flatMap((c) => c.ids.filter((id) => byId.get(id).groupId !== -1 && byId.get(id).groupId !== wantGroup(c)));
     if (wrong.length) await chrome.tabs.ungroup(wrong).catch(() => {});
     let index = nativePinned;
