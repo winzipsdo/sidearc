@@ -1,6 +1,6 @@
 # Sidearc
 
-[简体中文](README.md) | English
+[简体中文](README.md) | English | [Website](https://winzipsdo.github.io/sidearc/)
 
 An Arc-style vertical tabs sidebar for Chrome: child tabs, spaces, pinned tabs and favorites, kept in sync with Chrome's own tab strip.
 
@@ -107,6 +107,14 @@ npm test
 Tests use Node's built-in test runner (Node 20+), no dependencies. `npm run screenshots` regenerates the store screenshots and promo tiles in Chinese and English (needs Chrome installed).
 
 See [CHANGELOG.md](CHANGELOG.md) for changes.
+
+## Releasing
+
+Bump `version` in `manifest.json`, run `npm test` and `npm run pack` (writes `dist/sidearc-<version>.zip`), commit, tag `v<version>`, push with `--tags`, attach the zip to a GitHub Release and upload it to the Chrome Web Store. Details are in the Chinese README.
+
+## Website
+
+<https://winzipsdo.github.io/sidearc/> is published from the `gh-pages` branch, which also keeps the site and intro-video sources under `source/` (see its `source/README.md`).
 
 ## License
 

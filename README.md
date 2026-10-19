@@ -1,6 +1,6 @@
 # Sidearc
 
-简体中文 | [English](README.en.md)
+简体中文 | [English](README.en.md) | [主页](https://winzipsdo.github.io/sidearc/)
 
 把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。
 
@@ -128,6 +128,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `PRIVACY.md` | 隐私政策 |
 | `LICENSE` | 开源许可证(MIT) |
 | `CHANGELOG.md` | 更新日志 |
+| `scripts/pack.js` | 打包上架用的 zip(`npm run pack`) |
 
 ## 开发
 
@@ -143,6 +144,49 @@ npm test
 
 ```bash
 npm run screenshots
+```
+
+## 发布新版本
+
+1. 改 `manifest.json` 里的 `version`(新功能加第二位,只修问题加第三位,比如 1.4.0 → 1.5.0 / 1.4.1)。
+2. 运行测试并打包:
+
+   ```bash
+   npm test
+   ```
+
+   ```bash
+   npm run pack
+   ```
+
+   生成 `dist/sidearc-<版本号>.zip`(不在 git 里),只包含扩展运行需要的文件。
+3. 提交版本号改动,打上同名标签并推送:
+
+   ```bash
+   git tag v<版本号>
+   ```
+
+   ```bash
+   git push origin main --tags
+   ```
+
+4. 在 GitHub 的 Releases 页面基于这个标签新建一个 Release,把 zip 作为附件上传,说明里贴上 `CHANGELOG.md` 里对应日期的条目。
+5. 在 [Chrome 应用商店开发者信息中心](https://chrome.google.com/webstore/devconsole) 上传同一个 zip;截图、说明等上架资料见 [store/listing.md](store/listing.md)。
+
+## 主页(GitHub Pages)
+
+主页 <https://winzipsdo.github.io/sidearc/> 由 `gh-pages` 分支直接发布:分支根目录的 `index.html`、`style.css`、`main.js`、`assets/`(含介绍视频)就是主页本身,`store/`、`icons/` 是从 `main` 复制过去的截图和图标。生成主页和介绍视频的脚本也放在这个分支的 `source/` 下,详细步骤见该分支的 [source/README.md](https://github.com/winzipsdo/sidearc/blob/gh-pages/source/README.md)。
+
+常见的维护场景:
+
+- **改主页文字**:切到 `gh-pages` 分支,直接改 `index.html`,提交推送后几分钟内生效。
+- **界面或截图变了**:先在 `main` 上运行 `npm run screenshots` 并提交,再把 `store/screenshot-*.jpg` 和 `store/en/screenshot-*.jpg` 复制到 `gh-pages` 分支的同名位置,提交推送。
+- **新功能要进介绍视频**:按 `source/README.md` 的步骤重新生成视频。视频脚本会用到 `main` 上的 `sidepanel.css` 和 `store/screenshots/brand-icons.js`,所以要在 `main` 的检出目录里临时搭一个 `site/` 来跑,跑完删掉,不要提交到 `main`。
+
+不建议在 `main` 的工作区里直接切换到 `gh-pages` 分支来改:两个分支的文件完全不同。可以另开一个工作目录:
+
+```bash
+git worktree add ../sidearc-pages gh-pages
 ```
 
 ## 许可证

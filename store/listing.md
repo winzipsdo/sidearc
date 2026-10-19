@@ -4,7 +4,7 @@
 
 ## 上传的文件
 
-- 扩展包:`dist/sidearc-1.2.0.zip`(不在 git 里;重新打包见文末)
+- 扩展包:`dist/sidearc-<版本号>.zip`,用 `npm run pack` 生成(不在 git 里)
 - 商店图标:`icons/128.png`
 - 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`
 - 小型宣传图(440×280):`store/promo-small-440x280.jpg`
@@ -111,10 +111,10 @@ Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理�
 
 ## 重新打包
 
-在项目根目录运行(Windows 自带的 tar,生成的 zip 路径使用正斜杠):
+先把 `manifest.json` 里的 `version` 调高,再运行:
 
 ```bash
-tar -a -cf dist/sidearc-<版本号>.zip manifest.json background.js sidepanel.html sidepanel.css sidepanel.js boot.js icons src
+npm run pack
 ```
 
-每次提交新版本前,先把 `manifest.json` 里的 `version` 调高。
+会生成 `dist/sidearc-<版本号>.zip`,只包含扩展运行需要的文件。完整的发版步骤见 README 的「发布新版本」。
