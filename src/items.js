@@ -1,5 +1,6 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
+import { t } from './i18n.js';
 import { addressOf, pinnedItems, toUrl } from './logic.js';
 import { render, schedule } from './render.js';
 import {
@@ -77,15 +78,15 @@ export async function itemFromTab(tab) {
 // 把标签页当前所在的页面另存为一个新的收藏/固定项。标签页本身不动:不绑定到新项,原来绑定的固定标签也照旧
 export async function savePageAsItem(tab, zone) {
   const list = zone === 'fav' ? state.favorites : activeSpace().pinned;
-  const where = zone === 'fav' ? '收藏夹' : '当前空间的固定标签';
+  const where = zone === 'fav' ? t('whereFavs') : t('wherePins');
   const address = addressOf(tab.url) ?? tab.url;
   const existing = zone === 'fav' ? list : pinnedItems(activeSpace());
-  if (existing.some((i) => (addressOf(i.url) ?? i.url) === address)) return toast(`这个页面已经在${where}里了`);
+  if (existing.some((i) => (addressOf(i.url) ?? i.url) === address)) return toast(t('alreadySaved', { where }));
   const item = { id: uid(), title: tab.title || tab.url, url: tab.url };
   list.push(item);
   await save();
   render();
-  pushUndo(`已把「${item.title}」加入${where}`, async () => {
+  pushUndo(t('saved', { title: item.title, where }), async () => {
     // 保存后状态会被存储同步替换成新对象,所以按 id 找,而不是用上面的 list
     if (!takeItem(item.id)) return;
     await save();
@@ -113,7 +114,7 @@ export async function moveItemToSpace(id, spaceId) {
   if (tabId != null) await setTabSpace(tabId, spaceId);
   await save();
   render();
-  pushUndo(`已把「${item.alias || item.title}」移到空间「${target.name}」`, async () => {
+  pushUndo(t('movedToSpace', { title: item.alias || item.title, name: target.name }), async () => {
     // 放回原来的空间和位置(原来在文件夹里就放回文件夹;文件夹没了就放顶层)
     const space = state.spaces.find((s) => s.id === from.spaceId);
     const arr = space?.pinned.find((f) => f.id === from.folderId)?.items ?? space?.pinned;
@@ -154,7 +155,7 @@ export async function removeItem(id, openIfClosed) {
   render();
 
   // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
-  pushUndo(`已${kind === 'fav' ? '从收藏夹移除' : '取消固定'}「${item.alias || item.title}」`, async () => {
+  pushUndo(t(kind === 'fav' ? 'removedFromFavs' : 'unpinned', { title: item.alias || item.title }), async () => {
     // 原来在文件夹里就放回文件夹;文件夹已经没了就放到固定区顶层
     const space = state.spaces.find((s) => s.id === spaceId);
     const arr = kind === 'fav' ? state.favorites : (space?.pinned.find((f) => f.id === folderId)?.items ?? space?.pinned);
@@ -173,10 +174,10 @@ export async function removeItem(id, openIfClosed) {
 export async function editItem(id) {
   const item = findItem(id)?.item;
   if (!item) return;
-  const out = await ask('编辑', [
-    { key: 'alias', label: '别名(可留空)', value: item.alias, optional: true },
-    { key: 'title', label: '名称(留空则还原为网页标题)', value: item.title, optional: true },
-    { key: 'url', label: '网址', value: item.url },
+  const out = await ask(t('editItemTitle'), [
+    { key: 'alias', label: t('aliasOptional'), value: item.alias, optional: true },
+    { key: 'title', label: t('titleOptional'), value: item.title, optional: true },
+    { key: 'url', label: t('url'), value: item.url },
   ]);
   const target = out && findItem(id)?.item;
   if (!target) return;

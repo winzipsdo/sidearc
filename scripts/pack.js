@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url));
-const FILES = ['manifest.json', 'background.js', 'sidepanel.html', 'sidepanel.css', 'sidepanel.js', 'boot.js', 'icons', 'src'];
+const FILES = ['manifest.json', 'background.js', 'sidepanel.html', 'sidepanel.css', 'sidepanel.js', 'boot.js', '_locales', 'icons', 'src'];
 
 const { version } = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
 for (const f of FILES) if (!existsSync(join(ROOT, f))) throw new Error(`缺少 ${f}`);

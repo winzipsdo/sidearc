@@ -50,6 +50,7 @@ Arc 风格的 Chrome 侧边标签栏。基于 Manifest V3 和 `chrome.sidePanel`
 - **保持唤醒**:右键选「保持唤醒」,Chrome 的「节省内存」就不会回收这个标签页,适合音乐、聊天这类要在后台一直运行的页面。这个设置浏览器重启后会恢复。
 - **右键菜单**:标签页、收藏/固定项、空间圆点都有,可以复制链接地址、移到别的空间等。
 - **浅色 / 深色模式**:跟随系统。
+- **中文 / English**:默认跟随 Chrome 的界面语言(简体中文显示中文,其他显示英文),也可以点右下角的齿轮(设置)手动选。
 
 ## 安装
 
@@ -119,9 +120,11 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `src/groups.js` | 后台:让顶部标签栏的顺序和分组跟侧边栏一致 |
 | `src/folders.js` | 固定标签里的文件夹 |
 | `src/dom.js` | 生成页面元素的小工具 |
+| `src/i18n.js` | 界面文案(中文和英文)和语言选择 |
+| `_locales/` | 扩展名称下的简介、快捷键说明的中英文(由 Chrome 按浏览器语言显示) |
 | `src/logic.js` | 不碰浏览器的纯逻辑(网址判断、树形排列、拖拽落点、文件夹等) |
 | `src/protocol.js` | 侧边栏和后台共用的约定:会话存储的键、消息格式 |
-| `test/` | `src/logic.js` 和 `src/protocol.js` 的测试 |
+| `test/` | `src/logic.js`、`src/protocol.js` 和 `src/i18n.js` 的测试 |
 | `icons/` | 扩展图标 |
 | `store/` | Chrome 应用商店的上架资料、截图和宣传图;`store/screenshots/make.js` 用来重新生成截图 |
 | `README.en.md` | 英文版说明 |

@@ -1,13 +1,14 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, isAway, isUnloaded, pinnedItems } from './logic.js';
+import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems } from './logic.js';
 import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, tabSpace, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor } from './dom.js';
+import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
 import { copyText, showMenu } from './ui.js';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
@@ -18,12 +19,12 @@ function memoryItems(tab) {
     // 不能休眠时置灰,鼠标提示里说明原因
     {
       icon: 'sleep',
-      label: '休眠',
+      label: t('sleep'),
       disabled: !canDiscard(tab),
-      title: tab.active ? '正在看的标签页不能休眠' : isUnloaded(tab) ? '已经在休眠了' : null,
+      title: tab.active ? t('sleepCurrentTip') : isUnloaded(tab) ? t('alreadyAsleepTip') : null,
       run: () => discardTabs([tab]),
     },
-    { icon: keep ? 'unlock' : 'lock', label: keep ? '取消保持唤醒' : '保持唤醒', run: () => toggleAutoDiscard(tab) },
+    { icon: keep ? 'unlock' : 'lock', label: keep ? t('stopKeepAwake') : t('keepAwake'), run: () => toggleAutoDiscard(tab) },
   ];
 }
 
@@ -33,22 +34,22 @@ export function tabMenu(e, tab) {
   const below = visible.slice(visible.findIndex((t) => t.id === tab.id) + 1);
   const children = listedTabs().filter((t) => tabParent.get(t.id) === tab.id).map((t) => t.id);
   showMenu(e, [
-    { icon: 'edit', label: tabAlias.has(tab.id) ? '修改别名…' : '设置别名…', run: () => editTabAlias(tab.id) },
+    { icon: 'edit', label: tabAlias.has(tab.id) ? t('editAlias') : t('setAlias'), run: () => editTabAlias(tab.id) },
     '-',
-    { icon: 'pin', label: '固定标签页', title: '固定到当前空间,只在这个空间里显示', run: () => addItemFromTab(tab, 'pin') },
-    { icon: 'star', label: '添加到收藏夹', run: () => addItemFromTab(tab, 'fav') },
+    { icon: 'pin', label: t('pinTab'), title: t('pinTabTip'), run: () => addItemFromTab(tab, 'pin') },
+    { icon: 'star', label: t('addToFavs'), run: () => addItemFromTab(tab, 'fav') },
     '-',
-    { icon: 'link', label: '复制链接地址', run: () => copyText(tab.url, '已复制链接地址') },
-    { icon: 'copy', label: '复制标签页', run: () => chrome.tabs.duplicate(tab.id) },
+    { icon: 'link', label: t('copyLink'), run: () => copyText(tab.url, t('copied')) },
+    { icon: 'copy', label: t('duplicateTab'), run: () => chrome.tabs.duplicate(tab.id) },
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
-    (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? '取消静音' : '静音', run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
+    (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
     // 移动:子标签层级,以及移到别的空间
     '-',
-    listedParent(tab.id) != null && { icon: 'outdent', label: '移出为顶级标签页', run: () => setTabParent(tab.id, null).then(render) },
+    listedParent(tab.id) != null && { icon: 'outdent', label: t('unnest'), run: () => setTabParent(tab.id, null).then(render) },
     children.length > 0 && {
       icon: 'ungroup',
-      label: '解除所有子标签',
+      label: t('releaseChildren'),
       run: async () => {
         for (const id of children) await setTabParent(id, null);
         render();
@@ -56,10 +57,10 @@ export function tabMenu(e, tab) {
     },
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
-      .map((s) => ({ icon: 'dot', color: s.color, label: `移到空间「${s.name}」`, run: () => moveTabToSpace(tab.id, s.id) })),
+      .map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveTabToSpace(tab.id, s.id) })),
     '-',
-    { icon: 'close', label: '关闭标签页', run: () => closeTab(tab) },
-    below.length > 0 && { icon: 'closeBelow', label: '关闭下方所有标签页', danger: true, run: () => closeWithUndo(below, `已关闭 ${below.length} 个标签页`) },
+    { icon: 'close', label: t('close'), run: () => closeTab(tab) },
+    below.length > 0 && { icon: 'closeBelow', label: t('closeBelow'), danger: true, run: () => closeWithUndo(below, t('closedTabs', { n: below.length })) },
   ]);
 }
 
@@ -67,33 +68,32 @@ export function itemMenu(e, { item, kind, space, folder }) {
   const tab = tabs.find((t) => t.id === bind.get(item.id));
   // 标签页点进了别的页面
   const away = tab && isAway(item.url, tab.url);
-  const what = kind === 'fav' ? '收藏' : '固定';
   showMenu(e, [
-    { icon: 'edit', label: '编辑别名…', run: () => editItem(item.id) },
-    { icon: 'link', label: '复制链接地址', run: () => copyText(tab?.url || item.url, '已复制链接地址') },
-    away && { icon: 'back', label: `回到${what}地址`, run: () => backToItem(item) },
+    { icon: 'edit', label: t('editItemAlias'), run: () => editItem(item.id) },
+    { icon: 'link', label: t('copyLink'), run: () => copyText(tab?.url || item.url, t('copied')) },
+    away && { icon: 'back', label: kind === 'fav' ? t('backToFav') : t('backToPin'), run: () => backToItem(item) },
     // 对当前页面的操作:另存一份,或者拿它替换原来的地址;标签页本身不动
     away && '-',
-    away && { header: '当前页面' },
-    away && { icon: 'star', label: '加入收藏夹', run: () => savePageAsItem(tab, 'fav') },
-    away && { icon: 'pin', label: '固定标签页', title: '固定到当前空间,只在这个空间里显示', run: () => savePageAsItem(tab, 'pin') },
-    away && { icon: 'swap', label: `替换原来的${what}地址`, run: () => syncItemToTab(item.id, tab) },
+    away && { header: t('currentPage') },
+    away && { icon: 'star', label: t('saveToFavs'), run: () => savePageAsItem(tab, 'fav') },
+    away && { icon: 'pin', label: t('pinTab'), title: t('pinTabTip'), run: () => savePageAsItem(tab, 'pin') },
+    away && { icon: 'swap', label: kind === 'fav' ? t('replaceFavUrl') : t('replacePinUrl'), run: () => syncItemToTab(item.id, tab) },
     '-',
-    bind.has(item.id) && { icon: 'minus', label: '关闭标签页', run: () => closeItemTab(item) },
+    bind.has(item.id) && { icon: 'minus', label: t('close'), run: () => closeItemTab(item) },
     ...memoryItems(tab),
     // 移动:收藏和固定标签之间、文件夹进出、移到别的空间
     '-',
     kind === 'fav'
-      ? { icon: 'move', label: '移到固定标签', title: '移到当前空间的固定标签', run: () => moveItem(item.id, 'pin') }
-      : { icon: 'move', label: '移到收藏夹', run: () => moveItem(item.id, 'fav') },
-    folder && { icon: 'outdent', label: '移出文件夹', run: () => moveToFolder(item.id, null) },
+      ? { icon: 'move', label: t('moveToPins'), title: t('moveToPinsTip'), run: () => moveItem(item.id, 'pin') }
+      : { icon: 'move', label: t('moveToFavs'), run: () => moveItem(item.id, 'fav') },
+    folder && { icon: 'outdent', label: t('moveOutOfFolder'), run: () => moveToFolder(item.id, null) },
     ...(kind === 'pin'
-      ? state.spaces.filter((s) => s.id !== space.id).map((s) => ({ icon: 'dot', color: s.color, label: `移到空间「${s.name}」`, run: () => moveItemToSpace(item.id, s.id) }))
+      ? state.spaces.filter((s) => s.id !== space.id).map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveItemToSpace(item.id, s.id) }))
       : []),
     // 字比较多,放在这一组最后
-    kind === 'pin' && { icon: 'folderPlus', label: '新建文件夹并移入…', run: () => createFolder(item.id) },
+    kind === 'pin' && { icon: 'folderPlus', label: t('newFolderWithItem'), run: () => createFolder(item.id) },
     '-',
-    { icon: kind === 'fav' ? 'trash' : 'unpin', label: kind === 'fav' ? '从收藏夹移除' : '取消固定', danger: true, run: () => removeItem(item.id, false) },
+    { icon: kind === 'fav' ? 'trash' : 'unpin', label: kind === 'fav' ? t('removeFromFavs') : t('unpin'), danger: true, run: () => removeItem(item.id, false) },
   ]);
 }
 
@@ -102,11 +102,11 @@ export function folderMenu(e, id) {
   if (!folder) return;
   const folderTabs = folder.items.map((i) => tabs.find((t) => t.id === bind.get(i.id))).filter(Boolean);
   showMenu(e, [
-    { icon: 'edit', label: '重命名…', run: () => renameFolder(id) },
-    { icon: 'sleep', label: '休眠文件夹内所有标签', disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : '没有可以休眠的标签页', run: () => discardTabs(folderTabs) },
-    { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleFolderNoHistory(id) },
+    { icon: 'edit', label: t('rename'), run: () => renameFolder(id) },
+    { icon: 'sleep', label: t('sleepFolder'), disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(folderTabs) },
+    { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleFolderNoHistory(id) },
     '-',
-    { icon: 'trash', label: '删除文件夹(保留里面的固定标签)', danger: true, run: () => deleteFolder(id) },
+    { icon: 'trash', label: t('deleteFolder'), danger: true, run: () => deleteFolder(id) },
   ]);
 }
 
@@ -117,23 +117,31 @@ export function spaceMenu(e, id) {
   const pinnedTabIds = new Set(space ? pinnedItems(space).map((i) => bind.get(i.id)) : []);
   const spaceTabs = tabs.filter((t) => pinnedTabIds.has(t.id) || (!byTab.has(t.id) && tabSpace.get(t.id) === id));
   showMenu(e, [
-    { icon: 'edit', label: '编辑空间…', run: () => editSpace(id) },
-    { icon: 'plus', label: '新建空间…', run: addSpace },
-    { icon: 'sleep', label: '休眠空间内所有标签', disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : '没有可以休眠的标签页', run: () => discardTabs(spaceTabs) },
-    id === activeSpace().id && { icon: 'folderPlus', label: '新建文件夹…', run: () => createFolder() },
-    { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? '关闭「不记录历史」' : '开启「不记录历史」', run: () => toggleNoHistory(id) },
+    { icon: 'edit', label: t('editSpace'), run: () => editSpace(id) },
+    { icon: 'plus', label: t('newSpaceMenu'), run: addSpace },
+    { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },
+    id === activeSpace().id && { icon: 'folderPlus', label: t('newFolderMenu'), run: () => createFolder() },
+    { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleNoHistory(id) },
     state.spaces.length > 1 && '-',
-    state.spaces.length > 1 && { icon: 'trash', label: '删除空间', danger: true, run: () => deleteSpace(id) },
+    state.spaces.length > 1 && { icon: 'trash', label: t('deleteSpace'), danger: true, run: () => deleteSpace(id) },
   ]);
+}
+
+// 右下角的设置按钮。目前只有界面语言:存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+export function settingsMenu(e) {
+  // 贴着按钮上方、右对齐弹出,不盖住底部这一行
+  const anchor = e.currentTarget.getBoundingClientRect();
+  const pick = (value, label) => ({ icon: langPref() === value ? 'check' : null, label, run: () => chrome.storage.local.set({ lang: value }) });
+  showMenu(e, [{ header: t('language') }, pick('auto', t('langAuto')), pick('zh', LANGS.zh), pick('en', LANGS.en)]);
+  const menu = $('#menu');
+  menu.dataset.from = 'settings';
+  menu.style.left = Math.max(4, anchor.right - menu.offsetWidth) + 'px';
+  menu.style.top = Math.max(4, anchor.top - menu.offsetHeight - 6) + 'px';
 }
 
 // 「多久以前」:Chrome 记的关闭时间是秒
 function ago(seconds) {
-  const min = Math.floor((Date.now() / 1000 - seconds) / 60);
-  if (min < 1) return '刚刚';
-  if (min < 60) return `${min} 分钟前`;
-  if (min < 60 * 24) return `${Math.floor(min / 60)} 小时前`;
-  return `${Math.floor(min / 60 / 24)} 天前`;
+  return t('ago', { duration: formatDuration(durationParts(Date.now() - seconds * 1000)) });
 }
 
 // 最近关闭的标签页:用 Chrome 自己的记录(只有本次启动以来的),不分空间;整个窗口的关闭记录跳过。
@@ -144,7 +152,7 @@ export async function recentMenu(e) {
   const pos = { clientX: anchor.left, clientY: anchor.top, preventDefault() {} };
   const closed = (await chrome.sessions.getRecentlyClosed({ maxResults: 25 }).catch(() => [])).filter((s) => s.tab).slice(0, 10);
   showMenu(pos, [
-    { header: closed.length ? '最近关闭' : '没有最近关闭的标签页' },
+    { header: closed.length ? t('recentlyClosed') : t('noRecentlyClosed') },
     ...closed.map(({ tab, lastModified }) => ({
       img: tab.favIconUrl && /^(https?|data):/.test(tab.favIconUrl) ? tab.favIconUrl : faviconFor(tab.url || 'about:blank'),
       label: tab.title || tab.url,
@@ -157,7 +165,7 @@ export async function recentMenu(e) {
     {
       icon: 'external',
       link: true,
-      label: '打开完整历史记录',
+      label: t('openHistory'),
       note: /Mac/i.test(navigator.platform) ? '⌘Y' : 'Ctrl+H',
       run: () => chrome.tabs.create({ url: 'chrome://history', windowId }),
     },

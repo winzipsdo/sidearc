@@ -6,5 +6,10 @@ try {
     for (const [id, html] of Object.entries(snap.html)) document.getElementById(id).innerHTML = html;
     document.documentElement.style.setProperty('--accent', snap.accent);
     document.getElementById('favs').style.setProperty('--cols', snap.cols);
+    if (snap.lang) document.documentElement.lang = snap.lang;
+    const text = snap.text || {};
+    for (const el of document.querySelectorAll('[data-i18n]')) el.textContent = text[el.dataset.i18n] ?? el.textContent;
+    for (const el of document.querySelectorAll('[data-i18n-title]')) el.title = text[el.dataset.i18nTitle] ?? el.title;
+    for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = text[el.dataset.i18nPlaceholder] ?? el.placeholder;
   }
 } catch {}

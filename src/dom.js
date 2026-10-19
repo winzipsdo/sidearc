@@ -40,6 +40,8 @@ const ICONS = {
   sleep: svg('<path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/>'),
   lock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/>'),
   unlock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 014.8-1"/>'),
+  check: svg('<path d="M3.5 8.5l3 3 6-6.5"/>'),
+  gear: svg('<circle cx="8" cy="8" r="2"/><path d="M8 1.8l1.2 1.6 2-.4.4 2 1.6 1.2L12.4 8l.8 1.8-1.6 1.2-.4 2-2-.4L8 14.2l-1.2-1.6-2 .4-.4-2-1.6-1.2L3.6 8l-.8-1.8 1.6-1.2.4-2 2 .4z"/>'),
   recent: svg('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
 };
 export function icon(name) {

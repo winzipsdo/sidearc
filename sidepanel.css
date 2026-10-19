@@ -458,7 +458,16 @@ header { padding: 12px 12px 8px; }
 /* 最近关闭:底部这一行的最左边;提示文字靠左对齐,免得超出侧边栏 */
 #spaces { position: relative; }
 #spaces .space-dot.recent { position: absolute; left: 10px; top: 6px; }
-#spaces .space-dot.recent svg { width: 18px; height: 18px; stroke-width: 1.5; }
+#spaces .space-dot.recent svg, #spaces .space-dot.settings svg { width: 18px; height: 18px; stroke-width: 1.5; }
+/* 右下角的设置按钮,和左下角的「最近关闭」对称;提示文字靠右 */
+#spaces .space-dot.settings { position: absolute; right: 10px; top: 6px; }
+/* 不常用,平时藏起来:鼠标移到底部这一行(或用键盘选中、设置菜单开着)时才渐显 */
+#spaces .space-dot.settings { opacity: 0; transition: background 0.15s, color 0.15s, opacity 0.2s; }
+#spaces:hover .space-dot.settings,
+#spaces .space-dot.settings:focus-visible,
+body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings { opacity: 1; }
+#spaces .space-dot.settings::after { left: auto; right: 0; transform: translate(0, 3px); }
+#spaces .space-dot.settings:hover::after { transform: translate(0, 0); }
 #spaces .space-dot.recent::after { left: 0; transform: translate(0, 3px); }
 #spaces .space-dot.recent:hover::after { transform: translate(0, 0); }
 

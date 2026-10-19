@@ -1,0 +1,4 @@
+{
+  "description": { "message": "把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。" },
+  "toggleSidebar": { "message": "打开/关闭侧边标签栏" }
+}

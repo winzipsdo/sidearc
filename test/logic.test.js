@@ -178,13 +178,13 @@ test('canDiscard:当前标签页和已经不在内存里的不能休眠', () => 
   assert.equal(canDiscard(null), false);
 });
 
-test('sleptFor:休眠了多久的简短说法', () => {
+test('sleptFor:休眠了多久,取最大的单位', () => {
   const now = 1_000_000_000_000;
-  assert.equal(sleptFor(now - 20_000, now), '刚刚');
-  assert.equal(sleptFor(now - 60_000, now), '1 分钟');
-  assert.equal(sleptFor(now - 59 * 60_000, now), '59 分钟');
-  assert.equal(sleptFor(now - 60 * 60_000, now), '1 小时');
-  assert.equal(sleptFor(now - 23 * 3600_000 - 59 * 60_000, now), '23 小时');
-  assert.equal(sleptFor(now - 24 * 3600_000, now), '1 天');
-  assert.equal(sleptFor(now - 10 * 86400_000, now), '10 天');
+  assert.deepEqual(sleptFor(now - 20_000, now), { unit: 'now', n: 0 });
+  assert.deepEqual(sleptFor(now - 60_000, now), { unit: 'minutes', n: 1 });
+  assert.deepEqual(sleptFor(now - 59 * 60_000, now), { unit: 'minutes', n: 59 });
+  assert.deepEqual(sleptFor(now - 60 * 60_000, now), { unit: 'hours', n: 1 });
+  assert.deepEqual(sleptFor(now - 23 * 3600_000 - 59 * 60_000, now), { unit: 'hours', n: 23 });
+  assert.deepEqual(sleptFor(now - 24 * 3600_000, now), { unit: 'days', n: 1 });
+  assert.deepEqual(sleptFor(now - 10 * 86400_000, now), { unit: 'days', n: 10 });
 });

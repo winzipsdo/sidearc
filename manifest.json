@@ -1,21 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Sidearc",
-  "description": "把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。",
+  "description": "__MSG_description__",
+  "default_locale": "en",
   "version": "1.4.1",
   "minimum_chrome_version": "116",
   "permissions": ["sidePanel", "tabs", "storage", "favicon", "search", "clipboardWrite", "sessions", "history", "webNavigation", "tabGroups"],
   "background": { "service_worker": "background.js", "type": "module" },
   "side_panel": { "default_path": "sidepanel.html" },
   "action": {
-    "default_title": "打开/关闭侧边标签栏",
+    "default_title": "__MSG_toggleSidebar__",
     "default_icon": { "16": "icons/16.png", "32": "icons/32.png" }
   },
   "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
   "commands": {
     "_execute_action": {
       "suggested_key": { "default": "Alt+S", "mac": "Alt+S" },
-      "description": "打开/关闭侧边标签栏"
+      "description": "__MSG_toggleSidebar__"
     }
   }
 }

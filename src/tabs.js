@@ -1,6 +1,7 @@
 // 对标签页的操作:打开、关闭、撤销关闭、别名、移到别的空间、搜索栏回车。
 
 import { $ } from './dom.js';
+import { t } from './i18n.js';
 import { canDiscard, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { render, schedule } from './render.js';
@@ -22,7 +23,7 @@ export async function discardTabs(list) {
   } finally {
     setRenderHeld(false);
   }
-  toast(n ? `已让 ${n} 个标签页休眠` : '没有可以休眠的标签页');
+  toast(n ? t('slept', { n }) : t('nothingToSleep'));
   schedule();
 }
 
@@ -31,7 +32,7 @@ export async function discardTabs(list) {
 export async function toggleAutoDiscard(tab) {
   const keep = tab.autoDiscardable !== false;
   await chrome.tabs.update(tab.id, { autoDiscardable: !keep }).catch(() => {});
-  toast(keep ? '已开启保持唤醒,这个标签页不会被自动休眠' : '已取消保持唤醒,这个标签页恢复自动休眠');
+  toast(keep ? t('keepAwakeOn') : t('keepAwakeOff'));
   schedule();
 }
 
@@ -48,7 +49,7 @@ export async function focusTab(tab) {
 }
 
 export async function editTabAlias(tabId) {
-  const out = await ask('设置别名', [{ key: 'alias', label: '别名(留空则清除)', value: tabAlias.get(tabId), optional: true }]);
+  const out = await ask(t('setAliasTitle'), [{ key: 'alias', label: t('aliasClear'), value: tabAlias.get(tabId), optional: true }]);
   if (!out) return;
   await setTabAlias(tabId, out.alias);
   render();
@@ -65,14 +66,14 @@ export async function moveTabToSpace(tabId, spaceId) {
 
 export function clearTabs() {
   const doomed = listedTabs().filter((t) => !t.active);
-  closeWithUndo(doomed, `已清理 ${doomed.length} 个标签页`);
+  closeWithUndo(doomed, t('cleared', { n: doomed.length }));
 }
 
 // 关闭一个标签页;它的子标签会跟着关,所以一起记下来以便撤销
 export function closeTab(tab) {
   const kids = listedTabs().filter((t) => tabParent.get(t.id) === tab.id);
-  const name = `「${tabAlias.get(tab.id) || tab.title || tab.url}」`;
-  return closeWithUndo([tab, ...kids], kids.length ? `已关闭${name}及 ${kids.length} 个子标签` : `已关闭${name}`);
+  const title = tabAlias.get(tab.id) || tab.title || tab.url;
+  return closeWithUndo([tab, ...kids], kids.length ? t('closedTabWithKids', { title, n: kids.length }) : t('closedTab', { title }));
 }
 
 // 关闭一批标签页,并在提示条里提供撤销

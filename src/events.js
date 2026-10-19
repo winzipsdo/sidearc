@@ -5,6 +5,7 @@ import { bindDrag } from './drag.js';
 import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { toggleFolder } from './folders.js';
+import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, refreshSleptLabels, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
@@ -163,7 +164,7 @@ function bindBrowser() {
   chrome.runtime.onMessage.addListener((msg) => {
     const d = msg?.[MSG.deduped];
     if (!d || d.windowId !== windowId) return;
-    pushUndo(d.active ? '已切到现有标签页' : '标签页已存在', () => chrome.runtime.sendMessage({ [MSG.openDup]: d }));
+    pushUndo(d.active ? t('switchedToExisting') : t('alreadyOpen'), () => chrome.runtime.sendMessage({ [MSG.openDup]: d }));
   });
   // 后台把新标签页绑定到了同地址的收藏/固定项:先记上绑定(存储的变化可能还没到),固定项在别的空间就跟过去
   chrome.runtime.onMessage.addListener((msg) => {
@@ -175,6 +176,11 @@ function bindBrowser() {
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.lang) {
+      setLangPref(changes.lang.newValue);
+      applyStaticText();
+      render();
+    }
     if (area === 'local' && changes.state) {
       setState(changes.state.newValue);
       normalize();

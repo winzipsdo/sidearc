@@ -1,6 +1,7 @@
 // 侧边栏的全部状态,以及只读写状态、不碰界面的函数。
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
+import { t } from './i18n.js';
 import { buildTree, matchesQuery, pinnedItems, pinnedLists } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
@@ -44,7 +45,7 @@ export const matches = (...texts) => matchesQuery(query, texts);
 
 function defaultState() {
   const id = uid();
-  return { spaces: [{ id, name: '个人', color: COLORS[0], pinned: [] }], favorites: [], activeSpaceId: id };
+  return { spaces: [{ id, name: t('defaultSpace'), color: COLORS[0], pinned: [] }], favorites: [], activeSpaceId: id };
 }
 
 export function normalize() {

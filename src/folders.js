@@ -1,6 +1,7 @@
 // 固定标签里的文件夹:{ id, folder: true, name, open, noHistory?, items: [项] }。
 // 文件夹只放在空间的固定区顶层,里面只放固定项,不再嵌套。
 
+import { t } from './i18n.js';
 import { isFolder } from './logic.js';
 import { render } from './render.js';
 import { activeSpace, bind, findItem, save, state, tabs, takeItem, uid } from './store.js';
@@ -16,7 +17,7 @@ export function findFolder(id) {
 
 // 新建文件夹;给了 itemId 就把那个固定项移进去
 export async function createFolder(itemId) {
-  const out = await ask('新建文件夹', [{ key: 'name', label: '名称', value: '' }]);
+  const out = await ask(t('newFolderTitle'), [{ key: 'name', label: t('name'), value: '' }]);
   if (!out) return;
   const folder = { id: uid(), folder: true, name: out.name, open: true, items: [] };
   const space = activeSpace();
@@ -33,7 +34,7 @@ export async function createFolder(itemId) {
 export async function renameFolder(id) {
   const folder = findFolder(id)?.folder;
   if (!folder) return;
-  const out = await ask('重命名文件夹', [{ key: 'name', label: '名称', value: folder.name }]);
+  const out = await ask(t('renameFolderTitle'), [{ key: 'name', label: t('name'), value: folder.name }]);
   const target = out && findFolder(id)?.folder;
   if (!target) return;
   target.name = out.name;
@@ -63,7 +64,7 @@ export async function toggleFolderNoHistory(id) {
       if (tab?.url) chrome.history.deleteUrl({ url: tab.url }).catch(() => {});
     }
   }
-  toast(folder.noHistory ? `「${folder.name}」里的页面不再记录浏览历史` : `「${folder.name}」恢复记录浏览历史`);
+  toast(t(folder.noHistory ? 'folderNoHistoryOn' : 'folderNoHistoryOff', { name: folder.name }));
 }
 
 // 删除文件夹:里面的固定标签留下,放回文件夹原来的位置
@@ -75,7 +76,7 @@ export async function deleteFolder(id) {
   space.pinned.splice(at, 1, ...folder.items);
   await save();
   render();
-  pushUndo(`已删除文件夹「${folder.name}」,里面的固定标签已移出`, async () => {
+  pushUndo(t('folderDeleted', { name: folder.name }), async () => {
     const s = state.spaces.find((x) => x.id === space.id);
     if (!s || findFolder(id)) return;
     const ids = new Set(folder.items.map((i) => i.id));

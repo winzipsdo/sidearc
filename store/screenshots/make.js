@@ -2,7 +2,7 @@
 //   中文 → store/screenshot-*.jpg、store/promo-small-440x280.jpg
 //   英文 → store/en/ 下同名文件
 // 侧边栏部分直接套用 sidepanel.css,界面改了重新运行即可:npm run screenshots。
-// 扩展界面本身只有中文,所以英文截图里侧边栏的按钮文字(搜索框、新标签页、清理)仍是中文,示例内容和文案是英文
+// 侧边栏自带的文字(搜索框、清理、新标签页)取自 src/i18n.js,跟着截图的语言
 // 需要本机装有 Chrome(路径可用环境变量 CHROME 指定);macOS 上用自带的 sips 转成高质量 JPEG。
 
 import { execFileSync } from 'node:child_process';
@@ -10,6 +10,7 @@ import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFi
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { BRAND_ICONS } from './brand-icons.js';
+import { setLangPref, t as ui } from '../../src/i18n.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 const CHROME =
@@ -79,6 +80,7 @@ const SPACE_COLORS = [
 // 两种语言的文案:示例内容(空间名、标签页标题、别名)、左侧介绍、小宣传图的副标题。示例内容都是编的
 const TEXT = {
   zh: {
+    lang: 'zh',
     dir: 'store',
     font: '"PingFang SC",system-ui,sans-serif',
     spaces: ['个人', '工作', '学习', '生活'],
@@ -99,6 +101,7 @@ const TEXT = {
     ],
   },
   en: {
+    lang: 'en',
     dir: 'store/en',
     font: 'system-ui,-apple-system,"Segoe UI",sans-serif',
     spaces: ['Personal', 'Work', 'Study', 'Life'],
@@ -128,7 +131,6 @@ const row = (icon, title, { alias, cls = '', child, sound } = {}) =>
   '</div>';
 
 // 侧边栏:和真实界面同样的结构和样式。folder 为真时固定标签里放一个展开的文件夹。
-// 界面自带的文字(搜索框、清理、新标签页)只有中文,两种语言都照实显示
 function panel(t, active, dark, folder) {
   const color = SPACE_COLORS[active].color;
   // 收藏夹(所有空间共用):用流行网站的图标
@@ -151,12 +153,12 @@ function panel(t, active, dark, folder) {
   const dots = SPACE_COLORS.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
   return `<!doctype html><html style="--accent:${color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
 <link rel="stylesheet" href="sidepanel.css">${dark ? `<style>${darkVars}</style>` : ''}</head><body>
-<header><label class="search">${SEARCH}<input id="search" placeholder="搜索标签页或输入网址"></label></header>
+<header><label class="search">${SEARCH}<input id="search" placeholder="${ui('searchPlaceholder')}"></label></header>
 <main id="scroll"><section id="favs" class="zone grid" style="--cols:5">${favs}</section>
 <div class="space-head"><span id="space-name">${esc(t.spaces[active])}</span><button class="ghost">${MORE}</button></div>
 <section id="pins" class="zone list">${pins}</section>
-<div class="divider"><span></span><button class="ghost">清理</button></div>
-<button class="row new">${PLUS}<span class="title">新标签页</span></button>
+<div class="divider"><span></span><button class="ghost">${ui('clear')}</button></div>
+<button class="row new">${PLUS}<span class="title">${ui('newTab')}</span></button>
 <section id="tabs" class="zone list">${tabs}</section></main>
 <footer id="spaces">${dots}<button class="space-dot">${PLUS}</button></footer></body></html>`;
 }
@@ -261,6 +263,7 @@ const SHOTS = [
   { file: '3-spaces-dark', active: 1, dark: true },
 ];
 for (const t of Object.values(TEXT)) {
+  setLangPref(t.lang);
   mkdirSync(join(ROOT, t.dir), { recursive: true });
   SHOTS.forEach((shot, i) => page(t, shot, t.pages[i]));
   promo(t);

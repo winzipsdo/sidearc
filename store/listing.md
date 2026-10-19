@@ -15,9 +15,11 @@
 
 **名称**:Sidearc(取自 manifest)
 
-**简短说明**(取自 manifest,132 字符以内):
+**简短说明**(取自 `_locales/*/messages.json` 的 description,132 字符以内,商店按语言显示):
 
 > 把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。
+>
+> Vertical tabs in Chrome's side panel, with child tabs and spaces, and your favorite pages pinned on top.
 
 **详细说明**:
 

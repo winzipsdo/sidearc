@@ -1,6 +1,7 @@
 // 提示条、撤销栈、右键菜单的外壳和对话框。
 
 import { $, h, icon } from './dom.js';
+import { t } from './i18n.js';
 import { COLORS } from './store.js';
 
 let toastTimer;
@@ -19,7 +20,7 @@ export function pushUndo(text, run) {
   const entry = { run, time: Date.now() };
   undoStack.push(entry);
   if (undoStack.length > 30) undoStack.shift();
-  toast(text, '撤销', () => undo(entry));
+  toast(text, t('undo'), () => undo(entry));
 }
 // entry 为空 = 按了 Ctrl/Cmd+Z:撤销最近的一步。
 // 在浏览器自己的标签栏里关掉的标签页不经过这个栈,所以先看浏览器的「最近关闭」:比栈顶更晚关掉的,先恢复它
@@ -30,13 +31,13 @@ export async function undo(entry) {
     // lastModified 是秒;侧边栏自己关掉的标签页,关闭时间不会晚于它那一步的记录时间
     if (closed?.tab && closed.lastModified * 1000 > (entry?.time ?? 0)) {
       await chrome.sessions.restore(closed.tab.sessionId).catch(() => {});
-      return toast(`已恢复「${closed.tab.title || closed.tab.url}」`);
+      return toast(t('restored', { title: closed.tab.title || closed.tab.url }));
     }
   }
-  if (!entry) return toast('没有可撤销的操作');
+  if (!entry) return toast(t('nothingToUndo'));
   undoStack.splice(undoStack.indexOf(entry), 1);
   await entry.run();
-  toast('已撤销');
+  toast(t('undone'));
 }
 
 export async function copyText(text, done) {
@@ -61,6 +62,8 @@ export function hideMenu() {
 export function showMenu(e, items) {
   e.preventDefault();
   const menu = $('#menu');
+  // 哪个按钮打开的菜单(样式里用),由调用方在之后设置
+  delete menu.dataset.from;
   // 条件不满足的项是 false;分隔线不出现在开头、结尾,也不连着出现
   const list = items.filter(Boolean).filter((it, i, all) => it !== '-' || (i > 0 && i < all.length - 1 && all[i + 1] !== '-'));
   menu.replaceChildren(
@@ -92,7 +95,7 @@ export function showMenu(e, items) {
 }
 
 // fields: [{key,label,value}];color 非空时显示颜色选择。取消返回 null
-export function ask(title, fields, color, okLabel = '保存') {
+export function ask(title, fields, color, okLabel = t('save')) {
   return new Promise((resolve) => {
     const dlg = $('#dlg');
     const inputs = {};
@@ -124,7 +127,7 @@ export function ask(title, fields, color, okLabel = '保存') {
         h(
           'div',
           { class: 'btns' },
-          h('button', { type: 'button', onclick: () => dlg.close('cancel') }, '取消'),
+          h('button', { type: 'button', onclick: () => dlg.close('cancel') }, t('cancel')),
           h('button', { value: 'ok', class: 'primary' }, okLabel)
         )
       )
