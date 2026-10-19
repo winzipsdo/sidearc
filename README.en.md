@@ -18,7 +18,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 
 ### Tabs
 
-- **Vertical tabs**: click to switch, middle-click or ✕ to close, drag to reorder. Tabs playing sound show a speaker you can click to mute — favorites and pinned tabs too.
+- **Vertical tabs**: click to switch, middle-click or ✕ to close, drag to reorder. `Ctrl/⌘+click` selects several tabs (shared with the tab strip's selection; click empty space or press Esc to clear it) — drag any of them to move them all. Tabs playing sound show a speaker you can click to mute — favorites and pinned tabs too.
 - **Synced with Chrome's tab strip**: the order of Chrome's native tab strip always matches the sidebar — open favorites on the far left, then one tab group per space; inside each group, pinned tabs first, then the list, with child tabs right after their parent.
   - Drag in the sidebar and the tab strip follows; drag in the tab strip and the sidebar follows.
   - Dragging a tab into another space's group in the tab strip moves it to that space; dragging a child tab away from its parent un-nests it.

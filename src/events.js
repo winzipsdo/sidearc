@@ -15,6 +15,11 @@ import { hideMenu, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
+// 取消多选:只留当前标签页
+function clearSelection() {
+  for (const tab of tabs) if (tab.highlighted && !tab.active) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
+}
+
 // 列表里的行和磁贴:点击、中键
 function bindRows(scroll) {
   scroll.addEventListener('click', (e) => {
@@ -29,6 +34,8 @@ function bindRows(scroll) {
       else if (act === 'discard') discardTabs([tab]);
       else if (act === 'unnest') setTabParent(tab.id, null).then(render);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
+      // Cmd/Ctrl+点击:加入或移出多选,和顶部标签栏一样用浏览器的高亮(当前标签页总是选中的)
+      else if (e.metaKey || e.ctrlKey) chrome.tabs.update(tab.id, { highlighted: !tab.highlighted }).catch(() => {});
       else chrome.tabs.update(tab.id, { active: true });
     } else {
       const item = findItem(el.dataset.id)?.item;
@@ -119,6 +126,15 @@ function bindSearch() {
 
 function bindKeyboard() {
   // Ctrl/Cmd+Z 撤销最近一次操作;在输入框里时留给文字编辑自己的撤销
+  // Esc 取消多选:只留当前标签页
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.target.closest?.('input, textarea, dialog') || $('#dlg').open) return;
+    clearSelection();
+  });
+  // 点空白的地方也取消多选(行、按钮、输入框、菜单、对话框上的点击不算)
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest?.('[data-kind], button, input, #menu, dialog')) clearSelection();
+  });
   document.addEventListener('keydown', (e) => {
     if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== 'z') return;
     if (e.target.closest?.('input, textarea, dialog') || $('#dlg').open) return;
@@ -151,7 +167,7 @@ function bindPage() {
 
 // 浏览器这边的变化:标签页、后台发来的消息、存储
 function bindBrowser() {
-  for (const ev of ['onCreated', 'onRemoved', 'onUpdated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced']) {
+  for (const ev of ['onCreated', 'onRemoved', 'onUpdated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced', 'onHighlighted']) {
     chrome.tabs[ev].addListener(schedule);
   }
   chrome.tabs.onReplaced.addListener(replaceTabId);

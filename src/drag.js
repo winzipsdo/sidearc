@@ -3,7 +3,9 @@
 import { itemFromTab, removeItem } from './items.js';
 import { dropBefore, dropInto, isFolder } from './logic.js';
 import { render, schedule } from './render.js';
-import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem } from './store.js';
+import { h } from './dom.js';
+import { t } from './i18n.js';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
 import { moveTabToSpace } from './tabs.js';
 import { hideMenu } from './ui.js';
 
@@ -15,20 +17,22 @@ function clearMarks() {
 function finishDrag() {
   setDragging(null);
   clearMarks();
-  document.querySelector('.dragging')?.classList.remove('dragging');
+  for (const el of document.querySelectorAll('.dragging')) el.classList.remove('dragging');
   if (renderPending) render();
 }
 
 const rectsOf = (els) => els.map((el) => el.getBoundingClientRect());
-const isDragged = (el) => el?.dataset.id === dragging.id && el.dataset.kind === dragging.kind;
+// 多选拖动时 dragging.ids 是一起拖的所有标签页(字符串 id,按列表顺序)
+const draggedIds = () => dragging.ids ?? [dragging.id];
+const isDragged = (el) => el?.dataset.kind === dragging.kind && draggedIds().includes(el.dataset.id);
 
-// 指针还在被拖的那一项自己身上:原地不动。
+// 指针还在被拖的那一项(多选时任何一项)自己身上:原地不动。
 // 否则它会被当成不存在,落点算到下一项去,拖文件夹最后一项时就会掉到文件夹外面
 function overSelf(zone, e) {
-  const self = [...zone.querySelectorAll('[data-kind]')].find(isDragged);
-  if (!self) return false;
-  const r = self.getBoundingClientRect();
-  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  return [...zone.querySelectorAll('[data-kind]')].filter(isDragged).some((el) => {
+    const r = el.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+  });
 }
 
 // 拖标签页时,指针落在某一行的中间部分 = 要成为它的子标签;上下边缘仍是排序
@@ -39,7 +43,7 @@ function nestElement(zone, e) {
     return folders[dropInto(rectsOf(folders), e.clientY)] ?? null;
   }
   if (dragging.kind !== 'tab' || zone.dataset.zone !== 'tab') return null;
-  const els = [...zone.querySelectorAll('[data-kind="tab"]')].filter((el) => el.dataset.id !== dragging.id);
+  const els = [...zone.querySelectorAll('[data-kind="tab"]')].filter((el) => !isDragged(el));
   return els[dropInto(rectsOf(els), e.clientY)] ?? null;
 }
 
@@ -69,7 +73,7 @@ function folderEnd(zone, e) {
 
 // 拖到 zone 里时,应插在哪个元素之前(null = 末尾)
 function refElement(zone, e) {
-  let els = [...zone.querySelectorAll('[data-kind]')].filter((el) => el.dataset.id !== dragging.id || el.dataset.kind !== dragging.kind);
+  let els = [...zone.querySelectorAll('[data-kind]')].filter((el) => !isDragged(el));
   // 文件夹只能在顶层排序:不拿文件夹里的项当参照
   if (dragging.kind === 'folder') els = els.filter((el) => !el.style.getPropertyValue('--depth'));
   return els[dropBefore(rectsOf(els), e.clientX, e.clientY, zone.classList.contains('grid'))] ?? null;
@@ -96,23 +100,27 @@ async function moveGroup(ids, where) {
   schedule();
 }
 
+// 一起移动的标签页:拖的这些,连同各自的子标签,按列表顺序,不重复
+const withSubtrees = (tabIds) => [...new Set(tabIds.flatMap(subtreeIds))];
+
 // 把标签页(连同子标签)拖到 refId 之前:和 refId 同级;refId 为空则放到末尾并成为顶级
-async function dropTab(tabId, refId) {
-  const moving = subtreeIds(tabId);
+async function dropTab(tabIds, refId) {
+  const moving = withSubtrees(tabIds);
   if (refId != null && moving.includes(refId)) return;
   const rest = listedTabs().filter((t) => !moving.includes(t.id));
   const parent = refId != null ? listedParent(refId) : null;
-  // 最多两级:带着子标签拖进别人名下时,子标签一起并为同级
-  for (const id of parent == null ? [tabId] : moving) await setTabParent(id, parent);
+  // 放到顶级:父标签不在这批里的成为顶级,其余的子标签还跟着自己的父标签。
+  // 放进别人名下:最多两级,带着的子标签一起并为同级
+  for (const id of moving) if (parent != null || !moving.includes(listedParent(id))) await setTabParent(id, parent);
   const last = rest.reduce((a, b) => (a && a.index > b.index ? a : b), null);
   await moveGroup(moving, refId != null ? { before: refId } : { after: last?.id });
 }
 
 // 把标签页拖到另一个标签页上:成为它的子标签,排在它现有子标签的最后。
 // 最多两级:目标本身是子标签时,挂到目标的父标签下;自己带着的子标签一起并为同级
-async function nestTab(tabId, targetId) {
+async function nestTab(tabIds, targetId) {
   const parent = listedParent(targetId) ?? targetId;
-  const moving = subtreeIds(tabId);
+  const moving = withSubtrees(tabIds);
   if (moving.includes(parent)) return;
   const after = subtreeIds(parent).filter((id) => !moving.includes(id)).at(-1);
   for (const id of moving) await setTabParent(id, parent);
@@ -136,25 +144,30 @@ async function performDrop(d, zone, refId, intoId) {
     return render();
   }
   if (zone === 'tab') {
-    if (d.kind === 'tab') return intoId != null ? nestTab(+d.id, +intoId) : dropTab(+d.id, refId == null ? null : +refId);
+    const ids = (d.ids ?? [d.id]).map(Number);
+    if (d.kind === 'tab') return intoId != null ? nestTab(ids, +intoId) : dropTab(ids, refId == null ? null : +refId);
     return removeItem(d.id, true);
   }
-  let item;
+  // 多选的标签页按顺序变成多项,一起放进去
+  let added;
   if (d.kind === 'tab') {
-    const tab = tabs.find((t) => t.id === +d.id);
-    if (!tab) return;
-    item = await itemFromTab(tab);
+    added = [];
+    for (const id of d.ids ?? [d.id]) {
+      const tab = tabs.find((x) => x.id === +id);
+      const item = tab && (await itemFromTab(tab));
+      if (item) added.push(item);
+    }
   } else {
-    item = takeItem(d.id);
+    added = [takeItem(d.id)].filter(Boolean);
   }
-  if (!item) return;
+  if (!added.length) return;
   let arr = zone === 'fav' ? state.favorites : activeSpace().pinned;
   if (zone === 'pin') {
     const pinned = activeSpace().pinned;
     const into = intoId && pinned.find((x) => isFolder(x) && x.id === intoId);
     if (into) {
       // 拖到文件夹上:放进去,排在最后
-      into.items.push(item);
+      into.items.push(...added);
       into.open = true;
       await save();
       return render();
@@ -163,7 +176,7 @@ async function performDrop(d, zone, refId, intoId) {
     arr = (refId && pinned.find((f) => isFolder(f) && f.items.some((x) => x.id === refId))?.items) || pinned;
   }
   const i = refId ? arr.findIndex((x) => x.id === refId) : -1;
-  arr.splice(i < 0 ? arr.length : i, 0, item);
+  arr.splice(i < 0 ? arr.length : i, 0, ...added);
   await save();
   render();
 }
@@ -180,11 +193,23 @@ export function bindDrag() {
     const el = e.target.closest?.('[data-kind]');
     if (!el) return;
     hideMenu();
-    setDragging({ kind: el.dataset.kind, id: el.dataset.id });
+    // 拖的是多选里的一个:选中的标签页一起拖(和顶部标签栏一样,选中 = 浏览器里高亮的标签页)
+    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => x.tab.highlighted).map((x) => String(x.tab.id)) : [];
+    const multi = selected.length > 1 && selected.includes(el.dataset.id);
+    setDragging({ kind: el.dataset.kind, id: el.dataset.id, ids: multi ? selected : undefined });
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', el.title || '');
+    if (multi) {
+      // 拖拽的影子换成「N 个标签页」的小标签;它要在页面上才能截图,截完就删
+      const ghost = h('div', { class: 'drag-ghost' }, t('nTabs', { n: selected.length }));
+      document.body.append(ghost);
+      e.dataTransfer.setDragImage(ghost, 14, 14);
+      setTimeout(() => ghost.remove());
+    }
     // 下一帧再变半透明(否则拖拽的影子也是半透明的);那时拖拽要是已经结束了就不加
-    requestAnimationFrame(() => dragging && isDragged(el) && el.classList.add('dragging'));
+    requestAnimationFrame(() => {
+      if (dragging) for (const row of document.querySelectorAll('[data-kind]')) if (isDragged(row)) row.classList.add('dragging');
+    });
   });
   document.addEventListener('dragover', (e) => {
     if (!dragging) return;
@@ -221,7 +246,7 @@ export function bindDrag() {
     const d = dragging;
     if (target.dataset.space) {
       finishDrag();
-      if (d.kind === 'tab') await moveTabToSpace(+d.id, target.dataset.space);
+      if (d.kind === 'tab') for (const id of d.ids ?? [d.id]) await moveTabToSpace(+id, target.dataset.space);
       return;
     }
     if (overSelf(target, e)) return finishDrag();

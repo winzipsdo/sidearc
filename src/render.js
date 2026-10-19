@@ -121,10 +121,12 @@ export function render() {
   });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, t('pinsHint'))]));
 
+  // 选中了不止一个(多选)时,当前标签页也标成选中:它本来就在多选里
+  const multi = tabs.filter((x) => x.highlighted).length > 1;
   $('#tabs').replaceChildren(
     ...visibleTabs().map(({ tab, depth }) => {
       const muted = tab.mutedInfo?.muted;
-      const cls = ['row', tab.active && 'active', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
+      const cls = ['row', tab.active && 'active', multi && tab.highlighted && 'selected', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
       return h(
         'div',
         { class: cls, draggable: true, title: tab.url + sleptTip(tab), style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
