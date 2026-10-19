@@ -4,6 +4,12 @@
 
 按提交日期分组,新的在前。
 
+## 2026-10-19
+
+### 文档
+
+- **打包命令和发版、主页维护说明。** 新增 `npm run pack` 生成上架用的 zip;README 补充了发布新版本和维护 GitHub Pages 主页的步骤。 [`032bda4`](https://github.com/winzipsdo/sidearc/commit/032bda4)
+
 ## 2026-10-18
 
 ### 新增
