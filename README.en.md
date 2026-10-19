@@ -37,7 +37,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 - **Pinned tabs**: one set per space. Closing the tab keeps the pinned item; click it to reopen. Hover to close the tab but keep the pin (−), or to unpin a closed one.
   - When an open pinned tab navigates elsewhere, the row shows the current page; ↩ takes it back to the pinned address.
   - **Folders**: group pinned tabs into folders; drag items in and out, collapse and expand, rename.
-- **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it.
+- **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it. A window holding tabs from only one space isn't grouped, since Chrome saves the groups of every closed window to the bookmarks bar.
 - **No-history spaces and folders**: pages visited from them are removed from browser history right away. This is not incognito mode: cookies, logins and cache are kept.
 
 ### Also

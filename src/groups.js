@@ -62,7 +62,11 @@ async function syncWindow(windowId, state, all) {
   const layout = buildLayout(state, all, tabs);
   const order = layout.flatMap((c) => c.ids);
   const groupOfSpace = new Map([...groupSpace].map(([g, s]) => [s, g]));
-  const wantGroup = (c) => (c.spaceId == null ? -1 : groupOfSpace.get(c.spaceId));
+  // 窗口里只有一个空间的标签页、也还没有空间分组时,不建分组:分开空间的作用用不上,
+  // 而 Chrome 会把关掉的窗口里的分组都存到书签栏上,临时开的新窗口每关一个就多一个同名分组。
+  // 有了第二个空间再分组;分组建了就一直用,不来回拆
+  const grouping = new Set(layout.map((c) => c.spaceId).filter((s) => s != null)).size > 1 || layout.some((c) => groupOfSpace.has(c.spaceId));
+  const wantGroup = (c) => (c.spaceId == null ? -1 : (groupOfSpace.get(c.spaceId) ?? (grouping ? undefined : -1)));
   const byId = new Map(tabs.map((t) => [t.id, t]));
   // 排好了 = 要管的标签页按顺序排在前面,别人的分组整组在最后面
   const strip = allTabs.filter((t) => !t.pinned).map((t) => t.id);
@@ -78,7 +82,7 @@ async function syncWindow(windowId, state, all) {
     let index = nativePinned;
     for (const c of layout) {
       await chrome.tabs.move(c.ids, { index }).catch(() => {});
-      if (c.spaceId == null) {
+      if (wantGroup(c) === -1) {
         await chrome.tabs.ungroup(c.ids).catch(() => {});
       } else {
         const existing = groupOfSpace.get(c.spaceId);
