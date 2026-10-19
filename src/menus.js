@@ -28,7 +28,33 @@ function memoryItems(tab) {
   ];
 }
 
+// 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
+function selectionMenu(e, list) {
+  const n = list.length;
+  showMenu(e, [
+    { header: t('nTabs', { n }) },
+    { icon: 'sleep', label: t('sleep'), disabled: !list.some(canDiscard), run: () => discardTabs(list) },
+    '-',
+    ...state.spaces
+      .filter((s) => s.id !== state.activeSpaceId)
+      .map((s) => ({
+        icon: 'dot',
+        color: s.color,
+        label: t('moveToSpace', { name: s.name }),
+        run: async () => {
+          for (const x of list) await moveTabToSpace(x.id, s.id);
+        },
+      })),
+    '-',
+    { icon: 'close', label: t('close'), run: () => closeWithUndo(list, t('closedTabs', { n })) },
+  ]);
+}
+
 export function tabMenu(e, tab) {
+  const selected = visibleTabs()
+    .map((x) => x.tab)
+    .filter((x) => x.highlighted);
+  if (selected.length > 1 && tab.highlighted) return selectionMenu(e, selected);
   // 只算列表里看得见的:搜索过滤掉的标签页不会被关掉
   const visible = visibleTabs().map((x) => x.tab);
   const below = visible.slice(visible.findIndex((t) => t.id === tab.id) + 1);

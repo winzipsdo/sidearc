@@ -23,7 +23,8 @@ const MESSAGES = {
     defaultSpace: '个人',
 
     // 行上的按钮和提示
-    close: '关闭标签页',
+    // 和 Chrome 自己的标签页菜单一致;右键菜单和行上按钮的鼠标提示都用它
+    close: '关闭',
     unpin: '取消固定',
     mute: '静音',
     unmute: '取消静音',
@@ -47,18 +48,18 @@ const MESSAGES = {
     // 右键菜单:标签页
     setAlias: '设置别名…',
     editAlias: '修改别名…',
-    pinTab: '固定标签页',
+    pinTab: '固定',
     pinTabTip: '固定到当前空间,只在这个空间里显示',
     addToFavs: '添加到收藏夹',
     copyLink: '复制链接地址',
-    duplicateTab: '复制标签页',
+    duplicateTab: '复制',
     sleepCurrentTip: '正在看的标签页不能休眠',
     alreadyAsleepTip: '已经在休眠了',
     keepAwake: '保持唤醒',
     stopKeepAwake: '取消保持唤醒',
     releaseChildren: '解除所有子标签',
     moveToSpace: '移到空间「{name}」',
-    closeBelow: '关闭下方所有标签页',
+    closeBelow: '关闭下方标签页',
 
     // 右键菜单:收藏 / 固定标签
     editItemAlias: '编辑别名…',
@@ -155,7 +156,7 @@ const MESSAGES = {
     recentlyClosed: 'Recently closed',
     defaultSpace: 'Personal',
 
-    close: 'Close tab',
+    close: 'Close',
     unpin: 'Unpin',
     mute: 'Mute',
     unmute: 'Unmute',
@@ -177,11 +178,11 @@ const MESSAGES = {
 
     setAlias: 'Set alias…',
     editAlias: 'Edit alias…',
-    pinTab: 'Pin tab',
+    pinTab: 'Pin',
     pinTabTip: 'Pin to the current space; shown only in this space',
     addToFavs: 'Add to favorites',
     copyLink: 'Copy link address',
-    duplicateTab: 'Duplicate tab',
+    duplicateTab: 'Duplicate',
     sleepCurrentTip: "The tab you're viewing can't sleep",
     alreadyAsleepTip: 'Already asleep',
     keepAwake: 'Keep awake',
