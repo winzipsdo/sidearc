@@ -6,6 +6,10 @@
 
 ## 2026-10-19
 
+### 新增
+
+- **英文界面。** 默认跟随 Chrome 的界面语言(简体中文显示中文,其他显示英文);鼠标移到底部时右下角会出现齿轮,可以手动选语言。 [`fd901b4`](https://github.com/winzipsdo/sidearc/commit/fd901b4)
+
 ### 修复
 
 - **Sidearc 会拆掉别人建的标签页分组。** 你自己或别的扩展(比如 Claude)建的分组现在原样保留,整组排在空间分组后面。 [`9a2d129`](https://github.com/winzipsdo/sidearc/commit/9a2d129)
