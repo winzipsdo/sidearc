@@ -129,6 +129,8 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `LICENSE` | 开源许可证(MIT) |
 | `CHANGELOG.md` | 更新日志 |
 | `scripts/pack.js` | 打包上架用的 zip(`npm run pack`) |
+| `scripts/release-notes.js` | 从更新日志生成 Release 说明(`npm run release-notes`) |
+| `.github/workflows/release.yml` | 版本号变了就自动发 Release |
 
 ## 开发
 
@@ -148,30 +150,25 @@ npm run screenshots
 
 ## 发布新版本
 
-1. 改 `manifest.json` 里的 `version`(新功能加第二位,只修问题加第三位,比如 1.4.0 → 1.5.0 / 1.4.1)。
-2. 运行测试并打包:
+发版是自动的:`main` 上 `manifest.json` 的版本号一变,GitHub Actions([.github/workflows/release.yml](.github/workflows/release.yml))就会跑测试、打包,创建 `v<版本号>` 标签和 GitHub Release,附上 zip,说明从 `CHANGELOG.md` 里自动挑出这个版本包含的条目。
 
-   ```bash
-   npm test
-   ```
+1. 改 `manifest.json` 里的 `version`(新功能加第二位,只修问题加第三位,比如 1.4.1 → 1.5.0 / 1.4.2),和更新日志一起提交。
+2. 推送到 `main`。几分钟后在仓库的 Releases 页面就能看到新版本;进度在 Actions 页面看。
+3. 在 [Chrome 应用商店开发者信息中心](https://chrome.google.com/webstore/devconsole) 上传 Release 里的 zip;截图、说明等上架资料见 [store/listing.md](store/listing.md)。
 
-   ```bash
-   npm run pack
-   ```
+本地预览这次 Release 的说明(默认从最近的版本标签算起):
 
-   生成 `dist/sidearc-<版本号>.zip`(不在 git 里),只包含扩展运行需要的文件。
-3. 提交版本号改动,打上同名标签并推送:
+```bash
+npm run release-notes
+```
 
-   ```bash
-   git tag v<版本号>
-   ```
+本地打包(不发布):
 
-   ```bash
-   git push origin main --tags
-   ```
+```bash
+npm run pack
+```
 
-4. 在 GitHub 的 Releases 页面基于这个标签新建一个 Release,把 zip 作为附件上传,说明里贴上 `CHANGELOG.md` 里对应日期的条目。
-5. 在 [Chrome 应用商店开发者信息中心](https://chrome.google.com/webstore/devconsole) 上传同一个 zip;截图、说明等上架资料见 [store/listing.md](store/listing.md)。
+说明是按更新日志里每条末尾的提交链接挑的:条目引用的提交在这个版本范围里,就会被收进去。所以更新日志里的条目要带上提交链接。
 
 ## 主页(GitHub Pages)
 

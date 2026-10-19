@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test",
     "screenshots": "node store/screenshots/make.js",
-    "pack": "node scripts/pack.js"
+    "pack": "node scripts/pack.js",
+    "release-notes": "node scripts/release-notes.js"
   },
   "license": "MIT"
 }

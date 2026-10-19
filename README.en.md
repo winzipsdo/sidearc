@@ -110,7 +110,7 @@ See [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## Releasing
 
-Bump `version` in `manifest.json`, run `npm test` and `npm run pack` (writes `dist/sidearc-<version>.zip`), commit, tag `v<version>`, push with `--tags`, attach the zip to a GitHub Release and upload it to the Chrome Web Store. Details are in the Chinese README.
+Releases are automated: when `version` in `manifest.json` changes on `main`, a GitHub Actions workflow runs the tests, builds the zip, tags `v<version>` and publishes a GitHub Release with notes picked from `CHANGELOG.md`. Then upload the zip to the Chrome Web Store. Preview the notes locally with `npm run release-notes`.
 
 ## Website
 

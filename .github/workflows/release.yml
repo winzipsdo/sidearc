@@ -1,0 +1,63 @@
+# 自动发版:main 上 manifest.json 的版本号变了,而且还没有对应的标签,就跑测试、打包,
+# 创建 v<版本号> 标签和 GitHub Release(说明从 CHANGELOG.md 生成,附上 zip)。
+# 也可以在 Actions 页面手动运行,给已有的标签补发 Release。
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: [manifest.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 读取版本号,判断要不要发
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if gh release view "v$version" > /dev/null 2>&1; then
+            echo "v$version 已经发过 Release,跳过"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 测试
+        if: steps.version.outputs.skip != 'true'
+        run: npm test
+
+      - name: 打包并生成说明
+        if: steps.version.outputs.skip != 'true'
+        run: |
+          npm run pack
+          # 标签已经存在(比如手动打过)就从它的上一个版本算起,否则从最近的版本标签算起
+          tag="v${{ steps.version.outputs.version }}"
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            prev=$(git describe --tags --abbrev=0 --match 'v*' "$tag^" 2>/dev/null || true)
+          else
+            prev=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          fi
+          node scripts/release-notes.js $prev > release-notes.md
+          cat release-notes.md
+
+      - name: 发布
+        if: steps.version.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${{ steps.version.outputs.version }}
+          gh release create "v$v" "dist/sidearc-$v.zip" --title "Sidearc $v" --notes-file release-notes.md --target "$GITHUB_SHA"
