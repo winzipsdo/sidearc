@@ -12,6 +12,7 @@
 
 ### 文档
 
+- **发版自动化。** 改版本号推送后,GitHub 自动跑测试、打包,发布带说明和 zip 的 Release;说明从更新日志里自动挑出。 [`29e711c`](https://github.com/winzipsdo/sidearc/commit/29e711c)
 - **打包命令和发版、主页维护说明。** 新增 `npm run pack` 生成上架用的 zip;README 补充了发布新版本和维护 GitHub Pages 主页的步骤。 [`032bda4`](https://github.com/winzipsdo/sidearc/commit/032bda4)
 
 ## 2026-10-18
