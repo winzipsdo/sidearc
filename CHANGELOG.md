@@ -6,6 +6,10 @@
 
 ## 2026-10-19
 
+### 修复
+
+- **Sidearc 会拆掉别人建的标签页分组。** 你自己或别的扩展(比如 Claude)建的分组现在原样保留,整组排在空间分组后面。 [`9a2d129`](https://github.com/winzipsdo/sidearc/commit/9a2d129)
+
 ### 文档
 
 - **打包命令和发版、主页维护说明。** 新增 `npm run pack` 生成上架用的 zip;README 补充了发布新版本和维护 GitHub Pages 主页的步骤。 [`032bda4`](https://github.com/winzipsdo/sidearc/commit/032bda4)
