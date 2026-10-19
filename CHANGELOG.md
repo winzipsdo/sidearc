@@ -12,6 +12,7 @@
 
 ### 修复
 
+- **把标签页拖到地址栏上松手后,那一行一直是半透明的,列表也不再更新。** 现在鼠标回到侧边栏就恢复。 [`8a25235`](https://github.com/winzipsdo/sidearc/commit/8a25235)
 - **Sidearc 会拆掉别人建的标签页分组。** 你自己或别的扩展(比如 Claude)建的分组现在原样保留,整组排在空间分组后面。 [`9a2d129`](https://github.com/winzipsdo/sidearc/commit/9a2d129)
 
 ### 文档
