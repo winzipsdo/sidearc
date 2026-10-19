@@ -41,7 +41,8 @@ const ICONS = {
   lock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/>'),
   unlock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 014.8-1"/>'),
   check: svg('<path d="M3.5 8.5l3 3 6-6.5"/>'),
-  gear: svg('<circle cx="8" cy="8" r="2"/><path d="M8 1.8l1.2 1.6 2-.4.4 2 1.6 1.2L12.4 8l.8 1.8-1.6 1.2-.4 2-2-.4L8 14.2l-1.2-1.6-2 .4-.4-2-1.6-1.2L3.6 8l-.8-1.8 1.6-1.2.4-2 2 .4z"/>'),
+  // 设置:三条滑杆
+  sliders: svg('<path d="M2 3.5h5.9M11.1 3.5H14M2 8h2.4M7.6 8H14M2 12.5h6.4M11.6 12.5H14"/><circle cx="9.5" cy="3.5" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="10" cy="12.5" r="1.6"/>'),
   recent: svg('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
 };
 export function icon(name) {

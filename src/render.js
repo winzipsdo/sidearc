@@ -152,7 +152,7 @@ export function render() {
     ),
     h('button', { class: 'space-dot', 'aria-label': t('newSpace'), data: { name: t('newSpace') }, onclick: addSpace }, icon('plus')),
     h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: recentMenu }, icon('recent')),
-    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('gear'))
+    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
   );
   saveSnapshot();
 }
