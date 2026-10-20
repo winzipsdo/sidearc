@@ -114,7 +114,7 @@ See [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## Releasing
 
-Releases are automated: when `version` in `manifest.json` changes on `main`, a GitHub Actions workflow runs the tests, builds the zip, tags `v<version>` and publishes a GitHub Release with notes picked from `CHANGELOG.md`. Then upload the zip to the Chrome Web Store. Preview the notes locally with `npm run release-notes`.
+Releases are automated: when `version` in `manifest.json` changes on `main`, a GitHub Actions workflow runs the tests, builds the zip, tags `v<version>` and publishes a GitHub Release with notes picked from `CHANGELOG.md`. Sidearc isn't on the Chrome Web Store yet while it's still being polished; listing materials are ready in `store/listing.md`. Preview the notes locally with `npm run release-notes`.
 
 ## Website
 

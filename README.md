@@ -163,7 +163,7 @@ npm run screenshots
 
 1. 改 `manifest.json` 里的 `version`(新功能加第二位,只修问题加第三位,比如 1.4.1 → 1.5.0 / 1.4.2),和更新日志一起提交。
 2. 推送到 `main`。几分钟后在仓库的 Releases 页面就能看到新版本;进度在 Actions 页面看。
-3. 在 [Chrome 应用商店开发者信息中心](https://chrome.google.com/webstore/devconsole) 上传 Release 里的 zip;截图、说明等上架资料见 [store/listing.md](store/listing.md)。
+3. 暂不上架 Chrome 应用商店,还在打磨;以后上架时,在 [开发者信息中心](https://chrome.google.com/webstore/devconsole) 上传 Release 里的 zip,截图、说明等上架资料见 [store/listing.md](store/listing.md)。
 
 本地预览这次 Release 的说明(默认从最近的版本标签算起):
 
