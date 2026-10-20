@@ -8,6 +8,7 @@
 
 ### 新增
 
+- **键盘操作。** 点一下侧边栏后用方向键从当前页面开始移动选中框,回车打开、Delete 关闭、Shift+F10 打开右键菜单;选中框参考 Switch 的样式和动效。 [`ae0cfd4`](https://github.com/winzipsdo/sidearc/commit/ae0cfd4)
 - **Shift+点击连选标签页。** 选中上一次点过的标签页到这一个之间的所有标签页,和顶部标签栏一样;只在下面的标签页列表里生效。 [`1c07ed8`](https://github.com/winzipsdo/sidearc/commit/1c07ed8)
 
 ### 变更
