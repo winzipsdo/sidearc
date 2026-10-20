@@ -37,8 +37,15 @@ export function hideCursor() {
   focus(null);
 }
 
+// 侧边栏没了键盘焦点(焦点去了网页、地址栏或别的窗口),方向键就到不了这里,选中框也收起来。
+// blur 不一定每次都有(比如关掉当前标签页后 Chrome 把焦点交给网页),所以选中框在的时候再定时看一眼
+setInterval(() => cursor && !document.hasFocus() && hideCursor(), 500);
+addEventListener('blur', () => cursor && hideCursor());
+
 // 走不过去:朝按的方向晃一下
 function bump(el, dir) {
+  // 上一次还没晃完(连续快按)就不重来,免得来回抽动
+  if (el.classList.contains('kb-bump-' + dir)) return;
   el.classList.remove('kb-bump-left', 'kb-bump-right', 'kb-bump-up', 'kb-bump-down');
   void el.offsetWidth;
   el.classList.add('kb-bump-' + dir);
@@ -74,26 +81,35 @@ function neighbor(el, dir) {
   return best;
 }
 
-function move(dir) {
+// repeat:按住不放时系统连续补发的按键。这时照常移动但不弹;一路按到边上时晃一次,之后按住不再晃
+let bumpedThisHold = false;
+function move(dir, repeat) {
+  if (!repeat) bumpedThisHold = false;
   const el = current();
   // 还没有选中框:从当前页面(正在看的标签页、收藏或固定标签)开始,按上就选它上面的,按下就选它下面的
   if (!el) {
     const start = items().find((x) => x.classList.contains('active')) ?? items()[0];
     if (!start) return;
-    return focus(((dir === 'up' || dir === 'down') && neighbor(start, dir)) || start);
+    return focus(((dir === 'up' || dir === 'down') && neighbor(start, dir)) || start, !repeat);
   }
   // 文件夹:右展开、左收起;已经是那个状态就晃一下
   if (el.dataset.kind === 'folder' && (dir === 'left' || dir === 'right')) {
-    if (el.classList.contains('expanded') === (dir === 'right')) return bump(el, dir);
+    if (el.classList.contains('expanded') === (dir === 'right')) return edge(el, dir);
     return el.click();
   }
   const next = neighbor(el, dir);
-  if (next) return focus(next);
+  if (next) return focus(next, !repeat);
   // 最上面再往上:回到搜索框
   if (dir === 'up') {
     hideCursor();
     return $('#search').focus();
   }
+  edge(el, dir);
+}
+
+function edge(el, dir) {
+  if (bumpedThisHold) return;
+  bumpedThisHold = true;
   bump(el, dir);
 }
 
@@ -106,13 +122,15 @@ export function bindKeys() {
     if (dir) {
       e.preventDefault();
       hideMenu();
-      return move(dir);
+      return move(dir, e.repeat);
     }
     const el = current();
     if (!el) return;
     if (e.key === 'Enter') {
       e.preventDefault();
       el.click();
+      // 打开标签页后键盘焦点会进网页,选中框留着也用不了;只有展开收起文件夹时还留在侧边栏
+      if (el.dataset.kind !== 'folder') hideCursor();
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
       // 和行上的关闭按钮一样:标签页关掉;收藏/固定项只关它的标签页,没开着的不动
       e.preventDefault();
