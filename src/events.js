@@ -9,11 +9,24 @@ import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, refreshSleptLabels, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, setTabParent, state, tabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, setTabParent, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
+
+// Shift+点击连选的起点:上一次普通点击或 Cmd/Ctrl+点击的标签页,没有就从当前标签页算
+let anchorId = null;
+
+// Shift+点击:选中起点到这个标签页之间(按列表里的顺序)的所有标签页,其他的取消选中,和顶部标签栏一样。
+// tabs.highlight 会切到给出的第一个标签页,所以把起点放在最前面,当前标签页一般就不变
+function selectRange(tab) {
+  const list = visibleTabs().map((x) => x.tab);
+  const anchor = list.find((x) => x.id === anchorId) ?? list.find((x) => x.active) ?? tab;
+  const [a, b] = [list.indexOf(anchor), list.indexOf(tab)].sort((x, y) => x - y);
+  const range = list.slice(a, b + 1).filter((x) => x !== anchor);
+  chrome.tabs.highlight({ windowId, tabs: [anchor, ...range].map((x) => x.index) }).catch(() => {});
+}
 
 // 取消多选:只留当前标签页
 function clearSelection() {
@@ -34,9 +47,15 @@ function bindRows(scroll) {
       else if (act === 'discard') discardTabs([tab]);
       else if (act === 'unnest') setTabParent(tab.id, null).then(render);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
+      else if (e.shiftKey) selectRange(tab);
       // Cmd/Ctrl+点击:加入或移出多选,和顶部标签栏一样用浏览器的高亮(当前标签页总是选中的)
-      else if (e.metaKey || e.ctrlKey) chrome.tabs.update(tab.id, { highlighted: !tab.highlighted }).catch(() => {});
-      else chrome.tabs.update(tab.id, { active: true });
+      else if (e.metaKey || e.ctrlKey) {
+        anchorId = tab.id;
+        chrome.tabs.update(tab.id, { highlighted: !tab.highlighted }).catch(() => {});
+      } else {
+        anchorId = tab.id;
+        chrome.tabs.update(tab.id, { active: true });
+      }
     } else {
       const item = findItem(el.dataset.id)?.item;
       if (!item) return;
@@ -51,7 +70,8 @@ function bindRows(scroll) {
 
   // 中键关闭
   scroll.addEventListener('mousedown', (e) => {
-    if (e.button === 1 && e.target.closest('[data-kind]')) e.preventDefault();
+    // 中键不要出滚动图标;Shift+点击不要选中文字
+    if ((e.button === 1 || e.shiftKey) && e.target.closest('[data-kind]')) e.preventDefault();
   });
   scroll.addEventListener('auxclick', (e) => {
     const el = e.button === 1 && e.target.closest('[data-kind]');
