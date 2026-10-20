@@ -4,7 +4,7 @@ import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemT
 import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems } from './logic.js';
 import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
-import { addSpace, deleteSpace, editSpace, toggleNoHistory } from './spaces.js';
+import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, tabSpace, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor } from './dom.js';
@@ -43,6 +43,7 @@ function selectionMenu(e, list) {
         label: t('moveToSpace', { name: s.name }),
         run: async () => {
           for (const x of list) await moveTabToSpace(x.id, s.id);
+          await switchSpace(s.id, list[0].id);
         },
       })),
     '-',
@@ -83,7 +84,7 @@ export function tabMenu(e, tab) {
     },
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
-      .map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveTabToSpace(tab.id, s.id) })),
+      .map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveTabToSpace(tab.id, s.id).then(() => switchSpace(s.id, tab.id)) })),
     '-',
     { icon: 'close', label: t('close'), run: () => closeTab(tab) },
     below.length > 0 && { icon: 'closeBelow', label: t('closeBelow'), danger: true, run: () => closeWithUndo(below, t('closedTabs', { n: below.length })) },
@@ -114,7 +115,7 @@ export function itemMenu(e, { item, kind, space, folder }) {
       : { icon: 'move', label: t('moveToFavs'), run: () => moveItem(item.id, 'fav') },
     folder && { icon: 'outdent', label: t('moveOutOfFolder'), run: () => moveToFolder(item.id, null) },
     ...(kind === 'pin'
-      ? state.spaces.filter((s) => s.id !== space.id).map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveItemToSpace(item.id, s.id) }))
+      ? state.spaces.filter((s) => s.id !== space.id).map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveItemToSpace(item.id, s.id).then(() => switchSpace(s.id, bind.get(item.id))) }))
       : []),
     // 字比较多,放在这一组最后
     kind === 'pin' && { icon: 'folderPlus', label: t('newFolderWithItem'), run: () => createFolder(item.id) },

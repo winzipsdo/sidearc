@@ -6,6 +6,7 @@ import { render, schedule } from './render.js';
 import { h } from './dom.js';
 import { t } from './i18n.js';
 import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
+import { switchSpace } from './spaces.js';
 import { moveTabToSpace } from './tabs.js';
 import { hideMenu } from './ui.js';
 
@@ -246,7 +247,11 @@ export function bindDrag() {
     const d = dragging;
     if (target.dataset.space) {
       finishDrag();
-      if (d.kind === 'tab') for (const id of d.ids ?? [d.id]) await moveTabToSpace(+id, target.dataset.space);
+      if (d.kind !== 'tab') return;
+      // 移过去之后跟着切到那个空间,看着刚移过去的标签页(和右键「移到空间」一样)
+      const ids = (d.ids ?? [d.id]).map(Number);
+      for (const id of ids) await moveTabToSpace(id, target.dataset.space);
+      await switchSpace(target.dataset.space, ids[0]);
       return;
     }
     if (overSelf(target, e)) return finishDrag();

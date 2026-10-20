@@ -7,12 +7,13 @@ import { render, schedule } from './render.js';
 import { applySession, bind, COLORS, itemByTab, normalize, save, state, tabs, tabSpace, uid } from './store.js';
 import { ask, toast } from './ui.js';
 
-export async function switchSpace(id) {
+// focusTabId:切过去后要看的标签页(比如刚移过去的那个);不给就切到该空间里最近用过的
+export async function switchSpace(id, focusTabId) {
   if (id === state.activeSpaceId) return;
   state.activeSpaceId = id;
   await save();
   render();
-  // 切到该空间里最近用过的标签页
+  if (focusTabId != null && tabs.some((t) => t.id === focusTabId)) return chrome.tabs.update(focusTabId, { active: true }).catch(() => {});
   const byTab = itemByTab();
   const best = tabs
     .filter((t) => {
