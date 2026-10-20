@@ -3,6 +3,7 @@
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
+import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, tabSlept, visibleTabs } from './store.js';
@@ -156,6 +157,7 @@ export function render() {
     h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: recentMenu }, icon('recent')),
     h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
   );
+  applyCursor();
   saveSnapshot();
 }
 
@@ -166,7 +168,8 @@ function saveSnapshot() {
   clearTimeout(snapshotTimer);
   snapshotTimer = setTimeout(() => {
     try {
-      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML]));
+      // 键盘选中框不存进去,下次打开时不该出现
+      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML.replace(/ kb-(focus|pop)/g, '')]));
       const accent = document.documentElement.style.getPropertyValue('--accent');
       // 页面里写死的文字也存一份当前语言的,免得用英文时先闪一下中文
       const text = {};

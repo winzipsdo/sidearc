@@ -596,3 +596,54 @@ dialog input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%,
 .btns button:hover { background: var(--fill-hover); }
 .btns .primary { background: var(--accent); color: #fff; }
 .btns .primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+
+/* 键盘选中框,参考 Switch:离项一点距离的蓝青色粗边框,颜色在亮蓝和青绿之间来回呼吸,外圈一层淡光。
+   移到新的项上时边框从稍大缩回来(弹一下);往走不过去的方向按,项本身朝那边晃一下再弹回 */
+@property --kb-c {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0ab4ff;
+}
+.kb-focus { position: relative; z-index: 1; }
+.kb-focus::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  border: 3px solid var(--kb-c);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--kb-c) 55%, transparent);
+  pointer-events: none;
+  animation: kb-breathe 1.1s ease-in-out infinite alternate;
+}
+.kb-pop::after { animation: kb-pop 0.38s var(--kb-spring-pop), kb-breathe 1.1s ease-in-out infinite alternate; }
+@keyframes kb-breathe {
+  from { --kb-c: #0ab4ff; }
+  to { --kb-c: #1fe6d4; }
+}
+/* 弹出和晃动用弹簧曲线(按物理公式算好采样成 linear()),比手写关键帧更像真的回弹。
+   弹出:从 0 走到 1、略过头再回来,固有角频率 24 rad/s、阻尼比 0.5,0.38 秒。
+   晃动:被撞一下的衰减振荡,先朝按的方向冲出去(约 50 毫秒到最远)再来回几下归位,
+   固有角频率 26 rad/s、阻尼比 0.3,0.5 秒;峰值归一到 1,幅度由下面的关键帧决定 */
+:root {
+  --kb-spring-pop: linear(0, 0.042, 0.148, 0.294, 0.457, 0.621, 0.772, 0.901, 1.004, 1.08, 1.129, 1.156, 1.163, 1.155, 1.137, 1.113, 1.087, 1.06, 1.036, 1.015, 0.998, 0.986, 0.978, 0.974, 0.973, 0.975, 0.978, 0.982, 0.986, 0.99, 1);
+  --kb-spring-bump: linear(0, 0.432, 0.746, 0.934, 1, 0.958, 0.833, 0.651, 0.439, 0.223, 0.024, -0.142, -0.265, -0.341, -0.371, -0.361, -0.318, -0.252, -0.174, -0.094, -0.018, 0.045, 0.094, 0.124, 0.138, 0.136, 0.121, 0.098, 0.069, 0.039, 0.01, -0.014, -0.033, -0.045, -0.051, -0.051, -0.046, -0.038, -0.027, -0.016, 0);
+}
+@keyframes kb-pop {
+  from { transform: scale(1.08); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.kb-bump-left, .kb-bump-right { animation: kb-bump-x 0.5s var(--kb-spring-bump); }
+.kb-bump-up, .kb-bump-down { animation: kb-bump-y 0.5s var(--kb-spring-bump); }
+.kb-bump-left, .kb-bump-up { --kb-d: -1; }
+.kb-bump-right, .kb-bump-down { --kb-d: 1; }
+@keyframes kb-bump-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(var(--kb-d) * 6px)); }
+}
+@keyframes kb-bump-y {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(var(--kb-d) * 5px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-focus::after, .kb-pop::after, .kb-bump-left, .kb-bump-right, .kb-bump-up, .kb-bump-down { animation: none; }
+}

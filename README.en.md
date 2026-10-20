@@ -68,6 +68,11 @@ Requires Chrome 116 or later.
 | Undo (sidebar focused) | `Ctrl+Z` | `⌘+Z` |
 | Search box: skip matches, open the URL or search | `Ctrl+Enter` | `⌘+Enter` |
 | Search box: clear | `Esc` | `Esc` |
+| Keyboard cursor: move (starts from the current page; ↓ in the search box starts from the top) | `↑` `↓` `←` `→` | `↑` `↓` `←` `→` |
+| Keyboard cursor: open / close / context menu | `Enter` / `Delete` / `Shift+F10` | `Enter` / `Delete` / `Shift+F10` |
+| Keyboard cursor: expand / collapse a folder | `→` / `←` | `→` / `←` |
+
+After Enter opens a tab, Chrome moves keyboard focus into that page; press `F6` (maybe a few times) to bring focus back to the sidebar.
 | Close a tab | Middle-click or ✕ | Middle-click or ✕ |
 
 The sidebar shortcut can be changed at `chrome://extensions/shortcuts`.

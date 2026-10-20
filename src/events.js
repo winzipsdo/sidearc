@@ -2,6 +2,7 @@
 
 import { $, FALLBACK_ICON } from './dom.js';
 import { bindDrag } from './drag.js';
+import { bindKeys } from './keys.js';
 import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { toggleFolder } from './folders.js';
@@ -237,6 +238,7 @@ export function bindEvents() {
   bindControls();
   bindSearch();
   bindKeyboard();
+  bindKeys();
   bindPage();
   bindDrag();
   bindBrowser();
