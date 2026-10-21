@@ -6,10 +6,18 @@
 
 ## 2026-10-21
 
+### 新增
+
+- **足迹。** 最近离开的 3 个标签页左边有一道主题色竖条(收藏在图标下面),上一个最深,15 分钟内慢慢消失;出现和消失都有动效。右下角设置里可以关掉,默认打开。 [`7fc500e`](https://github.com/winzipsdo/sidearc/commit/7fc500e)
+
 ### 变更
 
 - **拖动收藏排序时,落点更清楚。** 两个图标之间出现一根带圆点的竖线,两边的图标让开一点;放到最后时竖线画在最后一个右边。 [`f2b9517`](https://github.com/winzipsdo/sidearc/commit/f2b9517)
 - **空间和文件夹菜单里,「休眠」排到「不记录历史」后面。** [`e29c77b`](https://github.com/winzipsdo/sidearc/commit/e29c77b)
+
+### 修复
+
+- **点了一个标签页后马上点另一个,有时没反应。** 切换标签页引起的重画会吞掉紧接着的点击,现在按着鼠标时不重画。 [`7fc500e`](https://github.com/winzipsdo/sidearc/commit/7fc500e)
 
 ## 2026-10-20
 
