@@ -233,9 +233,10 @@ export function bindDrag() {
     if (into) into.classList.add('drop-into');
     else if (ref) ref.classList.add('drop-before');
     else {
-      // 放到列表末尾:在最后一行下面画顶层的插入线;区域是空的(或是收藏夹网格)才高亮整个区域
-      const last = target.classList.contains('list') && [...target.children].filter((el) => el.matches('.row, .folder-empty')).at(-1);
-      if (last) last.classList.add('drop-after', 'drop-top');
+      // 放到末尾:列表在最后一行下面画顶层的插入线,收藏夹网格在最后一个磁贴右边画竖线;区域是空的才高亮整个区域
+      const grid = target.classList.contains('grid');
+      const last = [...target.children].filter((el) => el.matches(grid ? '.tile' : '.row, .folder-empty') && !isDragged(el)).at(-1);
+      if (last) last.classList.add(...(grid ? ['drop-after'] : ['drop-after', 'drop-top']));
       else target.classList.add('drop-end');
     }
   });

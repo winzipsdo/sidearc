@@ -397,7 +397,37 @@ header { padding: 12px 12px 8px; }
 .list .drop-before::before { top: -5px; }
 .list .drop-after::after { bottom: -2px; }
 .list .drop-after::before { bottom: -5px; }
-.grid .drop-before { box-shadow: -4px 0 0 -1.5px var(--accent); }
+/* 收藏夹网格:两个磁贴之间画一根竖的插入线(上端一个空心小圆点,和列表的插入线一个样子),
+   两边的磁贴各往外让开一点,像在给它腾位置;放到最后时画在最后一个磁贴右边 */
+.grid .tile.drop-before { transform: translateX(3px); }
+.grid .tile:has(+ .drop-before), .grid .tile.drop-after { transform: translateX(-3px); }
+.grid :is(.drop-before, .drop-after)::before,
+.grid :is(.drop-before, .drop-after)::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+.grid :is(.drop-before, .drop-after)::after {
+  top: 9px;
+  bottom: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent) 70%, color-mix(in srgb, var(--accent) 30%, transparent));
+}
+.grid :is(.drop-before, .drop-after)::before {
+  top: 1px;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg2);
+}
+.grid .drop-before::after { left: -7.5px; }
+.grid .drop-before::before { left: -10.5px; }
+.grid .drop-after::after { right: -7.5px; }
+.grid .drop-after::before { right: -10.5px; }
 .list .drop-into, .list .drop-into.active {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
   box-shadow: inset 0 0 0 1.5px var(--accent);
