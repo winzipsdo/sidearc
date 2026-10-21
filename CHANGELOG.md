@@ -8,7 +8,7 @@
 
 ### 新增
 
-- **足迹。** 最近离开的 3 个标签页左边有一道主题色竖条(收藏在图标下面),上一个最深,15 分钟内慢慢消失;出现和消失都有动效。右下角设置里可以关掉,默认打开。 [`7fc500e`](https://github.com/winzipsdo/sidearc/commit/7fc500e)
+- **足迹。** 最近离开的 3 个标签页左边有一道主题色竖条(收藏在图标下面),每道各自倒计时 10 分钟,从两头往中间缩短、变淡,最后缩成圆点再消失;出现和消失都有动效。右下角设置里可以关掉,默认打开。 [`7fc500e`](https://github.com/winzipsdo/sidearc/commit/7fc500e) [`d172305`](https://github.com/winzipsdo/sidearc/commit/d172305)
 
 ### 变更
 
