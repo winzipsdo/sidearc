@@ -8,6 +8,7 @@
 
 ### 变更
 
+- **拖动收藏排序时,落点更清楚。** 两个图标之间出现一根带圆点的竖线,两边的图标让开一点;放到最后时竖线画在最后一个右边。 [`f2b9517`](https://github.com/winzipsdo/sidearc/commit/f2b9517)
 - **空间和文件夹菜单里,「休眠」排到「不记录历史」后面。** [`e29c77b`](https://github.com/winzipsdo/sidearc/commit/e29c77b)
 
 ## 2026-10-20
