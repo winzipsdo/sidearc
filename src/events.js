@@ -8,9 +8,9 @@ import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, refreshSleptLabels, render, schedule } from './render.js';
+import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, replaceTabId, setQuery, setState, setTabParent, state, tabs, visibleTabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailOn, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { hideMenu, pushUndo, undo } from './ui.js';
 
@@ -36,6 +36,24 @@ function clearSelection() {
 
 // 列表里的行和磁贴:点击、中键
 function bindRows(scroll) {
+  // 按下到松开之间不重画(见 store.js 的 pressing)。松开后等这次 click 先派发完再补画;
+  // 松手的地方在侧边栏外面收不到 mouseup 时,失去焦点或几秒后也放开
+  let pressTimer;
+  const release = () => {
+    clearTimeout(pressTimer);
+    if (!pressing) return;
+    setPressing(false);
+    if (renderPending) render();
+  };
+  scroll.addEventListener('mousedown', () => {
+    setPressing(true);
+    pressTimer = setTimeout(release, 3000);
+  });
+  addEventListener('mouseup', () => setTimeout(release));
+  addEventListener('blur', release);
+  // 开始拖了:交给拖拽那边暂停重画,松手时它会补画(这里补画会把正要拖的那一行换掉)
+  document.addEventListener('dragstart', () => (clearTimeout(pressTimer), setPressing(false)));
+
   scroll.addEventListener('click', (e) => {
     const el = e.target.closest('[data-kind]');
     if (!el) return;
@@ -213,6 +231,10 @@ function bindBrowser() {
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.trail) {
+      setTrailOn(changes.trail.newValue);
+      refreshTrail();
+    }
     if (area === 'local' && changes.lang) {
       setLangPref(changes.lang.newValue);
       applyStaticText();
@@ -231,7 +253,7 @@ function bindBrowser() {
 
 export function bindEvents() {
   // 「休眠了多久」每分钟更新一次文字
-  setInterval(refreshSleptLabels, 60000);
+  setInterval(() => (refreshSleptLabels(), refreshTrail()), 60000);
   const scroll = $('#scroll');
   bindRows(scroll);
   bindMenus(scroll);

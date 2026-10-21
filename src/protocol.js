@@ -9,6 +9,7 @@ export const PREFIX = {
   fresh: 'n', // n:<tabId> -> 新开的标签页还在查重:1 = 还没载入过网页,其他 = 第一次载入网页的时间
   group: 'g', // g:<groupId> -> 这个标签页分组对应的空间 id
   slept: 'z', // z:<tabId> -> 这个标签页开始休眠的时间(毫秒);醒来后删掉
+  trail: 'f', // f:<windowId> -> 足迹:{ active: 当前标签页, trail: [{ id, at }] 最近离开的几个,新的在前,at 是离开的时间(毫秒) }
 };
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));
 export const hasPrefix = (key, prefix) => key.startsWith(prefix + ':');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailOpacity, TRAIL_TTL } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -187,4 +187,35 @@ test('sleptFor:休眠了多久,取最大的单位', () => {
   assert.deepEqual(sleptFor(now - 23 * 3600_000 - 59 * 60_000, now), { unit: 'hours', n: 23 });
   assert.deepEqual(sleptFor(now - 24 * 3600_000, now), { unit: 'days', n: 1 });
   assert.deepEqual(sleptFor(now - 10 * 86400_000, now), { unit: 'days', n: 10 });
+});
+
+test('nextTrail:离开的标签页记在最前,最多 3 个,回到的标签页不再算足迹', () => {
+  let rec = nextTrail(undefined, 1, 0);
+  assert.deepEqual(rec, { active: 1, trail: [] });
+  rec = nextTrail(rec, 2, 1000);
+  assert.deepEqual(rec.trail, [{ id: 1, at: 1000 }]);
+  for (const [id, t] of [[3, 2000], [4, 3000], [5, 4000]]) rec = nextTrail(rec, id, t);
+  assert.deepEqual(rec.trail.map((x) => x.id), [4, 3, 2]);
+  rec = nextTrail(rec, 3, 5000);
+  assert.deepEqual(rec.trail.map((x) => x.id), [5, 4, 2]);
+  // 原来的当前标签页已经关掉:不留足迹
+  assert.deepEqual(nextTrail({ active: 9, trail: [] }, 1, 0, false).trail, []);
+  // 切回同一个标签页(比如重复的 onActivated):不变
+  assert.deepEqual(nextTrail({ active: 1, trail: [{ id: 2, at: 0 }] }, 1, 10).trail, [{ id: 2, at: 0 }]);
+});
+
+test('nextTrail:超过 15 分钟的足迹会被丢掉', () => {
+  const rec = nextTrail({ active: 2, trail: [{ id: 1, at: 0 }] }, 3, TRAIL_TTL + 1);
+  assert.deepEqual(rec.trail, [{ id: 2, at: TRAIL_TTL + 1 }]);
+});
+
+test('trailOpacity:按顺序一档比一档淡,随时间变淡,15 分钟后为 0', () => {
+  assert.ok(trailOpacity(0, 0, 0) > trailOpacity(1, 0, 0));
+  assert.ok(trailOpacity(1, 0, 0) > trailOpacity(2, 0, 0));
+  assert.equal(trailOpacity(3, 0, 0), 0);
+  // 先慢后快:过了一半时间还剩大半
+  assert.ok(trailOpacity(0, 0, TRAIL_TTL / 2) > trailOpacity(0, 0, 0) / 2);
+  assert.ok(trailOpacity(0, 0, TRAIL_TTL * 0.9) < trailOpacity(0, 0, TRAIL_TTL / 2));
+  assert.equal(trailOpacity(0, 0, TRAIL_TTL), 0);
+  assert.equal(trailOpacity(0, 0, TRAIL_TTL * 2), 0);
 });

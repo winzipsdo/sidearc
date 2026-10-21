@@ -1,12 +1,12 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor } from './logic.js';
+import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailOpacity } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabs, tabSlept, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, query, refreshTabs, pressing, renderHeld, setRenderPending, state, tabAlias, tabs, tabSlept, trail, trailOn, visibleTabs } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -28,14 +28,71 @@ function sleptTip(tab) {
   return '\n' + t('sleptTip', { duration: formatDuration(sleptFor(since)), at });
 }
 
+// 足迹:最近离开的几个标签页左边(收藏是底部)画一道主题色的线,一个比一个淡,并随时间淡掉。
+// 只改类名和 CSS 变量,不整体重画;每次重画后和每分钟各调用一次。
+// 动效:新出现的从短到长长出来(fp-grow),深浅变了的从原来的过渡过去,没了的缩短淡出(fp-out)。
+// 切标签页时列表会连着重画好几次,每次都是新元素,所以每个足迹的动画从哪儿开始记在这里,
+// 重画后用负的 animation-delay(--fp-delay)接着播,不会从头来或被掐断
+const trailAnim = new Map(); // tabId -> { from, to, start, grow }
+const trailOut = new Map(); // tabId -> { from, start }:正在淡出的
+const GROW_MS = 450;
+const OUT_MS = 300;
+const trailEls = (itemOf, tabId) => {
+  const item = itemOf.get(tabId);
+  return document.querySelectorAll(item ? `[data-kind="pin"][data-id="${item}"], [data-kind="fav"][data-id="${item}"]` : `[data-kind="tab"][data-id="${tabId}"]`);
+};
+export function refreshTrail() {
+  for (const el of document.querySelectorAll('.fp, .fp-out')) el.classList.remove('fp', 'fp-grow', 'fp-out');
+  const now = Date.now();
+  const byId = new Map(tabs.map((t) => [t.id, t]));
+  const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
+  // 排第几只看足迹本身(还开着、没过期),不管现在哪个是当前标签页,免得切换的一瞬间排名先错后对、深浅闪一下
+  const next = new Map();
+  if (trailOn) {
+    trail
+      .filter((x) => byId.has(x.id) && now - x.at < TRAIL_TTL)
+      .forEach((x, rank) => byId.get(x.id).active || next.set(x.id, trailOpacity(rank, x.at, now)));
+  }
+  for (const [id, o] of next) {
+    let a = trailAnim.get(id);
+    if (!a) a = { from: 0, to: o, start: now, grow: !trailOut.has(id) };
+    else if (Math.abs(a.to - o) > 0.001) a = { from: a.to, to: o, start: now, grow: false };
+    trailAnim.set(id, a);
+    trailOut.delete(id);
+    for (const el of trailEls(itemOf, id)) {
+      el.classList.add('fp');
+      if (a.grow && now - a.start < GROW_MS) el.classList.add('fp-grow');
+      el.style.setProperty('--fp-o', o.toFixed(3));
+      el.style.setProperty('--fp-from', a.from.toFixed(3));
+      el.style.setProperty('--fp-delay', `${a.start - now}ms`);
+    }
+  }
+  for (const [id, a] of trailAnim) {
+    if (next.has(id)) continue;
+    trailAnim.delete(id);
+    trailOut.set(id, { from: a.to, start: now });
+  }
+  for (const [id, x] of trailOut) {
+    if (now - x.start >= OUT_MS) {
+      trailOut.delete(id);
+      continue;
+    }
+    for (const el of trailEls(itemOf, id)) {
+      el.classList.add('fp-out');
+      el.style.setProperty('--fp-from', x.from.toFixed(3));
+      el.style.setProperty('--fp-delay', `${x.start - now}ms`);
+    }
+  }
+}
+
 // 只更新行尾「休眠了多久」的文字,不整体重画(标签页很多时整体重画要几十毫秒)
 export function refreshSleptLabels() {
   for (const el of document.querySelectorAll('.slept')) el.textContent = formatDuration(sleptFor(+el.dataset.since));
 }
 
 export function render() {
-  // 拖拽过程中重画会打断拖拽,等松手后再画
-  if (dragging || renderHeld) {
+  // 拖拽过程中、鼠标按着的时候重画会打断拖拽或吞掉点击,等松手后再画
+  if (dragging || renderHeld || pressing) {
     setRenderPending(true);
     return;
   }
@@ -157,6 +214,7 @@ export function render() {
     h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: recentMenu }, icon('recent')),
     h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
   );
+  refreshTrail();
   applyCursor();
   saveSnapshot();
 }
@@ -169,7 +227,7 @@ function saveSnapshot() {
   snapshotTimer = setTimeout(() => {
     try {
       // 键盘选中框不存进去,下次打开时不该出现
-      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML.replace(/ kb-(focus|pop)/g, '')]));
+      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML.replace(/ kb-(focus|pop)| fp(-\w+)?\b/g, '')]));
       const accent = document.documentElement.style.getPropertyValue('--accent');
       // 页面里写死的文字也存一份当前语言的,免得用英文时先闪一下中文
       const text = {};

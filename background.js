@@ -1,6 +1,6 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, ANY_SPACE, itemsAt, privateItemIds, tabSpaces } from './src/logic.js';
+import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
 import { startGroupSync } from './src/groups.js';
 
@@ -44,6 +44,10 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     }
     for (const [k, v] of Object.entries(all)) {
       if (v === removedId && (hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent))) set[k] = addedId;
+      // 足迹里记的当前标签页和离开过的标签页
+      if (hasPrefix(k, PREFIX.trail) && (v.active === removedId || v.trail.some((x) => x.id === removedId))) {
+        set[k] = { active: v.active === removedId ? addedId : v.active, trail: v.trail.map((x) => (x.id === removedId ? { ...x, id: addedId } : x)) };
+      }
     }
     if (Object.keys(set).length) await chrome.storage.session.set(set);
     if (remove.length) await chrome.storage.session.remove(remove);
@@ -283,4 +287,25 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 // ---------- 空间 ↔ 标签页分组 ----------
+// ---------- 足迹 ----------
+// 每个窗口记下当前标签页和最近离开的几个,侧边栏据此在它们左边画越来越淡的竖条(见 logic.js 的 nextTrail)
+chrome.tabs.onActivated.addListener(({ tabId, windowId }) =>
+  serial(async () => {
+    const key = KEY.trail(windowId);
+    const rec = (await chrome.storage.session.get(key))[key];
+    // 原来的当前标签页刚被关掉(关掉当前标签页时 Chrome 会切到别的),不给它留足迹
+    const prevAlive = rec?.active == null || !!(await chrome.tabs.get(rec.active).catch(() => null));
+    await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, Date.now(), prevAlive) });
+  })
+);
+// 关掉的标签页从足迹里去掉;关掉的窗口整条删掉
+chrome.tabs.onRemoved.addListener((tabId, { windowId, isWindowClosing }) =>
+  serial(async () => {
+    const key = KEY.trail(windowId);
+    if (isWindowClosing) return chrome.storage.session.remove(key);
+    const rec = (await chrome.storage.session.get(key))[key];
+    if (rec?.trail.some((x) => x.id === tabId)) await chrome.storage.session.set({ [key]: { ...rec, trail: rec.trail.filter((x) => x.id !== tabId) } });
+  })
+);
+
 startGroupSync(serial);

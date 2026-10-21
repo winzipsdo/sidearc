@@ -93,6 +93,8 @@ const MESSAGES = {
     settings: '设置',
     language: '语言 / Language',
     langAuto: '跟随浏览器',
+    footprints: '足迹',
+    footprintsTip: '最近离开的 3 个标签页旁边显示一道越来越淡的竖条,15 分钟内消失',
 
     // 对话框
     save: '保存',
@@ -221,6 +223,8 @@ const MESSAGES = {
     settings: 'Settings',
     language: '语言 / Language',
     langAuto: 'Same as browser',
+    footprints: 'Footprints',
+    footprintsTip: 'Mark the last 3 tabs you left with a bar that fades out over 15 minutes',
 
     save: 'Save',
     cancel: 'Cancel',

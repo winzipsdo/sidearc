@@ -5,7 +5,7 @@ import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems } from './lo
 import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabs, tabSpace, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailOn, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
@@ -154,12 +154,20 @@ export function spaceMenu(e, id) {
   ]);
 }
 
-// 右下角的设置按钮。目前只有界面语言:存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言和足迹开关。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
   const pick = (value, label) => ({ icon: langPref() === value ? 'check' : null, label, run: () => chrome.storage.local.set({ lang: value }) });
-  showMenu(e, [{ header: t('language') }, pick('auto', t('langAuto')), pick('zh', LANGS.zh), pick('en', LANGS.en)]);
+  showMenu(e, [
+    { header: t('language') },
+    pick('auto', t('langAuto')),
+    pick('zh', LANGS.zh),
+    pick('en', LANGS.en),
+    '-',
+    // 开关:打开时前面打勾
+    { icon: trailOn ? 'check' : null, label: t('footprints'), title: t('footprintsTip'), run: () => chrome.storage.local.set({ trail: !trailOn }) },
+  ]);
   const menu = $('#menu');
   menu.dataset.from = 'settings';
   menu.style.left = Math.max(4, anchor.right - menu.offsetWidth) + 'px';

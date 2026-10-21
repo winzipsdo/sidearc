@@ -32,6 +32,9 @@ export const setQuery = (text) => (query = text);
 export const setDragging = (d) => (dragging = d);
 export const setRenderPending = (pending) => (renderPending = pending);
 export const setRenderHeld = (held) => (renderHeld = held);
+// 鼠标正按着:这时重画会把按下的那一行换成新元素,松开时就不算点在同一个元素上,点击会丢(切标签页后连着点很容易碰上)
+export let pressing = false;
+export const setPressing = (v) => (pressing = v);
 // state 和 tabs 被各处直接引用,所以原地换内容,不换对象
 export function setState(next) {
   for (const k of Object.keys(state)) delete state[k];
@@ -57,7 +60,14 @@ export function normalize() {
 export const save = () => chrome.storage.local.set({ state });
 export const activeSpace = () => state.spaces.find((s) => s.id === state.activeSpaceId) ?? state.spaces[0];
 
+// 这个窗口的足迹:[{ id, at }],最近离开的在前(后台记录,见 background.js)
+export let trail = [];
+// 足迹开关(右下角设置里),存在 chrome.storage.local 的 trail 里;没设置过算开
+export let trailOn = true;
+export const setTrailOn = (v) => (trailOn = v !== false);
+
 export function applySession(key, value) {
+  if (key === KEY.trail(windowId)) return (trail = value?.trail ?? []);
   const map = key[1] === ':' && SESSION_MAPS[key[0]];
   if (!map) return;
   const k = map === bind ? key.slice(2) : +key.slice(2);
