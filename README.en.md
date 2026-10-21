@@ -28,7 +28,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
   - Links opened from other apps and brand-new tabs are not nested.
 - **Aliases**: give a tab or pinned item your own short name, shown before the title and matched by search.
 - **No duplicate tabs**: opening an address that is already open in the current space switches to the existing tab instead. Opening the address of a favorite or pinned tab that isn't open yet opens it as that favorite or pinned tab. Tabs you deliberately open in a new tab (`Ctrl/⌘+click`, middle-click) are left alone.
-- **Footprints**: the last 3 tabs you left get a theme-colored bar on the left (a short line under the icon for favorites) — darkest for the one you just left — fading out over 15 minutes, so you can find your way back. Turn it off in Settings at the bottom right.
+- **Footprints**: the last 3 tabs you left get a theme-colored bar on the left (a short line under the icon for favorites) that shrinks toward its middle and fades over 10 minutes, so you can find your way back. Turn it off in Settings at the bottom right.
 - **Search box**: type to filter; Enter jumps to the first match, or opens the URL / searches with your default engine.
 - **Close in bulk**: "Clear" closes every unpinned tab in the current space except the active one; right-click a tab to close all tabs below it.
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailOpacity, TRAIL_TTL } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -204,18 +204,15 @@ test('nextTrail:离开的标签页记在最前,最多 3 个,回到的标签页�
   assert.deepEqual(nextTrail({ active: 1, trail: [{ id: 2, at: 0 }] }, 1, 10).trail, [{ id: 2, at: 0 }]);
 });
 
-test('nextTrail:超过 15 分钟的足迹会被丢掉', () => {
+test('nextTrail:超过 10 分钟的足迹会被丢掉', () => {
   const rec = nextTrail({ active: 2, trail: [{ id: 1, at: 0 }] }, 3, TRAIL_TTL + 1);
   assert.deepEqual(rec.trail, [{ id: 2, at: TRAIL_TTL + 1 }]);
 });
 
-test('trailOpacity:按顺序一档比一档淡,随时间变淡,15 分钟后为 0', () => {
-  assert.ok(trailOpacity(0, 0, 0) > trailOpacity(1, 0, 0));
-  assert.ok(trailOpacity(1, 0, 0) > trailOpacity(2, 0, 0));
-  assert.equal(trailOpacity(3, 0, 0), 0);
-  // 先慢后快:过了一半时间还剩大半
-  assert.ok(trailOpacity(0, 0, TRAIL_TTL / 2) > trailOpacity(0, 0, 0) / 2);
-  assert.ok(trailOpacity(0, 0, TRAIL_TTL * 0.9) < trailOpacity(0, 0, TRAIL_TTL / 2));
-  assert.equal(trailOpacity(0, 0, TRAIL_TTL), 0);
-  assert.equal(trailOpacity(0, 0, TRAIL_TTL * 2), 0);
+test('trailLeft:随离开的时间从 1 线性降到 0,10 分钟后为 0', () => {
+  assert.equal(trailLeft(0, 0), 1);
+  assert.equal(trailLeft(0, TRAIL_TTL / 2), 0.5);
+  assert.equal(trailLeft(0, TRAIL_TTL), 0);
+  assert.equal(trailLeft(0, TRAIL_TTL * 2), 0);
+  assert.equal(TRAIL_TTL, 10 * 60000);
 });

@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailOpacity } from './logic.js';
+import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
@@ -28,13 +28,14 @@ function sleptTip(tab) {
   return '\n' + t('sleptTip', { duration: formatDuration(sleptFor(since)), at });
 }
 
-// 足迹:最近离开的几个标签页左边(收藏是底部)画一道主题色的线,一个比一个淡,并随时间淡掉。
-// 只改类名和 CSS 变量,不整体重画;每次重画后和每分钟各调用一次。
-// 动效:新出现的从短到长长出来(fp-grow),深浅变了的从原来的过渡过去,没了的缩短淡出(fp-out)。
-// 切标签页时列表会连着重画好几次,每次都是新元素,所以每个足迹的动画从哪儿开始记在这里,
-// 重画后用负的 animation-delay(--fp-delay)接着播,不会从头来或被掐断
-const trailAnim = new Map(); // tabId -> { from, to, start, grow }
-const trailOut = new Map(); // tabId -> { from, start }:正在淡出的
+// 足迹:最近离开的几个标签页左边(收藏是底部)画一道主题色的线,每个各自倒计时 10 分钟,
+// 线从两头往中间缩短、同时变淡,到 0 消失。缩短是一段 10 分钟的 CSS 动画(fp-life),
+// 用负的 animation-delay(--fp-age)从「已经离开多久」接着播,所以重画后也连贯,不用定时去改。
+// 另外两段短动效:新出现的从中间长出来(fp-grow),切回去或被挤掉的从当前长度缩短淡出(fp-out)。
+// 切标签页时列表会连着重画好几次,这两段从哪儿开始记在这里,重画后接着播,不会从头来或被掐断
+const trailShown = new Map(); // tabId -> { at, start }:at 离开的时间,start 开始长出来的时间
+const trailOut = new Map(); // tabId -> { left, start }:正在缩短淡出的,left 是开始缩时还剩多少
+let trailTimer;
 const GROW_MS = 450;
 const OUT_MS = 300;
 const trailEls = (itemOf, tabId) => {
@@ -46,32 +47,29 @@ export function refreshTrail() {
   const now = Date.now();
   const byId = new Map(tabs.map((t) => [t.id, t]));
   const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
-  // 排第几只看足迹本身(还开着、没过期),不管现在哪个是当前标签页,免得切换的一瞬间排名先错后对、深浅闪一下
   const next = new Map();
-  if (trailOn) {
-    trail
-      .filter((x) => byId.has(x.id) && now - x.at < TRAIL_TTL)
-      .forEach((x, rank) => byId.get(x.id).active || next.set(x.id, trailOpacity(rank, x.at, now)));
-  }
-  for (const [id, o] of next) {
-    let a = trailAnim.get(id);
-    if (!a) a = { from: 0, to: o, start: now, grow: !trailOut.has(id) };
-    else if (Math.abs(a.to - o) > 0.001) a = { from: a.to, to: o, start: now, grow: false };
-    trailAnim.set(id, a);
+  if (trailOn) for (const x of trail) if (byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL) next.set(x.id, x.at);
+  for (const [id, at] of next) {
+    let s = trailShown.get(id);
+    if (!s || s.at !== at) s = { at, start: trailOut.has(id) ? -Infinity : now };
+    trailShown.set(id, s);
     trailOut.delete(id);
     for (const el of trailEls(itemOf, id)) {
       el.classList.add('fp');
-      if (a.grow && now - a.start < GROW_MS) el.classList.add('fp-grow');
-      el.style.setProperty('--fp-o', o.toFixed(3));
-      el.style.setProperty('--fp-from', a.from.toFixed(3));
-      el.style.setProperty('--fp-delay', `${a.start - now}ms`);
+      if (now - s.start < GROW_MS) el.classList.add('fp-grow');
+      el.style.setProperty('--fp-age', `${at - now}ms`);
+      el.style.setProperty('--fp-delay', `${Math.max(s.start, now - GROW_MS) - now}ms`);
     }
   }
-  for (const [id, a] of trailAnim) {
+  for (const [id, s] of trailShown) {
     if (next.has(id)) continue;
-    trailAnim.delete(id);
-    trailOut.set(id, { from: a.to, start: now });
+    trailShown.delete(id);
+    trailOut.set(id, { left: trailLeft(s.at, now), start: now });
   }
+  // 到点了就淡出,不等每分钟那次刷新
+  clearTimeout(trailTimer);
+  const due = Math.min(...[...trailShown.values()].map((x) => x.at + TRAIL_TTL));
+  if (due < Infinity) trailTimer = setTimeout(refreshTrail, due - now + 50);
   for (const [id, x] of trailOut) {
     if (now - x.start >= OUT_MS) {
       trailOut.delete(id);
@@ -79,7 +77,7 @@ export function refreshTrail() {
     }
     for (const el of trailEls(itemOf, id)) {
       el.classList.add('fp-out');
-      el.style.setProperty('--fp-from', x.from.toFixed(3));
+      el.style.setProperty('--fp-left', x.left.toFixed(3));
       el.style.setProperty('--fp-delay', `${x.start - now}ms`);
     }
   }

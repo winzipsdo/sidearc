@@ -182,7 +182,7 @@ export const canDiscard = (tab) => !!tab && !tab.active && !isUnloaded(tab);
 
 // 足迹:每个窗口最近离开的几个标签页,侧边栏在它们左边画一道越来越淡的竖条。
 export const TRAIL_SIZE = 3;
-export const TRAIL_TTL = 15 * 60000;
+export const TRAIL_TTL = 10 * 60000;
 // 切到 tabId 之后的足迹。rec 是原来的 { active, trail };prevAlive 为假表示原来的当前标签页已经关掉了,不留足迹
 export function nextTrail(rec, tabId, now, prevAlive = true) {
   const prev = rec?.active;
@@ -190,7 +190,5 @@ export function nextTrail(rec, tabId, now, prevAlive = true) {
   if (prev != null && prev !== tabId && prevAlive) trail = [{ id: prev, at: now }, ...trail.filter((x) => x.id !== prev)];
   return { active: tabId, trail: trail.slice(0, TRAIL_SIZE) };
 }
-// 第 rank 个足迹(0 = 上一个)在 now 时的深浅:按顺序一档比一档淡,再随离开的时间变淡,到 15 分钟为 0。
-// 时间上先慢后快(1 - t²):刚离开的几分钟里几乎不变,快到时候才明显淡下去
-const TRAIL_LEVELS = [0.75, 0.5, 0.35];
-export const trailOpacity = (rank, at, now) => (TRAIL_LEVELS[rank] ?? 0) * Math.max(0, 1 - ((now - at) / TRAIL_TTL) ** 2);
+// 足迹还剩多少(1 = 刚离开,0 = 到 10 分钟):竖条的长度和深浅都按它缩小、变淡
+export const trailLeft = (at, now) => Math.min(1, Math.max(0, 1 - (now - at) / TRAIL_TTL));
