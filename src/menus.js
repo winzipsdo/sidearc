@@ -130,8 +130,8 @@ export function folderMenu(e, id) {
   const folderTabs = folder.items.map((i) => tabs.find((t) => t.id === bind.get(i.id))).filter(Boolean);
   showMenu(e, [
     { icon: 'edit', label: t('rename'), run: () => renameFolder(id) },
-    { icon: 'sleep', label: t('sleepFolder'), disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(folderTabs) },
     { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleFolderNoHistory(id) },
+    { icon: 'sleep', label: t('sleepFolder'), disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(folderTabs) },
     '-',
     { icon: 'trash', label: t('deleteFolder'), danger: true, run: () => deleteFolder(id) },
   ]);
@@ -146,9 +146,9 @@ export function spaceMenu(e, id) {
   showMenu(e, [
     { icon: 'edit', label: t('editSpace'), run: () => editSpace(id) },
     { icon: 'plus', label: t('newSpaceMenu'), run: addSpace },
-    { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },
     id === activeSpace().id && { icon: 'folderPlus', label: t('newFolderMenu'), run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleNoHistory(id) },
+    { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { icon: 'trash', label: t('deleteSpace'), danger: true, run: () => deleteSpace(id) },
   ]);
