@@ -2,7 +2,7 @@
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
 import { t } from './i18n.js';
-import { buildTree, matchesQuery, pinnedItems, pinnedLists } from './logic.js';
+import { buildTree, isAway, matchesQuery, pinnedItems, pinnedLists } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
@@ -196,6 +196,23 @@ export async function refreshTabs(current) {
   }
   // 不用等写完:内存里已经记上了,先让界面画出来
   if (Object.keys(fresh).length) chrome.storage.session.set(fresh);
+  syncItemTitles();
+}
+
+// 收藏/固定项的名称跟着网页标题走:开着、还在固定的地址上、加载完了,标题变了就更新。
+// 页面还在加载时拖进来固定,存下的往往是个临时标题(比如飞书的「Docs」),加载完就该换成真正的标题。
+// 在「编辑」里手动改过名称的(named)不动
+function syncItemTitles() {
+  let changed = false;
+  for (const [itemId, tabId] of bind) {
+    const tab = tabs.find((x) => x.id === tabId);
+    if (!tab || tab.status !== 'complete' || !tab.title || tab.title === tab.url) continue;
+    const item = findItem(itemId)?.item;
+    if (!item || item.named || item.title === tab.title || isAway(item.url, tab.url)) continue;
+    item.title = tab.title;
+    changed = true;
+  }
+  if (changed) save();
 }
 
 // 激活的标签页属于别的空间时,侧边栏跟过去

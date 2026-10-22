@@ -182,7 +182,10 @@ export async function editItem(id) {
   const target = out && findItem(id)?.item;
   if (!target) return;
   target.url = toUrl(out.url) ?? out.url;
-  // 名称留空:还原成网页自己的标题;标签页没开着就拿不到,保留原来的
+  // 名称留空:还原成网页自己的标题(标签页没开着就拿不到,保留原来的),之后跟着网页标题走;
+  // 改成了别的名称:记下 named,不再跟着网页标题变(见 store.js 的 syncItemTitles)
+  if (!out.title) delete target.named;
+  else if (out.title !== target.title) target.named = true;
   target.title = out.title || tabs.find((t) => t.id === bind.get(id))?.title || target.title || target.url;
   if (out.alias) target.alias = out.alias;
   else delete target.alias;
@@ -195,6 +198,7 @@ export async function syncItemToTab(id, tab) {
   const target = findItem(id)?.item;
   if (!target) return;
   Object.assign(target, { url: tab.url, title: tab.title || tab.url });
+  delete target.named; // 用的是网页自己的标题,之后接着跟网页标题走
   await save();
   render();
 }
