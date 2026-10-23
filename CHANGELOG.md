@@ -6,10 +6,18 @@
 
 ## 2026-10-23
 
+### 新增
+
+- **正在看的标签页也能休眠。** 会先切到它下面最近的、醒着的标签页,和关闭时一样;休眠整个文件夹或空间时仍然跳过它。 [`05394b6`](https://github.com/winzipsdo/sidearc/commit/05394b6)
+
 ### 变更
 
 - **搜索框平时收起来。** 鼠标移到顶部时,空间名右边会出现放大镜,点它或按 `/`、`Ctrl/⌘+F` 展开搜索;按 Esc、打开结果或空着点别处时收起。 [`ccd37ad`](https://github.com/winzipsdo/sidearc/commit/ccd37ad)
 - **收藏夹和空间名固定在顶部,只有下面的列表滚动。** 参考 Arc;列表滚上去的内容在空间名下面淡淡地消失。 [`d5e48dd`](https://github.com/winzipsdo/sidearc/commit/d5e48dd)
+
+### 修复
+
+- **休眠标签页时整行会闪一下。** 休眠会换编号,侧边栏在重新读取标签页前的几次重画里漏掉了这一行;它的足迹也会重新长一遍。 [`05394b6`](https://github.com/winzipsdo/sidearc/commit/05394b6)
 
 ## 2026-10-22
 
