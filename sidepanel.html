@@ -28,11 +28,8 @@
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input id="search" type="text" data-i18n-placeholder="searchPlaceholder" placeholder="搜索标签页或输入网址" spellcheck="false" autocomplete="off">
     </label>
-  </header>
-
-  <main id="scroll">
+    <!-- 收藏夹和空间名放在顶部、滚动区外面(和 Arc 一样):只有下面的固定标签和标签页列表滚动 -->
     <section id="favs" class="zone grid" data-zone="fav"></section>
-
     <div class="space-head">
       <span id="space-name"></span>
       <i id="space-private" class="badge" data-i18n-title="noHistoryBadgeTip" title="此空间不记录浏览历史" hidden>
@@ -43,6 +40,9 @@
         <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>
       </button>
     </div>
+  </header>
+
+  <main id="scroll">
     <section id="pins" class="zone list" data-zone="pin"></section>
 
     <div class="divider">

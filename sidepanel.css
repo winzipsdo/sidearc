@@ -46,7 +46,14 @@ button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); out
 svg { display: block; }
 
 /* 地址 / 搜索栏 */
-header { padding: 12px 12px 8px; }
+header { padding: 12px 12px 0; }
+/* 收藏夹和空间名在顶部、不随列表滚动(参考 Arc);列表滚动后,滚上去的内容在顶端一小段里渐渐淡掉,
+   不画硬边的分隔线 */
+header #favs { margin-top: 8px; }
+body.scrolled #scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+}
 .search {
   display: flex;
   align-items: center;

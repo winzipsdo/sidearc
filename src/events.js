@@ -35,7 +35,7 @@ function clearSelection() {
 }
 
 // 列表里的行和磁贴:点击、中键
-function bindRows(scroll) {
+function bindRows(root) {
   // 按下到松开之间不重画(见 store.js 的 pressing)。松开后等这次 click 先派发完再补画;
   // 松手的地方在侧边栏外面收不到 mouseup 时,失去焦点或几秒后也放开
   let pressTimer;
@@ -45,7 +45,7 @@ function bindRows(scroll) {
     setPressing(false);
     if (renderPending) render();
   };
-  scroll.addEventListener('mousedown', () => {
+  root.addEventListener('mousedown', () => {
     setPressing(true);
     pressTimer = setTimeout(release, 3000);
   });
@@ -54,7 +54,7 @@ function bindRows(scroll) {
   // 开始拖了:交给拖拽那边暂停重画,松手时它会补画(这里补画会把正要拖的那一行换掉)
   document.addEventListener('dragstart', () => (clearTimeout(pressTimer), setPressing(false)));
 
-  scroll.addEventListener('click', (e) => {
+  root.addEventListener('click', (e) => {
     const el = e.target.closest('[data-kind]');
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
@@ -88,11 +88,11 @@ function bindRows(scroll) {
   });
 
   // 中键关闭
-  scroll.addEventListener('mousedown', (e) => {
+  root.addEventListener('mousedown', (e) => {
     // 中键不要出滚动图标;Shift+点击不要选中文字
     if ((e.button === 1 || e.shiftKey) && e.target.closest('[data-kind]')) e.preventDefault();
   });
-  scroll.addEventListener('auxclick', (e) => {
+  root.addEventListener('auxclick', (e) => {
     const el = e.button === 1 && e.target.closest('[data-kind]');
     if (!el || el.dataset.kind === 'folder') return;
     if (el.dataset.kind === 'tab') {
@@ -128,6 +128,8 @@ function bindMenus(scroll) {
   });
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
+  // 列表滚动了:滚上去的内容在顶端渐渐淡掉(样式见 sidepanel.css 的 body.scrolled)
+  scroll.addEventListener('scroll', () => document.body.classList.toggle('scrolled', scroll.scrollTop > 0), { passive: true });
   // 右键时侧边栏不一定拿到了焦点,之后点网页也就不会触发 blur。所以鼠标离开侧边栏一会儿就收起菜单;
   // 只是划出去又马上回来的,不收
   let leaveTimer;
@@ -255,7 +257,8 @@ export function bindEvents() {
   // 「休眠了多久」每分钟更新一次文字
   setInterval(() => (refreshSleptLabels(), refreshTrail()), 60000);
   const scroll = $('#scroll');
-  bindRows(scroll);
+  // 收藏夹在滚动区外面(顶部),行上的点击在整个页面上接
+  bindRows(document.body);
   bindMenus(scroll);
   bindControls();
   bindSearch();
