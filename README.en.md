@@ -18,7 +18,8 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 
 ### Tabs
 
-- **Vertical tabs**: click to switch, middle-click or ✕ to close, drag to reorder. `Ctrl/⌘+click` selects several tabs and `Shift+click` a range (shared with the tab strip's selection; click empty space or press Esc to clear it) — drag any of them to move them all, or right-click one to close, sleep or move them to another space together. Tabs playing sound show a speaker you can click to mute — favorites and pinned tabs too.
+- **Vertical tabs**: click to switch, middle-click or ✕ to close, drag to reorder. Tabs playing sound show a speaker you can click to mute — favorites and pinned tabs too.
+- **Multi-select**: `Ctrl/⌘+click` selects several tabs and `Shift+click` a range, shared with the tab strip's selection. Drag any of them to move them all, or right-click one to close, sleep or move them to another space together. Click empty space or press Esc to clear it.
 - **Synced with Chrome's tab strip**: the order of Chrome's native tab strip always matches the sidebar — open favorites on the far left, then one tab group per space; inside each group, pinned tabs first, then the list, with child tabs right after their parent.
   - Drag in the sidebar and the tab strip follows; drag in the tab strip and the sidebar follows.
   - Dragging a tab into another space's group in the tab strip moves it to that space; dragging a child tab away from its parent un-nests it.
@@ -29,13 +30,14 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 - **Aliases**: give a tab or pinned item your own short name, shown before the title and matched by search.
 - **No duplicate tabs**: opening an address that is already open in the current space switches to the existing tab instead. Opening the address of a favorite or pinned tab that isn't open yet opens it as that favorite or pinned tab. Tabs you deliberately open in a new tab (`Ctrl/⌘+click`, middle-click) are left alone.
 - **Footprints**: the last 3 tabs you left get a theme-colored bar on the left (a short line under the icon for favorites) that shrinks toward its middle and fades over 10 minutes, so you can find your way back. Turn it off in Settings at the bottom right.
+- **Keyboard**: click the sidebar, then use the arrow keys to move a cursor (styled after the Switch) starting from the current page; Enter opens, Delete closes. See [Shortcuts](#shortcuts).
 - **Search**: tucked away as a magnifier next to the space name that appears when you hover the top — click it or press `/` or `Ctrl/⌘+F` to open; type to filter; Enter jumps to the first match, or opens the URL / searches with your default engine.
 - **Close in bulk**: "Clear" closes every unpinned tab in the current space except the active one; right-click a tab to close all tabs below it.
 
 ### Favorites, pinned tabs and spaces
 
-- **Favorites**: an icon grid at the top, shared by all spaces. Drag a tab in to add it.
-- **Pinned tabs**: one set per space. Closing the tab keeps the pinned item; click it to reopen. Hover to close the tab but keep the pin (−), or to unpin a closed one.
+- **Favorites**: an icon grid at the top, shared by all spaces, that stays put while the list below scrolls (so does the space name). Drag a tab in to add it.
+- **Pinned tabs**: one set per space. Closing the tab keeps the pinned item; click it to reopen. Hover to close the tab but keep the pin (−), or to unpin a closed one. Names follow the page title unless you renamed them in Edit.
   - When an open pinned tab navigates elsewhere, the row shows the current page; ↩ takes it back to the pinned address.
   - **Folders**: group pinned tabs into folders; drag items in and out, collapse and expand, rename.
 - **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it. A window holding tabs from only one space isn't grouped, since Chrome saves the groups of every closed window to the bookmarks bar.
@@ -53,8 +55,8 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 
 ## Install
 
-1. Open `chrome://extensions` and turn on Developer mode (top right).
-2. Click "Load unpacked" and choose this repository's folder.
+1. Download the latest `sidearc-<version>.zip` from [Releases](https://github.com/winzipsdo/sidearc/releases/latest) and unzip it — or clone this repository to follow the latest code.
+2. Open `chrome://extensions`, turn on Developer mode (top right), click "Load unpacked" and choose the unzipped folder (or the repository folder).
 3. Click the toolbar icon, or press `Alt+S` (`⌥ Option+S` on Mac), to toggle the sidebar.
 
 Requires Chrome 116 or later.
@@ -73,9 +75,10 @@ Requires Chrome 116 or later.
 | Keyboard cursor: move (starts from the current page; ↓ in the search box starts from the top) | `↑` `↓` `←` `→` | `↑` `↓` `←` `→` |
 | Keyboard cursor: open / close / context menu | `Enter` / `Delete` / `Shift+F10` | `Enter` / `Delete` / `Shift+F10` |
 | Keyboard cursor: expand / collapse a folder | `→` / `←` | `→` / `←` |
+| Close a tab | Middle-click or ✕ | Middle-click or ✕ |
+| Reopen the last closed tab (Chrome's own) | `Ctrl+Shift+T` | `⌘+Shift+T` |
 
 After Enter opens a tab, Chrome moves keyboard focus into that page; press `F6` (maybe a few times) to bring focus back to the sidebar.
-| Close a tab | Middle-click or ✕ | Middle-click or ✕ |
 
 The sidebar shortcut can be changed at `chrome://extensions/shortcuts`.
 
@@ -101,6 +104,8 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 - Sidearc manages the order of its space groups in Chrome's tab strip. Tab groups created by you or by other extensions (such as Claude) are left alone — they're kept intact and placed after the space groups. Chrome's natively pinned tabs stay on the far left. Tab groups support only 9 colors, so each space uses the closest one.
 - Spaces, child tabs, aliases and pins are matched back to tabs by URL and position after a restart, so Chrome has to restore your previous tabs on startup.
 - "No duplicate tabs" can only decide once the new tab's address is known, so a duplicate may flash briefly before closing.
+- Newer Chrome versions may save tab groups automatically and sync them to your other devices, so space groups can show up there too.
+- No-history removes pages by URL: history left by the same URL from other spaces disappears too, while recently closed tabs still list it.
 
 ## Development
 
