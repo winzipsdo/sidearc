@@ -10,6 +10,7 @@ import { iconFor, page } from '../../demo/web.js';
 
 const DURATION = 62.5;
 const POSTER = 15.9; // 封面取这一刻:两边刚同步完
+const SLEEP_AT = 40.6; // 点月亮让 Hacker News 休眠的时刻
 const CLICKS = []; // 点击和按键的时间点,music.js 在这些地方加音效
 
 // ---------- 时间线工具 ----------
@@ -467,17 +468,20 @@ function scenes() {
   copyIn($('#copy-6'), 37.5);
   activate(q('#t-lofi'), st('lofi'), 'lofi', 38.4);
   const hn = q('#t-hn');
-  cls(hn, 39.5, 'hover');
+  cls(hn, 39.3, 'hover');
+  // 鼠标按在月亮上:按钮的悬停底色
+  const moon = hn.querySelector('.v-moon');
+  set(moon, 40.25, { backgroundColor: 'rgba(20,21,26,.12)', color: 'var(--fg)' });
   // 休眠:整行从悬停时的底色退到休眠的样子,图标缩一下、飘起一个 z,行尾出现「刚刚」
-  set(hn, 40.3, { '--sleep-bg': 'rgba(20,21,26,.06)', '--sleep-shadow': 'none' });
-  cls(hn, 40.3, 'hover', false);
-  cls(hn, 40.3, 'discarded');
-  cls(hn, 40.3, 'just-slept');
-  set(hn.querySelector('.v-moon'), 40.3, { display: 'none' });
-  set(hn.querySelector('.slept'), 40.3, { display: 'inline' });
-  cls(st('hn'), 40.3, 'asleep');
+  set(hn, SLEEP_AT, { '--sleep-bg': 'rgba(20,21,26,.06)', '--sleep-shadow': 'none' });
+  cls(hn, SLEEP_AT, 'hover', false);
+  cls(hn, SLEEP_AT, 'discarded');
+  cls(hn, SLEEP_AT, 'just-slept');
+  set(moon, SLEEP_AT, { display: 'none' });
+  set(hn.querySelector('.slept'), SLEEP_AT, { display: 'inline' });
+  cls(st('hn'), SLEEP_AT, 'asleep');
   const toast = q('#toast');
-  tw(toast, 40.45, 0.25, { opacity: [0, 1], transform: ['translateY(8px) scale(.96)', 'none'] });
+  tw(toast, SLEEP_AT + 0.2, 0.25, { opacity: [0, 1], transform: ['translateY(8px) scale(.96)', 'none'] });
   tw(toast, 42.6, 0.25, { opacity: [1, 0] });
   copyOut($('#copy-6'), 43.4);
 
@@ -632,8 +636,20 @@ function pointer() {
   // 37.5–44 足迹与休眠
   move(37.6, 0.7, at(38.3, q('#t-lofi'), 0.35));
   click(38.4);
-  move(39.2, 0.7, at(39.95, q('#t-hn .v-moon')));
-  click(40.3);
+  // 休眠的动效很小:镜头先推近到这一行(窗口以左边缘、这一行为中心放大),点完、播完再拉回来
+  const ZOOM = 1.7;
+  const win = $('#win');
+  build(); // 上面拖拽改了各行的顺序,先建好动画再量位置
+  const [mx, my] = at(39.6, q('#t-hn .v-moon'));
+  const [, hnY] = at(39.6, q('#t-hn'));
+  const left = win.getBoundingClientRect().left;
+  set(win, 38.85, { transformOrigin: `0px ${hnY - win.getBoundingClientRect().top}px` });
+  tw(win, 38.9, 0.8, { transform: ['none', `scale(${ZOOM})`] }, EASE.inOut);
+  tw(win, 42.5, 0.8, { transform: [`scale(${ZOOM})`, 'none'] }, EASE.inOut);
+  move(38.9, 0.8, [left + (cur[0] - left) * ZOOM, hnY + (cur[1] - hnY) * ZOOM]);
+  move(39.8, 0.6, [left + (mx - left) * ZOOM, hnY + (my - hnY) * ZOOM]);
+  click(SLEEP_AT);
+  move(41.4, 1.6, [cur[0] - 40, cur[1] + 140]);
 }
 
 // ---------- 搭画面 ----------
