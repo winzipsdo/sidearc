@@ -2,8 +2,8 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js';
-import { GLOBE, iconFor, NEW_TAB, page, scenario, tiles } from './web.js';
+import { Browser } from './sim.js?v=6a23d7ba';
+import { GLOBE, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=07135f86';
 import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js';
 import { KEY, MSG } from '../ext/src/protocol.js';
 

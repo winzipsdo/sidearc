@@ -3,7 +3,7 @@
 // 和在真的 Chrome 里一样:各自注册事件、读写同一份存储、互相发消息。
 // 事件的先后顺序尽量照着 Chrome 来,事件和返回值都是拷贝,插件改了也不会影响这里的数据。
 
-import { NEW_TAB, page } from './web.js';
+import { NEW_TAB, page } from './web.js?v=07135f86';
 
 const WIN = 1;
 const LOAD_MS = 300; // 网页「加载」多久

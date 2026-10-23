@@ -1,7 +1,7 @@
 // 在线试用里的「网」:每个网址对应一个简单的假网页(标题、图标、几段文字、可以点的链接),
 // 以及打开试用时的初始状态(空间、收藏、固定标签、已经开着的标签页)。内容都是编的。
 
-import { BRAND_ICONS } from './brand-icons.js';
+import { BRAND_ICONS } from './brand-icons.js?v=15555cae';
 
 const svgUrl = (svg) => 'data:image/svg+xml,' + encodeURIComponent(svg);
 const badge = (letter, bg) =>

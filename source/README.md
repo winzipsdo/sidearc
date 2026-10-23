@@ -34,7 +34,7 @@ git add -A && git commit -m "Site: update the extension to <版本号>" && git p
 
 ## 修改主页文字
 
-直接改 `index.html`,提交推送后几分钟内生效。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
+直接改 `index.html`,运行 `node source/stamp.js` 更新引用文件的版本号(改了样式、脚本或视频时必须运行,否则浏览器会拿缓存里的旧文件配新页面),再提交推送。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
 
 ## 重新生成视频
 

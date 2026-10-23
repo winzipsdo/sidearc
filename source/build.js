@@ -39,3 +39,6 @@ writeFileSync(join(SITE, '.nojekyll'), '');
 const { version } = JSON.parse(readFileSync(join(MAIN, 'manifest.json'), 'utf8'));
 writeFileSync(join(EXT, 'version.json'), JSON.stringify({ version }) + '\n');
 console.log(`已从 ${MAIN} 复制插件 ${version} 的代码、截图和图标`);
+
+// 复制来的文件变了,引用它们的版本号也要跟着变
+await import('./stamp.js');
