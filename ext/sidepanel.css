@@ -1,0 +1,770 @@
+:root {
+  color-scheme: light dark;
+  --accent: #6b7cff;
+  /* 整个界面的颜色都由空间主题色 --accent 调出来 */
+  --bg1: color-mix(in oklch, var(--accent) 26%, #fff);
+  --bg2: color-mix(in oklch, var(--accent) 13%, #f7f7f9);
+  --fg: color-mix(in oklch, var(--accent) 22%, #14151a);
+  --fg-2: color-mix(in srgb, var(--fg) 62%, transparent);
+  --fg-3: color-mix(in srgb, var(--fg) 38%, transparent);
+  --fill: color-mix(in srgb, var(--fg) 6%, transparent);
+  --fill-hover: color-mix(in srgb, var(--fg) 10%, transparent);
+  --line: color-mix(in srgb, var(--fg) 11%, transparent);
+  --card: rgba(255, 255, 255, 0.92);
+  --card-soft: rgba(255, 255, 255, 0.5);
+  --pop: rgba(255, 255, 255, 0.88);
+  --shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
+  --pop-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 10px 32px rgba(0, 0, 0, 0.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg1: color-mix(in oklch, var(--accent) 24%, #17181c);
+    --bg2: color-mix(in oklch, var(--accent) 9%, #131417);
+    --fg: color-mix(in oklch, var(--accent) 12%, #f2f3f7);
+    --card: rgba(255, 255, 255, 0.17);
+    --card-soft: rgba(255, 255, 255, 0.08);
+    --pop: rgba(38, 39, 46, 0.9);
+    --shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.35);
+    --pop-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.14), 0 12px 36px rgba(0, 0, 0, 0.55);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, var(--bg1), var(--bg2)) fixed;
+  color: var(--fg);
+  font: 500 13px/1.35 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+button { font: inherit; color: inherit; border: 0; padding: 0; background: none; cursor: pointer; }
+button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.i { display: grid; place-items: center; }
+svg { display: block; }
+
+/* 地址 / 搜索栏 */
+header { padding: 12px 12px 0; }
+/* 收藏夹和空间名在顶部、不随列表滚动(参考 Arc);列表滚动后,滚上去的内容在顶端一小段里渐渐淡掉,
+   不画硬边的分隔线 */
+header #favs { transition: margin 0.18s; }
+body.searching header #favs { margin-top: 8px; }
+body.scrolled #scroll {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 11px;
+  background: var(--fill);
+  color: var(--fg-3);
+  transition: background 0.15s, box-shadow 0.15s, height 0.18s, opacity 0.15s;
+}
+/* 平时收起(高度 0),body.searching 时展开(见 ui.js 的 openSearch) */
+body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-events: none; }
+.search:hover { background: var(--fill-hover); }
+.search:focus-within {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+#search {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+}
+#search::placeholder { color: var(--fg-3); }
+
+#scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  /* 底部多留一截:滚到最下面时,最后几行不会被底部的提示条挡住 */
+  padding: 4px 12px 56px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+/* 收藏夹 */
+.grid {
+  /* --cols 由 layoutFavs() 按数量和宽度算出，磁贴均分每一行，不留空列 */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  border-radius: 11px;
+}
+.tile {
+  position: relative;
+  flex: 1 0 calc((100% - (var(--cols, 1) - 1) * 7px) / var(--cols, 1) - 0.1px);
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--fill);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+.tile:hover { background: var(--fill-hover); }
+.tile:active { transform: scale(0.95); }
+.tile.open { background: var(--card-soft); }
+.tile.active { background: var(--card); box-shadow: var(--shadow); }
+/* 开着的收藏:鼠标移上去时右上角的小关闭按钮,出现时盖住发声的小喇叭 */
+.tile .tile-close {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-close svg { width: 10px; height: 10px; }
+.tile:hover .tile-close { display: grid; }
+.tile:hover .tile-sound { display: none; }
+.tile .tile-close:hover { color: var(--fg); background: var(--card); box-shadow: var(--shadow), 0 0 0 1px var(--line); }
+/* 收藏的标签页在发声:图标右上角的小喇叭,点了切换静音 */
+.tile .tile-sound {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-sound svg { width: 11px; height: 11px; }
+.tile .tile-sound:hover { color: var(--fg); }
+/* 正在发出声音:喇叭变成主题色,两道声波一前一后闪动,让人注意到是哪个标签页在响 */
+.playing { color: var(--accent) !important; }
+.playing svg path:nth-child(2) { animation: sound-wave 1.2s ease-in-out infinite; }
+.playing svg path:nth-child(3) { animation: sound-wave 1.2s ease-in-out 0.2s infinite; }
+@keyframes sound-wave {
+  0%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playing svg path { animation: none; }
+}
+/* 休眠了多久:变淡的行尾的一小段灰字 */
+.row .slept { flex: none; margin-left: 2px; color: var(--fg-3); font-size: 11px; font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* 保持唤醒:收藏图标右下角的小锁,固定标签和标签页标题右边的小锁 */
+.tile .tile-keep {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  color: var(--fg-2);
+}
+.tile .tile-keep svg { width: 10px; height: 10px; }
+.row .keep { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); }
+.row .keep svg { width: 12px; height: 12px; }
+.tile .icon { width: 20px; height: 20px; border-radius: 5px; }
+.tile:not(.open) .icon { opacity: 0.85; }
+
+.hint {
+  flex: 1 0 100%;
+  padding: 11px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 11px;
+  color: var(--fg-3);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+}
+
+/* 空间标题 / 分隔线 */
+.space-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  margin: 10px 0 4px;
+  padding: 0 4px 0 10px;
+  color: var(--fg-2);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.space-head::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.space-head span { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.space-head .ghost { margin-left: auto; }
+.space-head .ghost + .ghost { margin-left: 0; }
+body.searching #search-toggle { color: var(--accent); }
+/* 放大镜不常用,和右下角的设置按钮一样平时藏起来:鼠标移到顶部(或用键盘选中、搜索框展开着)时才渐显 */
+#search-toggle { opacity: 0; transition: background 0.15s, color 0.15s, opacity 0.2s; }
+header:hover #search-toggle, #search-toggle:focus-visible, body.searching #search-toggle { opacity: 1; }
+.badge {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fill-hover);
+  color: var(--fg-2);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.badge[hidden] { display: none; }
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  margin: 6px 0 4px;
+  padding-left: 10px;
+}
+.divider span { flex: 1; height: 1px; background: var(--line); }
+.ghost {
+  display: grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 7px;
+  color: var(--fg-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: background 0.15s, color 0.15s;
+}
+.ghost:hover { background: var(--fill-hover); color: var(--fg); }
+
+/* 行 */
+.list { display: flex; flex-direction: column; gap: 2px; min-height: 8px; border-radius: 11px; }
+/* 滚动区里的各段都不许被压扁:内容多了就滚动,而不是互相重叠 */
+#scroll > * { flex-shrink: 0; }
+#tabs { flex: 1 0 auto; min-height: 56px; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 36px;
+  flex: none;
+  padding: 0 7px 0 10px;
+  border-radius: 11px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.row:hover { background: var(--fill); }
+.row:active { background: var(--fill-hover); }
+.row.active { background: var(--card); box-shadow: var(--shadow); }
+/* 多选(Cmd/Ctrl+点击)选中的标签页:半透明的卡片,加一圈主题色细边 */
+.row.selected { background: color-mix(in srgb, var(--card) 55%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+.row.selected:hover { background: color-mix(in srgb, var(--card) 75%, transparent); }
+/* 当前标签页在多选里:保留白底和阴影,再加上同样的细边 */
+.row.active.selected { background: var(--card); box-shadow: var(--shadow), inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+/* 多选拖动时的影子:「N 个标签页」,只在拖拽开始的一瞬间放在页面外截图 */
+.drag-ghost { position: fixed; top: -100px; left: 0; padding: 4px 10px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.row .icon { width: 16px; height: 16px; flex: none; border-radius: 4px; }
+.row .title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  /* 标题过长时渐隐,而不是省略号 */
+  mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+}
+/* 子标签:按层级缩进 */
+#tabs .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
+
+/* 别名:标题左侧的小标签 */
+.row .alias {
+  flex: none;
+  max-width: 45%;
+  margin-right: -3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: color-mix(in oklch, var(--accent) 62%, var(--fg));
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row.discarded .title { color: var(--fg-2); }
+.row.discarded .icon, #pins .row:not(.open) .icon { opacity: 0.6; filter: saturate(0.6); }
+/* 休眠动效(见 render.js 的 markSlept):整行从点下去时的底色和阴影慢慢退到它平常的样子,
+   图标先缩一下再变淡,标题从正常颜色渐渐变暗,图标旁飘起一个「z」 */
+.row.just-slept, .tile.just-slept { animation: doze-row 0.5s ease-out var(--sleep-delay, 0s) backwards; }
+@keyframes doze-row { from { background-color: var(--sleep-bg); box-shadow: var(--sleep-shadow); } }
+.just-slept .icon { animation: doze-icon 0.6s ease-out var(--sleep-delay, 0s) both; }
+.just-slept .title { animation: doze-title 0.6s ease-out var(--sleep-delay, 0s) both; }
+.row.just-slept::after, .tile.just-slept::after {
+  content: "z";
+  position: absolute;
+  left: 24px;
+  top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--accent);
+  pointer-events: none;
+  animation: doze-z 0.9s ease-out var(--sleep-delay, 0s) both;
+}
+.tile.just-slept::after { left: calc(50% + 6px); top: 1px; }
+@keyframes doze-icon {
+  from { opacity: 1; filter: none; transform: scale(1); }
+  30% { transform: scale(0.82); }
+  to { transform: scale(1); }
+}
+@keyframes doze-title { from { color: var(--fg); } }
+@keyframes doze-z {
+  from { opacity: 0; transform: translate(0, 6px) scale(0.6); }
+  30% { opacity: 1; }
+  to { opacity: 0; transform: translate(7px, -9px) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.just-slept, .tile.just-slept, .just-slept .icon, .just-slept .title { animation: none; }
+  .row.just-slept::after, .tile.just-slept::after { display: none; }
+}
+/* 标题深浅表示开没开:开着的标签页(有没有别名都一样)用正常颜色,没开的固定标签变淡 */
+#pins .row:not(.open) .title { color: var(--fg-2); }
+#pins .row:not(.open) .alias { opacity: 0.65; }
+/* 固定标签里的文件夹 */
+/* 文件夹里的项:整行一起缩进(而不是只缩进内容),选中和悬停的底色也从缩进处开始;子标签也一样 */
+#pins .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
+#pins .row.folder .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
+#pins .row.folder .title { color: var(--fg); }
+#pins .row.folder .private { display: grid; color: var(--fg-3); }
+#pins .row.folder .count { flex: none; padding: 0 4px; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+#pins .folder-empty { padding: 3px 10px 7px 38px; color: var(--fg-3); font-size: 12px; font-weight: 400; }
+
+/* 固定标签点进了别的页面:前面是固定的名字,后面是当前页面,右边常驻「回到固定地址」 */
+#pins .row.away .pin-name {
+  flex: none;
+  max-width: 40%;
+  margin-right: -3px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--fill-hover);
+  color: var(--fg-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#pins .row.away .btn.back { color: var(--accent); }
+#pins .row.away .btn.back:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
+.row.loading .icon { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; transform: scale(0.85); } }
+
+.row.new { color: var(--fg-3); margin-bottom: 2px; }
+.row.new:hover { color: var(--fg-2); }
+.row.new .i { width: 16px; height: 16px; }
+
+.row .btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  color: var(--fg-3);
+  transition: background 0.12s, color 0.12s;
+}
+.row .btn:hover { background: var(--fill-hover); color: var(--fg); }
+.row .btn + .btn { margin-left: -6px; }
+.row .x { display: none; }
+.row:hover .x { display: grid; }
+
+/* 足迹:最近离开的几个标签页,左边一道主题色竖条(收藏在底部一道短横线)。每个各自倒计时 10 分钟,
+   从两头往中间缩短、同时变淡,最短缩成一个圆点、最淡 20%(fp-life,--fp-age 是负的「已经离开多久」,见 render.js 的 refreshTrail)。
+   改的是长度不是 scale,圆角不会被压扁,最后是个真正的圆点。
+   新出现的从中间长出来(fp-grow);到时间、切回去或被挤掉的从当前样子缩小淡出(fp-out,--fp-left 是那时还剩多少) */
+.row:is(.fp, .fp-out), .tile:is(.fp, .fp-out) { position: relative; }
+.row:is(.fp, .fp-out)::before, .tile:is(.fp, .fp-out)::before {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  background: var(--accent);
+  pointer-events: none;
+}
+/* 竖条:行高 36px,上下各留 7px(长 22px)到上下各留 16.5px(长 3px,和宽一样,是个圆点) */
+.row:is(.fp, .fp-out)::before { left: 3px; width: 3px; top: calc(16.5px - 9.5px * var(--fp-left, 1)); bottom: calc(16.5px - 9.5px * var(--fp-left, 1)); }
+/* 短横线:宽 16px 到 3px,始终居中 */
+.tile:is(.fp, .fp-out)::before { bottom: 3px; height: 3px; width: calc(3px + 13px * var(--fp-left, 1)); left: calc(50% - 1.5px - 6.5px * var(--fp-left, 1)); }
+.row.fp::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+.tile.fp::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+/* 长出来用 transform,和缩短改的长度是不同的属性,可以叠在一起 */
+.row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both, fp-grow-y 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both, fp-grow-x 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.row.fp-out::before, .tile.fp-out::before { animation: fp-out 0.3s ease-in var(--fp-delay, 0s) both; }
+@keyframes fp-life-y {
+  from { opacity: 0.75; top: 7px; bottom: 7px; }
+  to { opacity: 0.2; top: 16.5px; bottom: 16.5px; }
+}
+@keyframes fp-life-x {
+  from { opacity: 0.75; width: 16px; left: calc(50% - 8px); }
+  to { opacity: 0.2; width: 3px; left: calc(50% - 1.5px); }
+}
+@keyframes fp-grow-y { from { transform: scaleY(0.1); } }
+@keyframes fp-grow-x { from { transform: scaleX(0.1); } }
+@keyframes fp-out {
+  from { opacity: calc(0.2 + 0.55 * var(--fp-left)); }
+  to { opacity: 0; transform: scale(0.3); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+  .tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+  .row.fp-out::before, .tile.fp-out::before { animation: none; opacity: 0; }
+}
+
+/* 拖拽 */
+.dragging { opacity: 0.3; }
+/* 插入线:圆头细线,起点是一个空心小圆点。从内容的起点画起,
+   文件夹里的项、子标签会跟着缩进,一眼看出会落在哪一级 */
+.list :is(.row, .folder-empty) { position: relative; }
+.list :is(.drop-before, .drop-after) { --drop-x: 8px; }
+/* 行本身已经整行缩进,插入线从行内的固定位置画起;放到列表末尾时落点是顶层,线再退回顶层 */
+.list .drop-after.drop-top { --drop-x: calc(8px - var(--depth, 0) * 18px); }
+.list :is(.drop-before, .drop-after)::before,
+.list :is(.drop-before, .drop-after)::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+/* 线:从圆点右边开始,往右逐渐变淡 */
+.list :is(.drop-before, .drop-after)::after {
+  left: calc(var(--drop-x) + 6px);
+  right: 10px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) 70%, color-mix(in srgb, var(--accent) 30%, transparent));
+}
+/* 圆点 */
+.list :is(.drop-before, .drop-after)::before {
+  left: var(--drop-x);
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg2);
+}
+.list .drop-before::after { top: -2px; }
+.list .drop-before::before { top: -5px; }
+.list .drop-after::after { bottom: -2px; }
+.list .drop-after::before { bottom: -5px; }
+/* 收藏夹网格:两个磁贴之间画一根竖的插入线(上端一个空心小圆点,和列表的插入线一个样子),
+   两边的磁贴各往外让开一点,像在给它腾位置;放到最后时画在最后一个磁贴右边 */
+.grid .tile.drop-before { transform: translateX(3px); }
+.grid .tile:has(+ .drop-before), .grid .tile.drop-after { transform: translateX(-3px); }
+.grid :is(.drop-before, .drop-after)::before,
+.grid :is(.drop-before, .drop-after)::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+.grid :is(.drop-before, .drop-after)::after {
+  top: 9px;
+  bottom: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--accent) 70%, color-mix(in srgb, var(--accent) 30%, transparent));
+}
+.grid :is(.drop-before, .drop-after)::before {
+  top: 1px;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  background: var(--bg2);
+}
+.grid .drop-before::after { left: -7.5px; }
+.grid .drop-before::before { left: -10.5px; }
+.grid .drop-after::after { right: -7.5px; }
+.grid .drop-after::before { right: -10.5px; }
+.list .drop-into, .list .drop-into.active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.zone.drop-end { background: color-mix(in srgb, var(--accent) 13%, transparent); }
+.zone.drop-end .hint { border-color: var(--accent); color: var(--accent); }
+
+/* 空间切换 */
+#spaces {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 12px 10px;
+}
+.space-dot {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--fg-3);
+  transition: background 0.15s, color 0.15s;
+}
+.space-dot:hover, .space-dot.drop-on { background: var(--fill); color: var(--fg-2); }
+/* 当前空间:实心圆点加一圈细环,不再叠加悬停底色 */
+.space-dot.on:hover { background: none; }
+.space-dot i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.45;
+  transition: transform 0.18s ease, opacity 0.18s, box-shadow 0.18s;
+}
+.space-dot:hover i { opacity: 1; transform: scale(1.15); }
+.space-dot.on i, .space-dot.drop-on i {
+  opacity: 1;
+  transform: scale(1.2);
+  box-shadow: 0 0 0 2px var(--bg2), 0 0 0 3.5px currentColor;
+}
+/* 悬停时在上方显示空间名,比浏览器自带的提示出得快 */
+.space-dot::after {
+  content: attr(data-name);
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--pop);
+  box-shadow: var(--pop-shadow);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, 3px);
+  pointer-events: none;
+  transition: opacity 0.12s, transform 0.12s;
+}
+.space-dot:hover::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.2s; }
+/* 最近关闭:底部这一行的最左边;提示文字靠左对齐,免得超出侧边栏 */
+#spaces { position: relative; }
+#spaces .space-dot.recent { position: absolute; left: 10px; top: 6px; }
+#spaces .space-dot.recent svg, #spaces .space-dot.settings svg { width: 18px; height: 18px; stroke-width: 1.5; }
+/* 右下角的设置按钮,和左下角的「最近关闭」对称;提示文字靠右 */
+#spaces .space-dot.settings { position: absolute; right: 10px; top: 6px; }
+/* 不常用,平时藏起来:鼠标移到底部这一行(或用键盘选中、设置菜单开着)时才渐显 */
+#spaces .space-dot.settings { opacity: 0; transition: background 0.15s, color 0.15s, opacity 0.2s; }
+#spaces:hover .space-dot.settings,
+#spaces .space-dot.settings:focus-visible,
+body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings { opacity: 1; }
+#spaces .space-dot.settings::after { left: auto; right: 0; transform: translate(0, 3px); }
+#spaces .space-dot.settings:hover::after { transform: translate(0, 0); }
+#spaces .space-dot.recent::after { left: 0; transform: translate(0, 3px); }
+#spaces .space-dot.recent:hover::after { transform: translate(0, 0); }
+
+/* 提示条 */
+#toast {
+  position: fixed;
+  z-index: 9;
+  left: 12px;
+  right: 12px;
+  bottom: 50px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 12px;
+  background: var(--pop);
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: var(--pop-shadow);
+  font-weight: 400;
+  animation: pop 0.14s ease-out;
+}
+#toast[hidden] { display: none; }
+#toast span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#toast button {
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--accent);
+  font-weight: 600;
+}
+#toast button:hover { background: var(--fill-hover); }
+
+/* 右键菜单 */
+#menu {
+  position: fixed;
+  z-index: 10;
+  min-width: 180px;
+  max-width: min(260px, calc(100vw - 8px));
+  /* 侧边栏太矮放不下整个菜单时,菜单内部滚动 */
+  max-height: calc(100vh - 8px);
+  overflow-y: auto;
+  padding: 5px;
+  border-radius: 12px;
+  background: var(--pop);
+  backdrop-filter: blur(24px) saturate(1.6);
+  box-shadow: var(--pop-shadow);
+  animation: pop 0.12s ease-out;
+}
+@keyframes pop { from { opacity: 0; transform: scale(0.96); } }
+#menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 30px;
+  padding: 0 10px 0 8px;
+  border-radius: 8px;
+  text-align: left;
+  font-weight: 400;
+}
+#menu button > .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#menu button > .note { flex: none; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+#menu button:hover > .note { color: inherit; opacity: 0.8; }
+#menu button img.i { border-radius: 3px; }
+#menu button .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
+#menu button:hover { background: var(--accent); color: #fff; }
+#menu button:hover .i { color: inherit; }
+#menu button.danger .i { color: inherit; }
+#menu .menu-head { padding: 6px 10px 3px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
+#menu button.danger { color: #e5484d; }
+/* 暂时不能用的项:置灰,悬停也不高亮 */
+#menu button.disabled, #menu button.disabled:hover { background: none; color: var(--fg-3); cursor: default; }
+#menu button.disabled .i, #menu button.disabled:hover .i { color: var(--fg-3); opacity: 0.7; }
+/* 跳到别处的入口(比如完整历史记录):文字加粗、图标用正文颜色,和上面的列表项区分开 */
+#menu button.link { font-weight: 600; }
+#menu button.link .i { color: var(--fg); }
+#menu button.link:hover .i { color: inherit; }
+#menu button.danger:hover { background: #e5484d; color: #fff; }
+#menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
+
+/* 对话框 */
+dialog {
+  width: min(300px, calc(100vw - 24px));
+  padding: 18px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--pop);
+  backdrop-filter: blur(24px) saturate(1.6);
+  color: var(--fg);
+  box-shadow: var(--pop-shadow);
+}
+dialog[open] { animation: pop 0.14s ease-out; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.28); }
+dialog h3 { margin: 0 0 14px; font-size: 14px; font-weight: 600; line-height: 1.5; }
+dialog label { display: block; margin-bottom: 12px; color: var(--fg-2); font-size: 12px; }
+dialog input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: 5px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--fill);
+  color: var(--fg);
+  font: inherit;
+  outline: none;
+}
+dialog input:focus { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent); }
+.swatches { display: flex; justify-content: space-between; margin: 2px 2px 18px; }
+.swatch { width: 22px; height: 22px; border-radius: 50%; transition: transform 0.12s; }
+.swatch:hover { transform: scale(1.12); }
+.swatch.on { box-shadow: 0 0 0 2px var(--bg2), 0 0 0 4px currentColor; }
+.btns { display: flex; justify-content: flex-end; gap: 8px; }
+.btns button { height: 32px; padding: 0 16px; border-radius: 9px; background: var(--fill); font-weight: 600; }
+.btns button:hover { background: var(--fill-hover); }
+.btns .primary { background: var(--accent); color: #fff; }
+.btns .primary:hover { background: color-mix(in srgb, var(--accent) 88%, #000); }
+
+/* 键盘选中框,参考 Switch:离项一点距离的蓝青色粗边框,颜色在亮蓝和青绿之间来回呼吸,外圈一层淡光。
+   移到新的项上时边框从稍大缩回来(弹一下);往走不过去的方向按,项本身朝那边晃一下再弹回 */
+@property --kb-c {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #0ab4ff;
+}
+.kb-focus { position: relative; z-index: 1; }
+.kb-focus::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 14px;
+  border: 3px solid var(--kb-c);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--kb-c) 55%, transparent);
+  pointer-events: none;
+  animation: kb-breathe 1.1s ease-in-out infinite alternate;
+}
+.kb-pop::after { animation: kb-pop 0.38s var(--kb-spring-pop), kb-breathe 1.1s ease-in-out infinite alternate; }
+@keyframes kb-breathe {
+  from { --kb-c: #0ab4ff; }
+  to { --kb-c: #1fe6d4; }
+}
+/* 弹出和晃动用弹簧曲线(按物理公式算好采样成 linear()),比手写关键帧更像真的回弹。
+   弹出:从 0 走到 1、略过头再回来,固有角频率 24 rad/s、阻尼比 0.5,0.38 秒。
+   晃动:被撞一下的衰减振荡,先朝按的方向冲出去(约 50 毫秒到最远)再来回几下归位,
+   固有角频率 26 rad/s、阻尼比 0.3,0.5 秒;峰值归一到 1,幅度由下面的关键帧决定 */
+:root {
+  --kb-spring-pop: linear(0, 0.042, 0.148, 0.294, 0.457, 0.621, 0.772, 0.901, 1.004, 1.08, 1.129, 1.156, 1.163, 1.155, 1.137, 1.113, 1.087, 1.06, 1.036, 1.015, 0.998, 0.986, 0.978, 0.974, 0.973, 0.975, 0.978, 0.982, 0.986, 0.99, 1);
+  --kb-spring-bump: linear(0, 0.432, 0.746, 0.934, 1, 0.958, 0.833, 0.651, 0.439, 0.223, 0.024, -0.142, -0.265, -0.341, -0.371, -0.361, -0.318, -0.252, -0.174, -0.094, -0.018, 0.045, 0.094, 0.124, 0.138, 0.136, 0.121, 0.098, 0.069, 0.039, 0.01, -0.014, -0.033, -0.045, -0.051, -0.051, -0.046, -0.038, -0.027, -0.016, 0);
+}
+@keyframes kb-pop {
+  from { transform: scale(1.08); opacity: 0.5; }
+  to { transform: scale(1); opacity: 1; }
+}
+.kb-bump-left, .kb-bump-right { animation: kb-bump-x 0.5s var(--kb-spring-bump); }
+.kb-bump-up, .kb-bump-down { animation: kb-bump-y 0.5s var(--kb-spring-bump); }
+.kb-bump-left, .kb-bump-up { --kb-d: -1; }
+.kb-bump-right, .kb-bump-down { --kb-d: 1; }
+@keyframes kb-bump-x {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(var(--kb-d) * 6px)); }
+}
+@keyframes kb-bump-y {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(var(--kb-d) * 5px)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-focus::after, .kb-pop::after, .kb-bump-left, .kb-bump-right, .kb-bump-up, .kb-bump-down { animation: none; }
+}

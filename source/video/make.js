@@ -1,8 +1,9 @@
-// 生成主页上的介绍视频 site/assets/intro.mp4(1920×1080,30fps)和封面 site/assets/intro-poster.jpg。
+// 生成主页上的介绍视频 assets/intro.mp4(1920×1080,30fps)和封面 assets/intro-poster.jpg。
 // 画面和动画在 scene.html / scene.js 里(Web Animations,所有动画都暂停,按时间定格);
 // 这里用 Chrome 打开它,一帧帧调用 seek(t) 截图交给 ffmpeg 编码,再配上 music.js 生成的背景音乐。
-// 需要本机装有 Chrome(路径可用环境变量 CHROME 指定)和 ffmpeg:npm run video
-// 想在浏览器里实时预览动画:在仓库根目录起一个静态服务器,打开 /site/video/scene.html?play
+// 在 gh-pages 的工作目录里运行:node source/video/make.js。需要本机装有 Chrome(路径可用环境变量 CHROME 指定)和 ffmpeg;
+// 画面用到插件的 ext/sidepanel.css 和 demo/ 下的网站内容,先运行一次 source/build.js 把它们从 main 复制过来。
+// 想在浏览器里实时预览动画:在这个分支的根目录起一个静态服务器,打开 /source/video/scene.html?play
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -14,7 +15,7 @@ import { renderMusic } from './music.js';
 
 // 用 fileURLToPath 而不是 .pathname:Windows 上 .pathname 是 /C:/... 这样的路径,拼不出正确的文件路径
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const OUT = join(ROOT, 'site/assets');
+const OUT = join(ROOT, 'assets');
 const FPS = 30;
 const SCALE = 1.5; // 画面按 1280×720 排版,截图时放大 1.5 倍,输出 1920×1080
 const CHROME =
@@ -27,8 +28,8 @@ const CHROME =
   ].find(existsSync);
 if (!CHROME) throw new Error('找不到 Chrome,请用环境变量 CHROME 指定路径');
 
-// 从仓库根目录提供静态文件:画面要用到 sidepanel.css 和 store/ 下的图标
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml' };
+// 从这个分支的根目录提供静态文件:画面要用到 ext/sidepanel.css、demo/ 下的样式和网站内容
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 const server = createServer((req, res) => {
   const file = join(ROOT, normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)));
   if (!file.startsWith(ROOT) || !existsSync(file)) return res.writeHead(404).end();
@@ -78,7 +79,7 @@ const evaluate = async (expression) => {
 };
 await page('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: SCALE, mobile: false });
 await page('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
-await page('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/site/video/scene.html` });
+await page('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/source/video/scene.html` });
 // 等画面搭好(字体、图标、侧边栏 iframe 都加载完),拿到总时长和点击音效的时间点
 const deadline = Date.now() + 30000;
 while (!(await evaluate('window.sceneReady === true').catch(() => false))) {
@@ -121,7 +122,7 @@ console.log('\n已生成', mp4.slice(ROOT.length));
 await evaluate(`seek(${poster})`);
 const { data } = await page('Page.captureScreenshot', { format: 'jpeg', quality: 88 });
 writeFileSync(join(OUT, 'intro-poster.jpg'), Buffer.from(data, 'base64'));
-console.log('已生成', 'site/assets/intro-poster.jpg');
+console.log('已生成', 'assets/intro-poster.jpg');
 
 ws.close();
 chrome.kill();

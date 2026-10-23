@@ -1,9 +1,11 @@
 <!doctype html>
-<!-- 介绍视频的画面(1280×720)。时间线在 scene.js 里;生成视频见 make.js -->
+<!-- 介绍视频的画面(1280×720)。时间线在 scene.js 里;生成视频见 make.js。
+     浏览器窗口的样式和在线试用共用 demo/demo.css,侧边栏是 iframe,套用插件自己的 ext/sidepanel.css -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <title>Sidearc intro</title>
+<link rel="stylesheet" href="../../demo/demo.css">
 <style>
 * { box-sizing: border-box; margin: 0; }
 html, body { width: 1280px; height: 720px; overflow: hidden; background: #f4f2fb; }
@@ -23,54 +25,50 @@ body {
 .en { font-family: Inter, system-ui, sans-serif; }
 
 /* 开头 */
-#intro .logo { width: 116px; height: 116px; }
+#intro .logo { width: 108px; height: 108px; }
 #intro h1, #outro h1 { font-family: Inter, system-ui, sans-serif; }
-#intro h1 { margin-top: 26px; font-size: 76px; line-height: 1; font-weight: 800; letter-spacing: -1.5px; }
+#intro h1 { margin-top: 24px; font-size: 74px; line-height: 1; font-weight: 800; letter-spacing: -1.5px; }
 #intro .zh { margin-top: 22px; font-size: 30px; font-weight: 700; letter-spacing: 1px; }
 #intro .en { margin-top: 12px; font-size: 18px; color: #6b6d7c; }
 
 /* 左侧文案 */
-.copy { position: absolute; left: 72px; top: 0; bottom: 0; width: 380px; display: flex; flex-direction: column; justify-content: center; }
+.copy { position: absolute; left: 64px; top: 0; bottom: 0; width: 380px; display: flex; flex-direction: column; justify-content: center; }
 .eyebrow { display: flex; align-items: center; gap: 9px; margin-bottom: 16px; color: #5b6cf0; font-size: 13.5px; font-weight: 700; letter-spacing: 0.3px; }
 .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px rgba(107, 124, 255, 0.22); }
-.copy h2 { font-size: 40px; line-height: 1.24; font-weight: 800; letter-spacing: 0.5px; }
-.copy .zh { margin-top: 18px; font-size: 17px; line-height: 1.7; color: #575968; }
-.copy .en { margin-top: 10px; font-size: 14px; line-height: 1.55; color: #8a8c9a; }
-kbd { display: inline-block; padding: 0 7px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(0, 0, 0, 0.12); font: 600 14px/1.6 Inter, system-ui, sans-serif; color: #2a2a30; }
+.eyebrow .en { color: #8a8c9a; font-weight: 600; }
+.copy h2 { font-size: 39px; line-height: 1.24; font-weight: 800; letter-spacing: 0.5px; }
+.copy .zh { margin-top: 18px; font-size: 16.5px; line-height: 1.7; color: #575968; }
+.copy .en { margin-top: 10px; font-size: 13.5px; line-height: 1.55; color: #8a8c9a; }
+kbd { display: inline-block; padding: 0 7px; border-radius: 6px; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(0, 0, 0, 0.12); font: 600 13.5px/1.6 Inter, system-ui, sans-serif; color: #2a2a30; }
 
-/* 浏览器窗口 */
-#win { position: absolute; left: 488px; top: 22px; width: 732px; height: 676px; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 30px 70px rgba(0, 0, 0, 0.16); }
-.strip { position: absolute; left: 0; right: 0; top: 0; height: 40px; display: flex; align-items: flex-end; gap: 2px; padding: 0 10px 0 74px; background: #f1f1f4; }
-.lights { position: absolute; z-index: 1; left: 16px; top: 15px; display: flex; gap: 8px; }
-.lights i { width: 11px; height: 11px; border-radius: 50%; background: #d7d7dc; }
-.tab { position: relative; flex: 1 1 0; min-width: 0; max-width: 220px; height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 9px 9px 0 0; overflow: hidden; color: #5f6170; font-size: 11.5px; white-space: nowrap; }
-.tab img { width: 14px; height: 14px; flex: none; border-radius: 3px; }
-.tab span { overflow: hidden; mask-image: linear-gradient(90deg, #000 70%, transparent); }
-.tab.on { flex: 0 0 120px; background: #fff; color: #2a2a30; }
-.tab.fav { flex: none; width: 32px; padding: 0 9px; }
-.tab.fav span { display: none; }
-.chip { flex: none; align-self: center; margin: 4px 2px 0 6px; padding: 2px 8px; border-radius: 7px; background: var(--g); color: #fff; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-.group { display: flex; flex: 1 1 0; min-width: 0; max-width: 800px; gap: 2px; align-self: stretch; align-items: flex-end; overflow: hidden; border-bottom: 2px solid var(--g); }
-.newtab { flex: none; width: 26px; height: 28px; display: grid; place-items: center; align-self: center; color: #5f6170; font-size: 18px; }
-.toolbar { position: absolute; left: 0; right: 0; top: 40px; height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 14px; border-bottom: 1px solid rgba(0, 0, 0, 0.08); background: #fff; }
-.toolbar .nav { display: flex; gap: 12px; color: #9a9ca8; }
-.toolbar .url { flex: 1; height: 26px; border-radius: 13px; background: #f1f1f4; }
-.toolbar .ext { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; }
-.toolbar .ext img { width: 17px; height: 17px; }
-.toolbar .me { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #f6c37a, #e5687a); }
-.body { position: absolute; left: 0; right: 0; top: 80px; bottom: 0; display: flex; }
-.side { flex: none; width: 0; overflow: hidden; border-right: 1px solid rgba(0, 0, 0, 0.08); }
-.side iframe { display: block; width: 300px; height: 596px; border: 0; }
-.content { position: relative; flex: 1; min-width: 0; padding: 34px 30px; }
-.content i { display: block; height: 14px; margin-bottom: 14px; border-radius: 7px; background: #ececef; }
-.content i.title { width: 46%; height: 26px; margin-bottom: 24px; border-radius: 8px; }
-.content i.block { height: 150px; margin: 24px 0; border-radius: 14px; }
-.content i.link { background: rgba(26, 115, 232, 0.28); }
+/* 浏览器窗口(样式见 demo/demo.css) */
+#win { position: absolute; left: 470px; top: 22px; width: 762px; }
+#win .sb-window { height: 676px; }
+#win .sb-strip { position: relative; }
+#win .sb-tabs { position: absolute; left: 76px; right: 8px; top: 0; bottom: 0; }
+#win .sb-tab { min-width: 0; }
+#win .sb-tab.active { min-width: 0; }
+#win .sb-tab { transition: background 0.25s, box-shadow 0.25s; }
+#win .sb-tab.v-glow { z-index: 3; background: rgba(107, 124, 255, 0.18); box-shadow: inset 0 0 0 1.5px rgba(107, 124, 255, 0.95); }
+#win .v-group { display: flex; flex: 1 1 0; min-width: 0; max-width: 900px; align-items: flex-end; gap: 1px; height: 100%; overflow: hidden; }
+#win .sb-omni span { white-space: nowrap; overflow: hidden; color: var(--w-fg); font-size: 13px; }
+#win .sb-side { width: 0; overflow: hidden; }
+#win .sb-side iframe { display: block; width: 340px; height: 590px; border: 0; }
+#win .sb-page { position: relative; overflow: hidden; }
+#win .sb-page > .pg { position: absolute; inset: 0; }
+#win .sb-doc { padding: 26px 26px 30px; }
+#win .sb-doc h3 { font-size: 20px; }
+#win .sb-link.press { box-shadow: 0 0 0 1.5px var(--g-blue); }
+#win .sb-ext { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; }
+
+/* 键盘按键提示 */
+#keys { position: absolute; left: 64px; bottom: 112px; display: flex; gap: 10px; }
+#keys kbd { min-width: 44px; height: 40px; padding: 0 12px; display: grid; place-items: center; font-size: 18px; border-radius: 10px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 3px 0 rgba(0, 0, 0, 0.14); }
 
 /* 更多功能 */
 #more h2, #privacy h2 { font-size: 40px; font-weight: 800; letter-spacing: 0.5px; }
 #more .en.sub, #privacy .en.sub { margin-top: 10px; font-size: 16px; color: #7c7e8c; }
-.cards { display: grid; grid-template-columns: repeat(3, 330px); gap: 18px; margin-top: 40px; text-align: left; }
+.cards { display: grid; grid-template-columns: repeat(3, 340px); gap: 18px; margin-top: 40px; text-align: left; }
 .card { display: flex; gap: 16px; align-items: flex-start; padding: 22px 22px 20px; border-radius: 18px; background: rgba(255, 255, 255, 0.78); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 14px 34px rgba(60, 60, 110, 0.1); }
 .card .ic { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 13px; color: var(--c); background: color-mix(in srgb, var(--c) 15%, #fff); }
 .card .ic svg { width: 24px; height: 24px; }
@@ -85,12 +83,15 @@ kbd { display: inline-block; padding: 0 7px; border-radius: 6px; background: #ff
 .pill svg { width: 18px; height: 18px; color: #5b6cf0; }
 
 /* 结尾 */
-#outro .logo { width: 96px; height: 96px; }
-#outro h1 { margin-top: 22px; font-size: 64px; line-height: 1; font-weight: 800; letter-spacing: -1.2px; }
-#outro .zh { margin-top: 18px; font-size: 24px; font-weight: 600; }
-#outro .en { margin-top: 8px; font-size: 16px; color: #6b6d7c; }
-#outro .repo { display: flex; align-items: center; gap: 10px; margin-top: 34px; padding: 12px 22px; border-radius: 999px; background: #1d1d24; color: #fff; font: 600 18px Inter, system-ui, sans-serif; box-shadow: 0 14px 30px rgba(29, 29, 36, 0.25); }
-#outro .repo svg { width: 20px; height: 20px; }
+#outro .logo { width: 92px; height: 92px; }
+#outro h1 { margin-top: 20px; font-size: 62px; line-height: 1; font-weight: 800; letter-spacing: -1.2px; }
+#outro .zh { margin-top: 18px; font-size: 23px; font-weight: 600; }
+#outro .en { margin-top: 8px; font-size: 15.5px; color: #6b6d7c; }
+#outro .links { display: flex; gap: 14px; margin-top: 32px; }
+#outro .go { display: flex; align-items: center; gap: 10px; padding: 12px 22px; border-radius: 999px; font: 600 17px Inter, "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif; }
+#outro .go.try { background: linear-gradient(120deg, #6b7cff, #a874c8 55%, #e5687a); color: #fff; box-shadow: 0 14px 30px rgba(122, 108, 230, 0.35); }
+#outro .go.repo { background: #1d1d24; color: #fff; box-shadow: 0 14px 30px rgba(29, 29, 36, 0.25); }
+#outro .go svg { width: 19px; height: 19px; }
 #outro .keys { margin-top: 22px; font-size: 15px; color: #6b6d7c; }
 
 /* 鼠标指针 */
@@ -104,70 +105,56 @@ kbd { display: inline-block; padding: 0 7px; border-radius: 6px; background: #ff
   <div class="layer"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
 
   <section id="intro" class="layer center">
-    <img class="logo" src="../assets/logo.svg" alt="">
+    <img class="logo" src="../../assets/logo.svg" alt="">
     <h1>Sidearc</h1>
-    <p class="zh">把标签页放到侧边栏</p>
-    <p class="en">Arc-style vertical tabs for Chrome</p>
+    <p class="zh">侧边栏里的标签页,和顶部标签栏同步</p>
+    <p class="en">Vertical tabs that stay in sync with Chrome</p>
   </section>
 
-  <section class="copy" id="copy-b">
+  <section class="copy" id="copy-1">
     <h2>标签页一多,<br>标题就挤没了</h2>
     <p class="zh">横向标签栏越来越窄,<br>最后只剩一排看不清的小图标。</p>
     <p class="en">Too many tabs, and the titles get squeezed away.</p>
   </section>
-  <section class="copy" id="copy-c">
-    <div class="eyebrow">01 · 垂直标签栏 <span class="en">Vertical tabs</span></div>
-    <h2>标签页竖着排,<br>标题完整可见</h2>
-    <p class="zh">点工具栏图标或按 <kbd>Alt+S</kbd> 打开;<br>点击切换,中键关闭,拖拽排序。</p>
-    <p class="en">Open it with the toolbar icon or Alt+S. Full titles, click to switch, drag to reorder.</p>
+  <section class="copy" id="copy-2">
+    <div class="eyebrow">01 · 双向同步 <span class="en">Two-way sync</span></div>
+    <h2>在哪边拖,<br>另一边都跟着变</h2>
+    <p class="zh">侧边栏和 Chrome 自己的顶部标签栏,<br>始终是同一份顺序。</p>
+    <p class="en">The sidebar and Chrome's own tab strip always share one order. Drag on either side.</p>
   </section>
-  <section class="copy" id="copy-d">
-    <div class="eyebrow">02 · 子标签与别名 <span class="en">Child tabs &amp; aliases</span></div>
+  <section class="copy" id="copy-3">
+    <div class="eyebrow">02 · 空间 <span class="en">Spaces</span></div>
+    <h2>每个空间,<br>就是顶部的一个分组</h2>
+    <p class="zh">底部圆点一键切换,侧边栏跟着换颜色;<br>在顶部点开别的分组,侧边栏也切过去。</p>
+    <p class="en">Switch with the dots, or open another group up top: the sidebar follows.</p>
+  </section>
+  <section class="copy" id="copy-4">
+    <div class="eyebrow">03 · 子标签 <span class="en">Child tabs</span></div>
     <h2>从哪打开,<br>就挂在哪下面</h2>
-    <p class="zh">网页里点开的链接,自动成为子标签;<br>重要的标签页,再起个短名字。</p>
-    <p class="en">Links you open land under the page they came from. Give key tabs a short alias.</p>
+    <p class="zh">网页里点开的链接,自动缩进到原标签页下面;<br>关掉父标签页时一起关。</p>
+    <p class="en">Links you open from a page land under it, and close with it.</p>
   </section>
-  <section class="copy" id="copy-e">
-    <div class="eyebrow">03 · 收藏夹与固定标签 <span class="en">Favorites &amp; pinned</span></div>
-    <h2>常用的,<br>固定在顶部</h2>
-    <p class="zh">收藏夹所有空间共用;<br>固定标签关了也留着入口,还能分文件夹。</p>
-    <p class="en">Favorites are shared by every space. Pinned tabs keep their spot when closed, and fit in folders.</p>
+  <section class="copy" id="copy-5">
+    <div class="eyebrow">04 · 固定标签 <span class="en">Pinned tabs</span></div>
+    <h2>固定标签跑远了,<br>一键回家</h2>
+    <p class="zh">点进别的页面,这一行显示它现在在哪;<br>点 ↩ 回到固定的地址。</p>
+    <p class="en">Wander off and the row shows where you are; ↩ takes you back home.</p>
   </section>
-  <section class="copy" id="copy-f">
-    <div class="eyebrow">04 · 空间 <span class="en">Spaces</span></div>
-    <h2>用空间分开<br>工作与生活</h2>
-    <p class="zh">每个空间有自己的主题色、固定标签和标签页;<br>底部圆点一键切换。</p>
-    <p class="en">Each space has its own color, pinned tabs and tabs. Switch with the dots at the bottom.</p>
+  <section class="copy" id="copy-6">
+    <div class="eyebrow">05 · 足迹与休眠 <span class="en">Footprints &amp; sleep</span></div>
+    <h2>刚离开的留下足迹,<br>不用的就去休眠</h2>
+    <p class="zh">最近离开的标签页左边留一道竖条,<br>10 分钟里慢慢消失;点月亮让标签页休眠,<br>行尾标着它睡了多久。</p>
+    <p class="en">Recently left tabs keep a fading mark; idle tabs sleep and show how long.</p>
   </section>
-  <section class="copy" id="copy-g">
-    <div class="eyebrow">05 · 双向同步 <span class="en">Tab strip sync</span></div>
-    <h2>和顶部标签栏<br>保持一致</h2>
-    <p class="zh">在侧边栏里拖,顶部跟着变;<br>在顶部拖,侧边栏也跟着变。<br>每个空间是顶部的一个标签页分组。</p>
-    <p class="en">Drag in the sidebar and Chrome's tab strip follows, and the other way round.</p>
+  <section class="copy" id="copy-7">
+    <div class="eyebrow">06 · 键盘 <span class="en">Keyboard</span></div>
+    <h2>键盘也能操作,<br>选中框像 Switch</h2>
+    <p class="zh">点一下侧边栏,<kbd>↑</kbd> <kbd>↓</kbd> 移动选中框,<br><kbd>Enter</kbd> 打开、<kbd>Delete</kbd> 关闭。</p>
+    <p class="en">Click the sidebar and move a Switch-style cursor with the arrow keys.</p>
   </section>
+  <div id="keys"><kbd>↓</kbd><kbd>Enter</kbd></div>
 
-  <div id="win">
-    <div class="lights"><i></i><i></i><i></i></div>
-    <div class="strip" id="strip-crowd"></div>
-    <div class="strip" id="strip-sync"></div>
-    <div class="toolbar">
-      <div class="nav">
-        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>
-        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5L10.5 8 6 12.5"/></svg>
-        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12.8 8a4.8 4.8 0 11-1.4-3.4M12.8 2.8v2.6h-2.6"/></svg>
-      </div>
-      <div class="url"></div>
-      <div class="ext" id="ext"><img src="../assets/logo.svg" alt=""></div>
-      <div class="me"></div>
-    </div>
-    <div class="body">
-      <div class="side" id="side"><iframe id="panel" title="Sidearc"></iframe></div>
-      <div class="content">
-        <i class="title"></i><i></i><i class="link" id="link1" style="width:64%"></i><i style="width:80%"></i>
-        <i class="block"></i><i></i><i class="link" id="link2" style="width:52%"></i><i style="width:70%"></i>
-      </div>
-    </div>
-  </div>
+  <div id="win" class="sb"></div>
 
   <section id="more" class="layer center">
     <h2>还有这些贴心的细节</h2>
@@ -183,11 +170,11 @@ kbd { display: inline-block; padding: 0 7px; border-radius: 6px; background: #ff
   </section>
 
   <section id="outro" class="layer center">
-    <img class="logo" src="../assets/logo.svg" alt="">
+    <img class="logo" src="../../assets/logo.svg" alt="">
     <h1>Sidearc</h1>
-    <p class="zh">Arc 风格的 Chrome 侧边标签栏 · 免费开源</p>
-    <p class="en">Arc-style vertical tabs for Chrome · Free and open source</p>
-    <div class="repo" id="repo">github.com/winzipsdo/sidearc</div>
+    <p class="zh">侧边栏里的标签页,和顶部标签栏同步 · 免费开源</p>
+    <p class="en">Vertical tabs that stay in sync with Chrome · Free and open source</p>
+    <div class="links"><span class="go try" id="go-try">在线试用 · winzipsdo.github.io/sidearc</span><span class="go repo" id="go-repo">github.com/winzipsdo/sidearc</span></div>
     <p class="keys">Chrome 116+ · 按 <kbd>Alt+S</kbd> 打开侧边栏 · <span class="en">Press Alt+S to toggle</span></p>
   </section>
 
