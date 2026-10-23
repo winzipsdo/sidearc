@@ -147,3 +147,15 @@ export function ask(title, fields, color, okLabel = t('save')) {
     Object.values(inputs)[0]?.select();
   });
 }
+
+// 搜索框平时收起来(顶部只有空间名那一行的放大镜),要用时展开并聚焦。
+// 框里还有搜索词时不收,免得过滤着的列表突然没了来由
+export function openSearch() {
+  document.body.classList.add('searching');
+  $('#search').focus();
+}
+export function closeSearch() {
+  if ($('#search').value) return;
+  document.body.classList.remove('searching');
+  $('#search').blur();
+}

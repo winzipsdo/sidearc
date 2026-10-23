@@ -49,7 +49,8 @@ svg { display: block; }
 header { padding: 12px 12px 0; }
 /* 收藏夹和空间名在顶部、不随列表滚动(参考 Arc);列表滚动后,滚上去的内容在顶端一小段里渐渐淡掉,
    不画硬边的分隔线 */
-header #favs { margin-top: 8px; }
+header #favs { transition: margin 0.18s; }
+body.searching header #favs { margin-top: 8px; }
 body.scrolled #scroll {
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
   mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
@@ -63,8 +64,10 @@ body.scrolled #scroll {
   border-radius: 11px;
   background: var(--fill);
   color: var(--fg-3);
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, box-shadow 0.15s, height 0.18s, opacity 0.15s;
 }
+/* 平时收起(高度 0),body.searching 时展开(见 ui.js 的 openSearch) */
+body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-events: none; }
 .search:hover { background: var(--fill-hover); }
 .search:focus-within {
   background: var(--card);
@@ -220,6 +223,11 @@ body.scrolled #scroll {
 }
 .space-head span { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .space-head .ghost { margin-left: auto; }
+.space-head .ghost + .ghost { margin-left: 0; }
+body.searching #search-toggle { color: var(--accent); }
+/* 放大镜不常用,和右下角的设置按钮一样平时藏起来:鼠标移到顶部(或用键盘选中、搜索框展开着)时才渐显 */
+#search-toggle { opacity: 0; transition: background 0.15s, color 0.15s, opacity 0.2s; }
+header:hover #search-toggle, #search-toggle:focus-visible, body.searching #search-toggle { opacity: 1; }
 .badge {
   flex: none;
   display: flex;

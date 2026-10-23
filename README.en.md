@@ -29,7 +29,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 - **Aliases**: give a tab or pinned item your own short name, shown before the title and matched by search.
 - **No duplicate tabs**: opening an address that is already open in the current space switches to the existing tab instead. Opening the address of a favorite or pinned tab that isn't open yet opens it as that favorite or pinned tab. Tabs you deliberately open in a new tab (`Ctrl/⌘+click`, middle-click) are left alone.
 - **Footprints**: the last 3 tabs you left get a theme-colored bar on the left (a short line under the icon for favorites) that shrinks toward its middle and fades over 10 minutes, so you can find your way back. Turn it off in Settings at the bottom right.
-- **Search box**: type to filter; Enter jumps to the first match, or opens the URL / searches with your default engine.
+- **Search**: tucked away as a magnifier next to the space name that appears when you hover the top — click it or press `/` or `Ctrl/⌘+F` to open; type to filter; Enter jumps to the first match, or opens the URL / searches with your default engine.
 - **Close in bulk**: "Clear" closes every unpinned tab in the current space except the active one; right-click a tab to close all tabs below it.
 
 ### Favorites, pinned tabs and spaces
@@ -67,8 +67,9 @@ Requires Chrome 116 or later.
 | --- | --- | --- |
 | Toggle the sidebar | `Alt+S` | `⌥ Option+S` |
 | Undo (sidebar focused) | `Ctrl+Z` | `⌘+Z` |
+| Open search | `/` or `Ctrl+F` | `/` or `⌘+F` |
 | Search box: skip matches, open the URL or search | `Ctrl+Enter` | `⌘+Enter` |
-| Search box: clear | `Esc` | `Esc` |
+| Search box: clear and close | `Esc` | `Esc` |
 | Keyboard cursor: move (starts from the current page; ↓ in the search box starts from the top) | `↑` `↓` `←` `→` | `↑` `↓` `←` `→` |
 | Keyboard cursor: open / close / context menu | `Enter` / `Delete` / `Shift+F10` | `Enter` / `Delete` / `Shift+F10` |
 | Keyboard cursor: expand / collapse a folder | `→` / `←` | `→` / `←` |

@@ -12,7 +12,7 @@ import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from '
 import { switchSpace } from './spaces.js';
 import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailOn, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
-import { hideMenu, pushUndo, undo } from './ui.js';
+import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
@@ -161,8 +161,15 @@ function bindSearch() {
       search.value = '';
       setQuery('');
       render();
+      closeSearch();
     }
   });
+  // 不管怎么进到搜索框(包括按 Tab 切进来),都展开;空着点到别处就收起来,有搜索词时留着
+  search.addEventListener('focus', () => document.body.classList.add('searching'));
+  search.addEventListener('blur', () => search.value || document.body.classList.remove('searching'));
+  // 按下时不让搜索框失焦,否则空搜索框先因失焦收起,紧接着的点击又把它展开
+  $('#search-toggle').addEventListener('mousedown', (e) => e.preventDefault());
+  $('#search-toggle').addEventListener('click', () => (document.body.classList.contains('searching') && !search.value ? closeSearch() : openSearch()));
 }
 
 function bindKeyboard() {

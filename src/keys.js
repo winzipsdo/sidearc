@@ -3,7 +3,7 @@
 // 鼠标一动就收起选中框;重画后按 kind + id 找回原来的项,找不到(比如刚关掉)就落在同一位置附近的项上。
 
 import { $ } from './dom.js';
-import { hideMenu } from './ui.js';
+import { hideMenu, openSearch } from './ui.js';
 
 let cursor = null; // { kind, id, index }
 
@@ -102,7 +102,7 @@ function move(dir, repeat) {
   // 最上面再往上:回到搜索框
   if (dir === 'up') {
     hideCursor();
-    return $('#search').focus();
+    return openSearch();
   }
   edge(el, dir);
 }
@@ -117,7 +117,14 @@ const DIRS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 
 
 export function bindKeys() {
   document.addEventListener('keydown', (e) => {
-    if (e.target.closest?.('input, textarea, dialog') || $('#dlg').open || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.target.closest?.('input, textarea, dialog') || $('#dlg').open) return;
+    // 展开搜索:/ 或 ⌘F / Ctrl+F
+    if (e.key === '/' || ((e.metaKey || e.ctrlKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f')) {
+      e.preventDefault();
+      hideCursor();
+      return openSearch();
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
     const dir = DIRS[e.key];
     if (dir) {
       e.preventDefault();

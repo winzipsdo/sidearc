@@ -6,7 +6,7 @@ import { canDiscard, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { render, schedule } from './render.js';
 import { listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
-import { ask, pushUndo, toast } from './ui.js';
+import { ask, closeSearch, pushUndo, toast } from './ui.js';
 
 // 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
 export async function discardTabs(list) {
@@ -136,4 +136,5 @@ export async function submitSearch(force) {
   $('#search').value = '';
   setQuery('');
   render();
+  closeSearch();
 }

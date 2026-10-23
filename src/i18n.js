@@ -9,6 +9,7 @@ const MESSAGES = {
   zh: {
     // 常驻界面
     searchPlaceholder: '搜索标签页或输入网址',
+    searchTip: '搜索(/)',
     noHistoryBadge: '不记录历史',
     noHistoryBadgeTip: '此空间不记录浏览历史',
     spaceSettings: '空间设置',
@@ -145,6 +146,7 @@ const MESSAGES = {
 
   en: {
     searchPlaceholder: 'Search tabs or enter a URL',
+    searchTip: 'Search (/)',
     noHistoryBadge: 'No history',
     noHistoryBadgeTip: "This space doesn't keep browsing history",
     spaceSettings: 'Space settings',

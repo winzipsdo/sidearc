@@ -153,10 +153,10 @@ function panel(t, active, dark, folder) {
   const dots = SPACE_COLORS.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
   return `<!doctype html><html style="--accent:${color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
 <link rel="stylesheet" href="sidepanel.css">${dark ? `<style>${darkVars}</style>` : ''}</head><body>
-<header><label class="search">${SEARCH}<input id="search" placeholder="${ui('searchPlaceholder')}"></label></header>
-<main id="scroll"><section id="favs" class="zone grid" style="--cols:5">${favs}</section>
-<div class="space-head"><span id="space-name">${esc(t.spaces[active])}</span><button class="ghost">${MORE}</button></div>
-<section id="pins" class="zone list">${pins}</section>
+<header><label class="search">${SEARCH}<input id="search" placeholder="${ui('searchPlaceholder')}"></label>
+<section id="favs" class="zone grid" style="--cols:5">${favs}</section>
+<div class="space-head"><span id="space-name">${esc(t.spaces[active])}</span><button class="ghost">${MORE}</button></div></header>
+<main id="scroll"><section id="pins" class="zone list">${pins}</section>
 <div class="divider"><span></span><button class="ghost">${ui('clear')}</button></div>
 <button class="row new">${PLUS}<span class="title">${ui('newTab')}</span></button>
 <section id="tabs" class="zone list">${tabs}</section></main>
