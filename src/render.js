@@ -49,6 +49,41 @@ const trailEls = (itemOf, tabId) => {
   const item = itemOf.get(tabId);
   return document.querySelectorAll(item ? `[data-kind="pin"][data-id="${item}"], [data-kind="fav"][data-id="${item}"]` : `[data-kind="tab"][data-id="${tabId}"]`);
 };
+// 休眠动效:点下去那一刻起,这一行从当时的样子(悬停的底色,或者当前标签页的白卡片和阴影)
+// 慢慢过渡到休眠的样子;图标缩一下再变淡、标题变暗,旁边飘起一个「z」。
+// 中间会切走、换编号、连着重画好几次,开始时间和起始样子记在这里,重画后用负的 animation-delay 接着播
+const sleepAnim = new Map(); // tabId -> { start, bg, shadow }
+const SLEEP_MS = 900;
+export function markSlept(tabId) {
+  const el = trailEls(new Map([...bind].map(([itemId, id]) => [id, itemId])), tabId)[0];
+  const cs = el && getComputedStyle(el);
+  sleepAnim.set(tabId, { start: Date.now(), bg: cs?.backgroundColor ?? 'transparent', shadow: cs?.boxShadow ?? 'none' });
+  refreshSleepAnim();
+  // 播完把类名去掉(之后没有重画的话也要去)
+  setTimeout(refreshSleepAnim, SLEEP_MS + 50);
+}
+tabReplacedHooks.push((added, removed) => {
+  if (sleepAnim.has(removed)) sleepAnim.set(added, sleepAnim.get(removed));
+  sleepAnim.delete(removed);
+});
+function refreshSleepAnim() {
+  for (const el of document.querySelectorAll('.just-slept')) el.classList.remove('just-slept');
+  const now = Date.now();
+  const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
+  for (const [id, a] of sleepAnim) {
+    if (now - a.start >= SLEEP_MS) {
+      sleepAnim.delete(id);
+      continue;
+    }
+    for (const el of trailEls(itemOf, id)) {
+      el.classList.add('just-slept');
+      el.style.setProperty('--sleep-delay', `${a.start - now}ms`);
+      el.style.setProperty('--sleep-bg', a.bg);
+      el.style.setProperty('--sleep-shadow', a.shadow);
+    }
+  }
+}
+
 export function refreshTrail() {
   for (const el of document.querySelectorAll('.fp, .fp-out')) el.classList.remove('fp', 'fp-grow', 'fp-out');
   const now = Date.now();
@@ -220,6 +255,7 @@ export function render() {
     h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
   );
   refreshTrail();
+  refreshSleepAnim();
   applyCursor();
   saveSnapshot();
 }

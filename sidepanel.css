@@ -323,6 +323,40 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 }
 .row.discarded .title { color: var(--fg-2); }
 .row.discarded .icon, #pins .row:not(.open) .icon { opacity: 0.6; filter: saturate(0.6); }
+/* 休眠动效(见 render.js 的 markSlept):整行从点下去时的底色和阴影慢慢退到它平常的样子,
+   图标先缩一下再变淡,标题从正常颜色渐渐变暗,图标旁飘起一个「z」 */
+.row.just-slept, .tile.just-slept { animation: doze-row 0.5s ease-out var(--sleep-delay, 0s) backwards; }
+@keyframes doze-row { from { background-color: var(--sleep-bg); box-shadow: var(--sleep-shadow); } }
+.just-slept .icon { animation: doze-icon 0.6s ease-out var(--sleep-delay, 0s) both; }
+.just-slept .title { animation: doze-title 0.6s ease-out var(--sleep-delay, 0s) both; }
+.row.just-slept::after, .tile.just-slept::after {
+  content: "z";
+  position: absolute;
+  left: 24px;
+  top: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--accent);
+  pointer-events: none;
+  animation: doze-z 0.9s ease-out var(--sleep-delay, 0s) both;
+}
+.tile.just-slept::after { left: calc(50% + 6px); top: 1px; }
+@keyframes doze-icon {
+  from { opacity: 1; filter: none; transform: scale(1); }
+  30% { transform: scale(0.82); }
+  to { transform: scale(1); }
+}
+@keyframes doze-title { from { color: var(--fg); } }
+@keyframes doze-z {
+  from { opacity: 0; transform: translate(0, 6px) scale(0.6); }
+  30% { opacity: 1; }
+  to { opacity: 0; transform: translate(7px, -9px) scale(1.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.just-slept, .tile.just-slept, .just-slept .icon, .just-slept .title { animation: none; }
+  .row.just-slept::after, .tile.just-slept::after { display: none; }
+}
 /* 标题深浅表示开没开:开着的标签页(有没有别名都一样)用正常颜色,没开的固定标签变淡 */
 #pins .row:not(.open) .title { color: var(--fg-2); }
 #pins .row:not(.open) .alias { opacity: 0.65; }

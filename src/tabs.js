@@ -4,7 +4,7 @@ import { $ } from './dom.js';
 import { t } from './i18n.js';
 import { canDiscard, isUnloaded, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
-import { render, schedule } from './render.js';
+import { markSlept, render, schedule } from './render.js';
 import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, windowId } from './store.js';
 import { ask, closeSearch, pushUndo, toast } from './ui.js';
 
@@ -28,6 +28,9 @@ function nextTabAfter(tab, skip) {
 export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
   const active = withActive && list.find((x) => x.active && !isUnloaded(x));
+  // 动效从点下去这一刻就开始(记下这一行现在的底色和阴影,从这里过渡到休眠的样子),
+  // 不然切走、换编号、重画这几步会让整行先跳成别的样子再跳回来
+  for (const tab of list) if (tab === active || canDiscard(tab)) markSlept(tab.id);
   if (active) {
     const next = nextTabAfter(active, new Set(list.map((x) => x.id)));
     if (next != null) {
