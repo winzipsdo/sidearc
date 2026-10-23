@@ -172,12 +172,21 @@ export function subtreeIds(tabId) {
 
 // 标签页换了编号(比如休眠后):先在内存里把它的空间、别名、父标签,以及指向它的子标签和绑定挪到新编号上,
 // 这样重画时它还在原来的位置。存储里的数据由后台(background.js)同步挪,这里不写,免得两边同时改
+// 换编号时还要跟着挪的(比如 render.js 里足迹动画的进度);store 不能直接引用 render,由它来登记
+export const tabReplacedHooks = [];
+
 export function replaceTabId(added, removed) {
   for (const map of [tabSpace, tabAlias, tabParent, tabSlept]) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }
   for (const map of [tabParent, bind]) for (const [k, v] of map) if (v === removed) map.set(k, added);
+  // 内存里的标签页列表也立刻换上新编号:它要等下次重新读取才会更新,在那之前的几次重画里,
+  // 旧编号已经没有空间归属,这一行就会被漏掉,看着整行消失又出现
+  for (const t of tabs) if (t.id === removed) t.id = added;
+  // 足迹:后台也会把记录挪过去,但在那之前重画的话,换了编号的标签页会被当成新足迹,竖条重新长一遍(看着像抖了一下)
+  trail = trail.map((x) => (x.id === removed ? { ...x, id: added } : x));
+  for (const hook of tabReplacedHooks) hook(added, removed);
 }
 
 // 重新读取本窗口的标签页(启动时已经读好的可以直接传进来)

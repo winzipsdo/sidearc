@@ -2,15 +2,39 @@
 
 import { $ } from './dom.js';
 import { t } from './i18n.js';
-import { canDiscard, toUrl } from './logic.js';
+import { canDiscard, isUnloaded, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { render, schedule } from './render.js';
-import { listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabs, tabSpace, windowId } from './store.js';
+import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, windowId } from './store.js';
 import { ask, closeSearch, pushUndo, toast } from './ui.js';
 
-// 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。当前标签页不能回收,会跳过
-export async function discardTabs(list) {
+// 休眠当前标签页时先切到哪个:侧边栏里它下面最近的、不在这批里、醒着的标签页,下面没有就往上找(和关掉当前标签页的感觉一样)。
+// 收藏、固定标签、标签页列表按界面上的顺序一起算
+function nextTabAfter(tab, skip) {
+  const ids = [...document.querySelectorAll('[data-kind="fav"], [data-kind="pin"], [data-kind="tab"]')]
+    .map((el) => (el.dataset.kind === 'tab' ? +el.dataset.id : bind.get(el.dataset.id)))
+    .filter((id) => id != null && tabs.some((x) => x.id === id));
+  const i = ids.indexOf(tab.id);
+  const ok = (id) => id !== tab.id && !skip.has(id);
+  // 先找醒着的(切到休眠的会把它唤醒、重新加载,白费);其他都在休眠时才退而求其次
+  const awake = (id) => ok(id) && !isUnloaded(tabs.find((x) => x.id === id));
+  const order = [...ids.slice(i + 1), ...ids.slice(0, Math.max(i, 0)).reverse()];
+  return order.find(awake) ?? order.find(ok) ?? null;
+}
+
+// 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。
+// Chrome 不能回收当前标签页:withActive 为真(用户点的就是它,或多选里包括它)时先切到旁边的标签页再休眠它;
+// 否则(休眠整个文件夹、空间)跳过当前标签页
+export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
+  const active = withActive && list.find((x) => x.active && !isUnloaded(x));
+  if (active) {
+    const next = nextTabAfter(active, new Set(list.map((x) => x.id)));
+    if (next != null) {
+      await chrome.tabs.update(next, { active: true }).catch(() => {});
+      active.active = false;
+    }
+  }
   // 回收时 Chrome 会给标签页换编号:换完、把关系挪到新编号上之前先不重画,否则列表会跳一下
   setRenderHeld(true);
   try {

@@ -1,12 +1,12 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { canDiscard, favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
+import { favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, query, refreshTabs, pressing, renderHeld, setRenderPending, state, tabAlias, tabs, tabSlept, trail, trailOn, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailOn, visibleTabs } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -37,6 +37,13 @@ const trailShown = new Map(); // tabId -> { at, start }:at 离开的时间,start
 const trailOut = new Map(); // tabId -> { left, start }:正在缩短淡出的,left 是开始缩时还剩多少
 let trailTimer;
 const GROW_MS = 450;
+// 标签页换了编号(休眠时 Chrome 会换):足迹的动画进度跟过去,不然会当成新足迹重新长一遍
+tabReplacedHooks.push((added, removed) => {
+  for (const map of [trailShown, trailOut]) {
+    if (map.has(removed)) map.set(added, map.get(removed));
+    map.delete(removed);
+  }
+});
 const OUT_MS = 300;
 const trailEls = (itemOf, tabId) => {
   const item = itemOf.get(tabId);
@@ -113,7 +120,7 @@ export function render() {
     // 开了保持唤醒:收藏在图标右下角、固定标签在标题右边显示一把小锁
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
     // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
-    const free = canDiscard(tab) && freeButton();
+    const free = tab && !isUnloaded(tab) && freeButton();
     if (kind === 'fav') {
       // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭
       const close = open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
@@ -194,7 +201,7 @@ export function render() {
         (tab.audible || muted) && h('button', { class: 'btn' + (tab.audible && !muted ? ' playing' : ''), title: muted ? t('unmute') : t('mute'), data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
         // 子标签多一个「移出为顶级标签页」;按钮顺序:移出、休眠、关闭,都只在鼠标移上去时出现
         depth > 0 && h('button', { class: 'btn x', title: t('unnest'), data: { act: 'unnest' } }, icon('outdent')),
-        canDiscard(tab) && freeButton(),
+        !isUnloaded(tab) && freeButton(),
         h('button', { class: 'btn x', title: t('close'), data: { act: 'close' } }, icon('close'))
       );
     })

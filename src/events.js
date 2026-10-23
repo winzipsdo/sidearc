@@ -63,7 +63,7 @@ function bindRows(root) {
       const tab = tabOf(el);
       if (!tab) return;
       if (act === 'close') closeTab(tab);
-      else if (act === 'discard') discardTabs([tab]);
+      else if (act === 'discard') discardTabs([tab], { withActive: true });
       else if (act === 'unnest') setTabParent(tab.id, null).then(render);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
       else if (e.shiftKey) selectRange(tab);
@@ -79,7 +79,7 @@ function bindRows(root) {
       const item = findItem(el.dataset.id)?.item;
       if (!item) return;
       if (act === 'close') closeItemTab(item);
-      else if (act === 'discard') discardTabs(tabs.filter((t) => t.id === bind.get(item.id)));
+      else if (act === 'discard') discardTabs(tabs.filter((t) => t.id === bind.get(item.id)), { withActive: true });
       else if (act === 'mute') toggleItemMute(item);
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);

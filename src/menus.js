@@ -16,13 +16,13 @@ function memoryItems(tab) {
   if (!tab) return [];
   const keep = tab.autoDiscardable === false;
   return [
-    // 不能休眠时置灰,鼠标提示里说明原因
+    // 已经在休眠的置灰,鼠标提示里说明原因。当前标签页也能休眠:先切到旁边的(见 tabs.js 的 discardTabs)
     {
       icon: 'sleep',
       label: t('sleep'),
-      disabled: !canDiscard(tab),
-      title: tab.active ? t('sleepCurrentTip') : isUnloaded(tab) ? t('alreadyAsleepTip') : null,
-      run: () => discardTabs([tab]),
+      disabled: isUnloaded(tab),
+      title: isUnloaded(tab) ? t('alreadyAsleepTip') : null,
+      run: () => discardTabs([tab], { withActive: true }),
     },
     { icon: keep ? 'unlock' : 'lock', label: keep ? t('stopKeepAwake') : t('keepAwake'), run: () => toggleAutoDiscard(tab) },
   ];
@@ -33,7 +33,7 @@ function selectionMenu(e, list) {
   const n = list.length;
   showMenu(e, [
     { header: t('nTabs', { n }) },
-    { icon: 'sleep', label: t('sleep'), disabled: !list.some(canDiscard), run: () => discardTabs(list) },
+    { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
     '-',
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)

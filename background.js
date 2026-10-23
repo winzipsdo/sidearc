@@ -289,12 +289,20 @@ chrome.runtime.onMessage.addListener((msg) => {
 // ---------- 空间 ↔ 标签页分组 ----------
 // ---------- 足迹 ----------
 // 每个窗口记下当前标签页和最近离开的几个,侧边栏据此在它们左边画越来越淡的竖条(见 logic.js 的 nextTrail)
+// 刚关掉的标签页。判断「原来的当前标签页还在不在」不能用 tabs.get:休眠当前标签页时侧边栏先切走、马上休眠它,
+// 休眠会换编号,等这里查的时候旧编号已经查不到了,会被当成关掉了而不留足迹(竖条消失又出现)。
+// 关掉才会有 onRemoved,换编号没有,所以按这个记
+const closedTabs = new Set();
+chrome.tabs.onRemoved.addListener((tabId) => {
+  closedTabs.add(tabId);
+  setTimeout(() => closedTabs.delete(tabId), 60000);
+});
 chrome.tabs.onActivated.addListener(({ tabId, windowId }) =>
   serial(async () => {
     const key = KEY.trail(windowId);
     const rec = (await chrome.storage.session.get(key))[key];
     // 原来的当前标签页刚被关掉(关掉当前标签页时 Chrome 会切到别的),不给它留足迹
-    const prevAlive = rec?.active == null || !!(await chrome.tabs.get(rec.active).catch(() => null));
+    const prevAlive = rec?.active == null || !closedTabs.has(rec.active);
     await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, Date.now(), prevAlive) });
   })
 );
