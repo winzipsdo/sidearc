@@ -38,6 +38,7 @@ const ICONS = {
   unpin: svg('<path d="M6 2.5h4M7 2.5v3.5L4.5 9h7L9 6V2.5M8 9v4.5M2.5 2.5l11 11"/>'),
   external: svg('<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M12 9.5v3a1 1 0 01-1 1H3.5a1 1 0 01-1-1V5a1 1 0 011-1h3"/>'),
   reload: svg('<path d="M13 8a5 5 0 11-1.5-3.6"/><path d="M13 2.5v3h-3"/>'),
+  heart: svg('<path d="M8 13.5S2.5 10.2 2.5 6.3A2.8 2.8 0 018 4.6a2.8 2.8 0 015.5 1.7c0 3.9-5.5 7.2-5.5 7.2z"/>'),
   sleep: svg('<path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/>'),
   lock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/>'),
   unlock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 014.8-1"/>'),

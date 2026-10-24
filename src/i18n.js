@@ -102,6 +102,7 @@ const MESSAGES = {
     language: '语言 / Language',
     langAuto: '跟随浏览器',
     footprints: '足迹',
+    sponsor: '支持 Sidearc',
     footprintsTip: '最近离开的 3 个标签页旁边显示一道竖条,10 分钟内慢慢缩短、变淡直到消失',
 
     // 对话框
@@ -241,6 +242,7 @@ const MESSAGES = {
     language: '语言 / Language',
     langAuto: 'Same as browser',
     footprints: 'Footprints',
+    sponsor: 'Support Sidearc',
     footprintsTip: 'Mark the last 3 tabs you left with a bar that shrinks and fades away over 10 minutes',
 
     save: 'Save',

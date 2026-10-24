@@ -168,7 +168,9 @@ export function spaceMenu(e, id) {
   ]);
 }
 
-// 右下角的设置按钮:界面语言和足迹开关。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
+
+// 右下角的设置按钮:界面语言、足迹开关,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -181,6 +183,8 @@ export function settingsMenu(e) {
     '-',
     // 开关:打开时前面打勾
     { icon: trailOn ? 'check' : null, label: t('footprints'), title: t('footprintsTip'), run: () => chrome.storage.local.set({ trail: !trailOn }) },
+    '-',
+    { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);
   const menu = $('#menu');
   menu.dataset.from = 'settings';

@@ -199,6 +199,10 @@ npm run pack
 git worktree add ../sidearc-pages gh-pages
 ```
 
+## 支持这个项目
+
+Sidearc 免费、开源。觉得好用的话,可以在 [GitHub Sponsors](https://github.com/sponsors/winzipsdo) 赞助一下;侧边栏右下角的设置菜单里也有「支持 Sidearc」。
+
 ## 许可证
 
 [MIT](LICENSE)

@@ -127,6 +127,10 @@ Releases are automated: when `version` in `manifest.json` changes on `main`, a G
 
 <https://winzipsdo.github.io/sidearc/> is published from the `gh-pages` branch, which also keeps the site and intro-video sources under `source/` (see its `source/README.md`).
 
+## Support
+
+Sidearc is free and open source. If it's useful to you, consider [sponsoring on GitHub](https://github.com/sponsors/winzipsdo) — also reachable from "Support Sidearc" in the sidebar's settings menu.
+
 ## License
 
 [MIT](LICENSE)
