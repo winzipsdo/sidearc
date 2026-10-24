@@ -156,6 +156,9 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   color: var(--fg-2);
 }
 .tile .tile-sound svg { width: 11px; height: 11px; }
+/* 收藏点进了别的页面:关闭按钮换成主题色的「回到收藏地址」,和固定标签的回家按钮一样 */
+.tile .tile-close.back { color: var(--accent); }
+.tile .tile-close.back svg { width: 11px; height: 11px; }
 .tile .tile-sound:hover { color: var(--fg); }
 /* 正在发出声音:喇叭变成主题色,两道声波一前一后闪动,让人注意到是哪个标签页在响 */
 .playing { color: var(--accent) !important; }

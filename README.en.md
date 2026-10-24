@@ -38,7 +38,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 
 - **Favorites**: an icon grid at the top, shared by all spaces, that stays put while the list below scrolls (so does the space name). Drag a tab in to add it.
 - **Pinned tabs**: one set per space. Closing the tab keeps the pinned item; click it to reopen. Hover to close the tab but keep the pin (−), or to unpin a closed one. Names follow the page title unless you renamed them in Edit.
-  - When an open pinned tab navigates elsewhere, the row shows the current page; ↩ takes it back to the pinned address.
+  - When an open pinned tab navigates elsewhere, the row shows the current page; ↩ takes it back to the pinned address. Favorites do the same: the tile shows the current page's icon, and its hover close button becomes ↩ until it is back home.
   - **Folders**: group pinned tabs into folders; drag items in and out, collapse and expand, rename.
 - **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it. A window holding tabs from only one space isn't grouped, since Chrome saves the groups of every closed window to the bookmarks bar.
 - **No-history spaces and folders**: pages visited from them are removed from browser history right away. This is not incognito mode: cookies, logins and cache are kept.

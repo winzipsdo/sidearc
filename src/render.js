@@ -156,13 +156,19 @@ export function render() {
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
     // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
     const free = tab && !isUnloaded(tab) && freeButton();
+    // 开着的收藏或固定标签点进了别的页面
+    const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
     if (kind === 'fav') {
-      // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭
-      const close = open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
-      return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep, close);
+      // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭。
+      // 点进了别的页面时和固定标签一样,先回家再关:这个按钮换成回到收藏地址,图标是当前页面的
+      const close = away
+        ? h('button', { class: 'tile-close back', title: t('backToFav'), data: { act: 'back' } }, icon('back'))
+        : open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
+      const title = away ? t('favAwayTip', { name: item.alias || item.title, current: tab.title || tab.url, fav: item.url }) : tip;
+      return h('div', { class: away ? cls + ' away' : cls, draggable: true, title, data: { kind, id: item.id } }, img, sound, keep, close);
     }
-    // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
-    if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
+    // 固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
+    if (away) {
       return h(
         'div',
         { class: cls + ' away', draggable: true, title: t('awayTip', { current: tab.url, pinned: item.url }), style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
