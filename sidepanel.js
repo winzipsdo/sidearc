@@ -9,6 +9,7 @@
 import { bindEvents } from './src/events.js';
 import { applyStaticText, setLangPref } from './src/i18n.js';
 import { render } from './src/render.js';
+import { initRestore } from './src/restore.js';
 import { applySession, normalize, refreshTabs, save, setState, setTrailOn, setWindowId } from './src/store.js';
 
 async function init() {
@@ -31,6 +32,7 @@ async function init() {
   bindEvents();
   await refreshTabs(tabs);
   render();
+  initRestore();
 }
 
 init();

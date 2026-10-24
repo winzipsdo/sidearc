@@ -40,7 +40,7 @@ See [Shortcuts](#shortcuts) for keyboard shortcuts.
 - **Pinned tabs**: one set per space. Closing the tab keeps the pinned item; click it to reopen. Hover to close the tab but keep the pin (−), or to unpin a closed one. Names follow the page title unless you renamed them in Edit.
   - When an open pinned tab navigates elsewhere, the row shows the current page; ↩ takes it back to the pinned address. Favorites do the same: the tile shows the current page's icon, and its hover close button becomes ↩ until it is back home.
   - **Folders**: group pinned tabs into folders; drag items in and out, collapse and expand, rename.
-- **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it. A window holding tabs from only one space isn't grouped, since Chrome saves the groups of every closed window to the bookmarks bar.
+- **Spaces**: switch with the dots at the bottom. Each space has its own color, pinned tabs and tabs. In Chrome's tab strip each space is a tab group — the current one expanded, the others collapsed; expand one to switch to it. A window holding tabs from only one space is grouped too.
 - **No-history spaces and folders**: pages visited from them are removed from browser history right away. This is not incognito mode: cookies, logins and cache are kept.
 
 ### Also
@@ -102,7 +102,7 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 ## Known limitations
 
 - Sidearc manages the order of its space groups in Chrome's tab strip. Tab groups created by you or by other extensions (such as Claude) are left alone — they're kept intact and placed after the space groups. Chrome's natively pinned tabs stay on the far left. Tab groups support only 9 colors, so each space uses the closest one.
-- Spaces, child tabs, aliases and pins are matched back to tabs by URL and position after a restart, so Chrome has to restore your previous tabs on startup.
+- Spaces, child tabs, aliases and pins are matched back to tabs by URL and position after a restart, which relies on Chrome restoring your previous tabs on startup ("Continue where you left off"). With another startup setting, the sidebar offers to restore last time's tabs at the top (and under Recently closed until the next restart), back in their spaces with child tabs and aliases, unloaded until opened.
 - "No duplicate tabs" can only decide once the new tab's address is known, so a duplicate may flash briefly before closing.
 - Newer Chrome versions may save tab groups automatically and sync them to your other devices, so space groups can show up there too.
 - No-history removes pages by URL: history left by the same URL from other spaces disappears too, while recently closed tabs still list it.

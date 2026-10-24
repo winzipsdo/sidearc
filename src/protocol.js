@@ -14,6 +14,9 @@ export const PREFIX = {
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));
 export const hasPrefix = (key, prefix) => key.startsWith(prefix + ':');
 
+// 会话存储:侧边栏已经在恢复上次没回来的标签页了,后台别再提示(见 background.js 的 keepLastSession)
+export const LAST_TAKEN = '_lastTaken';
+
 // runtime 消息。每条消息是只有一个字段的对象,字段名如下,值见注释
 export const MSG = {
   keepTab: 'keepTab', // 侧边栏 → 后台:tabId。这个标签页是扩展自己开的(固定项、撤销、导入),不查重

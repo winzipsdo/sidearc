@@ -17,6 +17,7 @@
   <link rel="modulepreload" href="src/menus.js">
   <link rel="modulepreload" href="src/protocol.js">
   <link rel="modulepreload" href="src/render.js">
+  <link rel="modulepreload" href="src/restore.js">
   <link rel="modulepreload" href="src/spaces.js">
   <link rel="modulepreload" href="src/store.js">
   <link rel="modulepreload" href="src/tabs.js">
@@ -24,6 +25,8 @@
 </head>
 <body>
   <header>
+    <!-- 上次的标签页没有回来时的提示(见 src/restore.js) -->
+    <div id="restore-bar"><div><div class="card"></div></div></div>
     <label class="search">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
       <input id="search" type="text" data-i18n-placeholder="searchPlaceholder" placeholder="搜索标签页或输入网址" spellcheck="false" autocomplete="off">

@@ -9,6 +9,7 @@ import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, s
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
+import { lastSessionCount, restoreLastSession } from './restore.js';
 import { copyText, showMenu } from './ui.js';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
@@ -209,6 +210,8 @@ export async function recentMenu(e) {
       run: () => chrome.sessions.restore(tab.sessionId).catch(() => {}),
     })),
     '-',
+    // 上次没恢复的标签页:顶部的提示关掉了也能在这里恢复
+    lastSessionCount() > 0 && { icon: 'reload', label: t('restoreLastSession', { n: lastSessionCount() }), run: restoreLastSession },
     // 完整的浏览历史:Chrome 自己的历史记录页,右边标上它的快捷键
     {
       icon: 'external',

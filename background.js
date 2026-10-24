@@ -1,7 +1,7 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
 import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, tabSpaces } from './src/logic.js';
-import { hasPrefix, KEY, MSG, PREFIX } from './src/protocol.js';
+import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX } from './src/protocol.js';
 import { startGroupSync } from './src/groups.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
@@ -105,14 +105,44 @@ chrome.history.onVisited.addListener(async (item) => {
 
 const RESTORE = '_restore'; // 会话存储里的恢复进度:{ boot, tabs: 快照, claimed: { 快照下标: 新 tabId } }
 const RESTORE_WINDOW = 20000; // 启动后这段时间内陆续出现的标签页都尝试匹配
+const RESTORE_QUICK = 1500; // Chrome 自己要恢复的标签页,启动后这么久基本都已经建出来了,可以先判断有没有没回来的
 let quietUntil = 0;
 let queue = Promise.resolve();
 const serial = (fn) => (queue = queue.then(fn, fn));
 
+// Chrome 的「启动时」没选「从上次停下的地方继续」时,上次的标签页不会回来,快照里大半对不上。
+// 启动后很快(RESTORE_QUICK)就先判断一次,把对不上的另存为 lastSession(快照过后会被新的状态覆盖),
+// 侧边栏提示用户要不要恢复;恢复窗口内 Chrome 又陆续恢复出来、对上了大半的,就撤回提示。
+// 只保留到下一次启动;对上了大半的(正常恢复,个别页面自己跳了地址)不算
+async function keepLastSession(r) {
+  if ((await chrome.storage.session.get(LAST_TAKEN))[LAST_TAKEN]) return;
+  // 新标签页和扩展自己的页面(比如在标签页里打开的侧边栏)不算
+  const real = (pos) => r.tabs[pos].u && !NEW_TAB.test(r.tabs[pos].u) && !r.tabs[pos].u.startsWith(chrome.runtime.getURL(''));
+  const all = r.tabs.map((_, pos) => pos).filter(real);
+  const todo = all.filter((pos) => !(pos in r.claimed));
+  const missing = todo.length > 0 && todo.length * 2 >= all.length;
+  // 和上次判断的一样就不再写
+  const key = missing ? todo.join() : '';
+  if (r.kept === key) return;
+  r.kept = key;
+  if (missing) {
+    await chrome.storage.local.set({ lastSession: { time: r.time, tabs: r.tabs, todo, claimed: r.claimed } });
+  } else await chrome.storage.local.remove('lastSession');
+}
+
 async function restoreStep() {
   let r = (await chrome.storage.session.get(RESTORE))[RESTORE];
-  if (r && Date.now() > r.boot + RESTORE_WINDOW) return r;
+  if (r && Date.now() > r.boot + RESTORE_WINDOW) {
+    if (!r.done) {
+      r.done = true;
+      await keepLastSession(r);
+      await chrome.storage.session.set({ [RESTORE]: r });
+    }
+    return r;
+  }
   if (!r) {
+    // 上一次启动留下的提示已经过时(快照早就换成了上次关浏览器前的),先撤掉,马上会重新判断
+    await chrome.storage.local.remove('lastSession');
     const { snapshot } = await chrome.storage.local.get('snapshot');
     // time:快照最后保存的时间,约等于上次关浏览器前最后一次使用的时间
     r = { boot: Date.now(), tabs: snapshot?.tabs ?? [], time: snapshot?.time, claimed: {} };
@@ -148,6 +178,7 @@ async function restoreStep() {
     const [child, parent] = [r.claimed[pos], r.claimed[e.p]];
     if (child != null && parent != null && (fresh.includes(pos) || fresh.includes(e.p))) set[KEY.parent(child)] = parent;
   });
+  if (Date.now() >= r.boot + RESTORE_QUICK) await keepLastSession(r);
   set[RESTORE] = r;
   await chrome.storage.session.set(set);
   return r;
@@ -188,6 +219,9 @@ function touch() {
 }
 
 serial(restoreStep);
+// 启动后很快先判断一次上次的标签页回来没有,恢复窗口过了再看一次,不用等下一个标签页事件
+setTimeout(() => serial(restoreStep), RESTORE_QUICK + 100);
+setTimeout(() => serial(restoreStep), RESTORE_WINDOW + 1000);
 chrome.tabs.onCreated.addListener(() => (serial(restoreStep), touch()));
 chrome.tabs.onUpdated.addListener((_, info) => info.url && (serial(restoreStep), touch()));
 chrome.tabs.onMoved.addListener(touch);

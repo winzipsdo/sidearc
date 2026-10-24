@@ -205,6 +205,53 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   text-align: center;
 }
 
+/* 上次的标签页没有回来时顶部的提示。出现时高度从 0 展开(下面的内容跟着平滑让开),
+   同时淡入、从上面轻轻落下来;收起时反过来。高度用 grid 的 0fr → 1fr 过渡,不用写死高度 */
+#restore-bar {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top center;
+  pointer-events: none;
+  transition: grid-template-rows 0.42s var(--ease), margin 0.42s var(--ease), transform 0.42s var(--ease), opacity 0.2s ease-out;
+}
+#restore-bar.show {
+  grid-template-rows: 1fr;
+  margin-bottom: 8px;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition: grid-template-rows 0.42s var(--ease), margin 0.42s var(--ease), transform 0.42s var(--ease), opacity 0.3s ease-out 0.06s;
+}
+#restore-bar > div { min-height: 0; overflow: hidden; }
+#restore-bar .card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 11px;
+  background: var(--card-soft);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  #restore-bar, #restore-bar.show { transition: none; }
+}
+#restore-bar span { flex: 1; min-width: 0; color: var(--fg-2); }
+#restore-bar .restore {
+  flex: none;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--accent);
+  font-weight: 600;
+}
+#restore-bar .restore:hover { background: var(--fill-hover); }
+#restore-bar .ghost svg { width: 10px; height: 10px; }
+
 /* 空间标题 / 分隔线 */
 .space-head {
   display: flex;
