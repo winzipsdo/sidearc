@@ -28,11 +28,22 @@ function memoryItems(tab) {
   ];
 }
 
+// 硬性重新加载:不走缓存,整页重新从服务器取,和 Ctrl/⌘+Shift+R 一样(菜单里不标快捷键,免得菜单变宽)。没开着的项不显示
+function hardReloadItem(list) {
+  if (!list.length) return null;
+  return {
+    icon: 'reload',
+    label: t('hardReload'),
+    run: () => list.forEach((x) => chrome.tabs.reload(x.id, { bypassCache: true }).catch(() => {})),
+  };
+}
+
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
 function selectionMenu(e, list) {
   const n = list.length;
   showMenu(e, [
     { header: t('nTabs', { n }) },
+    hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
     '-',
     ...state.spaces
@@ -68,6 +79,7 @@ export function tabMenu(e, tab) {
     '-',
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab.url, t('copied')) },
     { icon: 'copy', label: t('duplicateTab'), run: () => chrome.tabs.duplicate(tab.id) },
+    hardReloadItem([tab]),
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
@@ -98,6 +110,7 @@ export function itemMenu(e, { item, kind, space, folder }) {
   showMenu(e, [
     { icon: 'edit', label: t('editItemAlias'), run: () => editItem(item.id) },
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab?.url || item.url, t('copied')) },
+    tab && hardReloadItem([tab]),
     away && { icon: 'back', label: kind === 'fav' ? t('backToFav') : t('backToPin'), run: () => backToItem(item) },
     // 对当前页面的操作:另存一份,或者拿它替换原来的地址;标签页本身不动
     away && '-',
