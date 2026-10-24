@@ -90,6 +90,8 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* 键盘选中的光圈弹出时会放大到超出列表宽度,横向不滚动,只裁掉 */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   /* 底部多留一截:滚到最下面时,最后几行不会被底部的提示条挡住 */
