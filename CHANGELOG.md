@@ -4,6 +4,12 @@
 
 按提交日期分组,新的在前。
 
+## 2026-10-25
+
+### 新增
+
+- **赞助入口。** 开通了 GitHub Sponsors:仓库页有「Sponsor」按钮,侧边栏右下角设置菜单里有「支持 Sidearc」,README 和主页底部也有链接。 [`749325a`](https://github.com/winzipsdo/sidearc/commit/749325a)
+
 ## 2026-10-24
 
 ### 新增
