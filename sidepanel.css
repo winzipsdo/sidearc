@@ -352,7 +352,7 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   overflow: hidden;
   white-space: nowrap;
   /* 标题过长时渐隐,而不是省略号 */
-  mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent);
 }
 /* 子标签:按层级缩进 */
 #tabs .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
@@ -460,6 +460,8 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 .row .btn + .btn { margin-left: -6px; }
 .row .x { display: none; }
 .row:hover .x { display: grid; }
+/* 鼠标移上去出现的按钮紧跟在标题后面时,和标题之间比行里别处的间隔(10px)紧一点,只留 6px */
+.row .title + .x { margin-left: -4px; }
 
 /* 足迹:最近离开的几个标签页,左边一道主题色竖条(收藏在底部一道短横线)。每个各自倒计时 10 分钟,
    从两头往中间缩短、同时变淡,最短缩成一个圆点、最淡 20%(fp-life,--fp-age 是负的「已经离开多久」,见 render.js 的 refreshTrail)。
