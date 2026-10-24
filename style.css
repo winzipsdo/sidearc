@@ -216,6 +216,8 @@ summary { width: fit-content; margin: 0 auto; padding: 8px 16px; border-radius: 
 .foot .brand { font-size: 16px; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 14px; }
 .foot nav a { color: var(--fg-3); }
+/* 赞助:和 GitHub 的 Sponsor 按钮一样用粉色的心 */
+.foot nav a.sponsor span[aria-hidden] { color: #db61a2; }
 
 @media (max-width: 1180px) {
   .try-grid { grid-template-columns: minmax(0, 1fr); }
