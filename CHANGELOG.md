@@ -4,16 +4,11 @@
 
 按提交日期分组,新的在前。
 
-## 2026-10-25
-
-### 新增
-
-- **赞助入口。** 开通了 GitHub Sponsors:仓库页有「Sponsor」按钮,侧边栏右下角设置菜单里有「支持 Sidearc」,README 和主页底部也有链接。 [`749325a`](https://github.com/winzipsdo/sidearc/commit/749325a)
-
 ## 2026-10-24
 
 ### 新增
 
+- **赞助入口。** 开通了 GitHub Sponsors:仓库页有「Sponsor」按钮,侧边栏右下角设置菜单里有「支持 Sidearc」,README 和主页底部也有链接。 [`749325a`](https://github.com/winzipsdo/sidearc/commit/749325a)
 - **恢复上次没回来的标签页。** Chrome 的「启动时」没选「继续浏览上次打开的网页」时,启动后侧边栏顶部会提示「上次有 N 个标签页没有恢复」,点「恢复」就按原来的空间、层级、别名和固定绑定打开回来,先不加载;提示关掉后在「最近关闭」里也能恢复。 [`4141e6f`](https://github.com/winzipsdo/sidearc/commit/4141e6f)
 - **右键菜单加了「硬性重新加载」。** 不走缓存、整页重新从服务器取,和 `Ctrl/⌘+Shift+R` 一样;标签页、开着的收藏和固定标签、多选都有。 [`0d3a049`](https://github.com/winzipsdo/sidearc/commit/0d3a049)
 
