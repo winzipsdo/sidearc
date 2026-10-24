@@ -76,7 +76,7 @@ export async function focusTab(tab) {
 }
 
 export async function editTabAlias(tabId) {
-  const out = await ask(t('setAliasTitle'), [{ key: 'alias', label: t('aliasClear'), value: tabAlias.get(tabId), optional: true }]);
+  const out = await ask(t('setAliasTitle'), [{ key: 'alias', label: t('alias'), value: tabAlias.get(tabId), placeholder: t('aliasClearHint'), optional: true }]);
   if (!out) return;
   await setTabAlias(tabId, out.alias);
   render();

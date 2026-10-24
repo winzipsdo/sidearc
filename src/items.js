@@ -62,7 +62,7 @@ export async function closeItemTab(item) {
 }
 
 // 标签页被固定项绑定后不再是列表里的父/子标签:自己脱离父级,子标签变成顶级(否则关掉固定项会连带关掉它们)
-async function detachTab(tabId) {
+export async function detachTab(tabId) {
   await setTabParent(tabId, null);
   for (const [child, parent] of [...tabParent]) if (parent === tabId) await setTabParent(child, null);
 }
@@ -175,8 +175,9 @@ export async function editItem(id) {
   const item = findItem(id)?.item;
   if (!item) return;
   const out = await ask(t('editItemTitle'), [
-    { key: 'alias', label: t('aliasOptional'), value: item.alias, optional: true },
-    { key: 'title', label: t('titleOptional'), value: item.title, optional: true },
+    { key: 'alias', label: t('alias'), value: item.alias, placeholder: t('optionalHint'), optional: true },
+    // 名称留空会还原成网页标题:标签页开着就直接拿那个标题当提示字
+    { key: 'title', label: t('name'), value: item.title, placeholder: tabs.find((t) => t.id === bind.get(id))?.title || t('titleHint'), optional: true },
     { key: 'url', label: t('url'), value: item.url },
   ]);
   const target = out && findItem(id)?.item;

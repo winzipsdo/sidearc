@@ -4,7 +4,8 @@
 import { t } from './i18n.js';
 import { isFolder } from './logic.js';
 import { render } from './render.js';
-import { activeSpace, bind, findItem, save, state, tabs, takeItem, uid } from './store.js';
+import { detachTab } from './items.js';
+import { activeSpace, bind, findItem, save, setBind, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind } from './store.js';
 import { ask, pushUndo, toast } from './ui.js';
 
 export function findFolder(id) {
@@ -67,22 +68,34 @@ export async function toggleFolderNoHistory(id) {
   toast(t(folder.noHistory ? 'folderNoHistoryOn' : 'folderNoHistoryOff', { name: folder.name }));
 }
 
-// 删除文件夹:里面的固定标签留下,放回文件夹原来的位置
+// 删除文件夹:连同里面的固定标签一起删。开着的标签页留下,变成这个空间里的普通标签页(和取消固定一样)
 export async function deleteFolder(id) {
   const hit = findFolder(id);
   if (!hit) return;
   const { folder, space } = hit;
   const at = space.pinned.indexOf(folder);
-  space.pinned.splice(at, 1, ...folder.items);
+  space.pinned.splice(at, 1);
+  const opened = [];
+  for (const item of folder.items) {
+    const tabId = bind.get(item.id);
+    if (tabId == null) continue;
+    opened.push([item.id, tabId]);
+    await unbind(item.id);
+    await setTabSpace(tabId, space.id);
+    await setTabAlias(tabId, item.alias);
+  }
   await save();
   render();
   pushUndo(t('folderDeleted', { name: folder.name }), async () => {
     const s = state.spaces.find((x) => x.id === space.id);
     if (!s || findFolder(id)) return;
-    const ids = new Set(folder.items.map((i) => i.id));
-    const items = folder.items.map((i) => s.pinned.find((x) => x.id === i.id)).filter(Boolean);
-    s.pinned = s.pinned.filter((x) => !ids.has(x.id));
-    s.pinned.splice(Math.min(at, s.pinned.length), 0, { ...folder, items });
+    s.pinned.splice(Math.min(at, s.pinned.length), 0, folder);
+    // 标签页还开着的话重新绑回原来的固定标签
+    for (const [itemId, tabId] of opened) {
+      if (!(await chrome.tabs.get(tabId).catch(() => null))) continue;
+      await detachTab(tabId);
+      await setBind(itemId, tabId);
+    }
     await save();
     render();
   });

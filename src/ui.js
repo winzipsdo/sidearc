@@ -122,7 +122,7 @@ export function ask(title, fields, color, okLabel = t('save')) {
         'form',
         { method: 'dialog' },
         h('h3', {}, title),
-        fields.map((f) => h('label', {}, f.label, (inputs[f.key] = h('input', { type: 'text', value: f.value ?? '', required: !f.optional })))),
+        fields.map((f) => h('label', {}, f.label, (inputs[f.key] = h('input', { type: 'text', value: f.value ?? '', placeholder: f.placeholder ?? '', required: !f.optional })))),
         swatches,
         h(
           'div',
