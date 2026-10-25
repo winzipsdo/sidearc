@@ -22,7 +22,7 @@ import {
   unbind,
   windowId,
 } from './store.js';
-import { createTab, focusTab } from './tabs.js';
+import { createTab, focusTab, returnBeforeClose } from './tabs.js';
 import { ask, pushUndo, toast } from './ui.js';
 
 export async function openItem(item) {
@@ -57,6 +57,7 @@ export async function closeItemTab(item) {
   // 先解绑再关,后台就认不出它是固定项的标签页了:它的子标签要在这里先放开,免得被连带关闭
   for (const [child, parent] of [...tabParent]) if (parent === tabId) await setTabParent(child, null);
   await unbind(item.id);
+  await returnBeforeClose(new Set([tabId]));
   await chrome.tabs.remove(tabId).catch(() => {});
   render();
 }
