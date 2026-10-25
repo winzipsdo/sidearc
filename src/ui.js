@@ -58,7 +58,7 @@ export function hideMenu() {
   $('#menu').hidden = true;
 }
 
-// items: [{ label, run, danger? } | '-' | 假值(跳过)]
+// items: [{ label, run, danger? } | { header } | { el } | '-' | 假值(跳过)]
 export function showMenu(e, items) {
   e.preventDefault();
   const menu = $('#menu');
@@ -70,6 +70,8 @@ export function showMenu(e, items) {
     ...list.map((it) => {
       if (it === '-') return h('hr');
       if (it.header) return h('div', { class: 'menu-head' }, it.header);
+      // 自己画的一整行(比如足迹个数的选择条)
+      if (it.el) return it.el;
       // 图标:icon 是内置图标名,img 是图片地址(比如网站图标);note 是右侧的灰色小字
       const ico = it.img ? h('img', { class: 'i', src: it.img, alt: '' }) : it.icon && icon(it.icon);
       if (ico && it.color) ico.style.color = it.color;

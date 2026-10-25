@@ -6,7 +6,7 @@ import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailOn, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -90,7 +90,8 @@ export function refreshTrail() {
   const byId = new Map(tabs.map((t) => [t.id, t]));
   const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
   const next = new Map();
-  if (trailOn) for (const x of trail) if (byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL) next.set(x.id, x.at);
+  // 最近离开、还开着、10 分钟以内的,取设置里选的个数
+  for (const x of trail.filter((x) => byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
   for (const [id, at] of next) {
     let s = trailShown.get(id);
     if (!s || s.at !== at) s = { at, start: trailOut.has(id) ? -Infinity : now };

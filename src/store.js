@@ -2,7 +2,7 @@
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
 import { t } from './i18n.js';
-import { buildTree, isAway, matchesQuery, pinnedItems, pinnedLists } from './logic.js';
+import { buildTree, isAway, matchesQuery, pinnedItems, pinnedLists, TRAIL_SHOW } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
@@ -62,9 +62,10 @@ export const activeSpace = () => state.spaces.find((s) => s.id === state.activeS
 
 // 这个窗口的足迹:[{ id, at }],最近离开的在前(后台记录,见 background.js)
 export let trail = [];
-// 足迹开关(右下角设置里),存在 chrome.storage.local 的 trail 里;没设置过算开
-export let trailOn = true;
-export const setTrailOn = (v) => (trailOn = v !== false);
+// 足迹显示几个(右下角设置里选,0 = 不显示),存在 chrome.storage.local 的 trail 里;没设置过是 3 个。
+// 以前存的是开关:true 算 3 个,false 算 0
+export let trailCount = TRAIL_SHOW;
+export const setTrailCount = (v) => (trailCount = typeof v === 'number' ? v : v === false ? 0 : TRAIL_SHOW);
 
 export function applySession(key, value) {
   if (key === KEY.trail(windowId)) return (trail = value?.trail ?? []);

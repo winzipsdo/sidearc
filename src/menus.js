@@ -1,13 +1,13 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems } from './logic.js';
+import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems, TRAIL_SIZE } from './logic.js';
 import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailOn, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
-import { $, faviconFor } from './dom.js';
+import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
 import { copyText, showMenu } from './ui.js';
@@ -168,9 +168,46 @@ export function spaceMenu(e, id) {
   ]);
 }
 
+// 足迹显示几个:一排 10 根小竖条(和列表里的足迹一个样子,越往后越淡),亮着几根就是显示几个(不另外写数字);
+// 最左边的「⊘」是第 0 格,点它就不显示。鼠标划过时预览,点哪格就是几个(再点一下亮着的最后一根也会关掉)。
+// 菜单不关,改完马上能看到
+function trailPicker() {
+  const off = h('i', {
+    class: 'off',
+    'aria-label': t('footprintsOff'),
+    onmouseenter: () => paint(0),
+    onclick: () => {
+      chrome.storage.local.set({ trail: 0 });
+      paint(0);
+    },
+  }, icon('ban'));
+  const bars = h('span', { class: 'bars' }, off);
+  const paint = (n) => {
+    bars.querySelectorAll('i:not(.off)').forEach((b, i) => b.classList.toggle('on', i < n));
+    off.classList.toggle('on', n === 0);
+  };
+  for (let n = 1; n <= TRAIL_SIZE; n++) {
+    bars.append(
+      h('i', {
+        style: `--k:${n - 1}`,
+        'aria-label': t('nTabs', { n }),
+        onmouseenter: () => paint(n),
+        onclick: () => {
+          const next = trailCount === n ? 0 : n;
+          chrome.storage.local.set({ trail: next });
+          paint(next);
+        },
+      })
+    );
+  }
+  bars.addEventListener('mouseleave', () => paint(trailCount));
+  paint(trailCount);
+  return h('div', { class: 'trail-pick', title: t('footprintsTip') }, icon('trail'), h('span', { class: 'label' }, t('footprints')), bars);
+}
+
 const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
 
-// 右下角的设置按钮:界面语言、足迹开关,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言、足迹显示几个,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -181,8 +218,7 @@ export function settingsMenu(e) {
     pick('zh', LANGS.zh),
     pick('en', LANGS.en),
     '-',
-    // 开关:打开时前面打勾
-    { icon: trailOn ? 'check' : null, label: t('footprints'), title: t('footprintsTip'), run: () => chrome.storage.local.set({ trail: !trailOn }) },
+    { el: trailPicker() },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);

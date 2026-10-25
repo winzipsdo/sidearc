@@ -189,24 +189,24 @@ test('sleptFor:休眠了多久,取最大的单位', () => {
   assert.deepEqual(sleptFor(now - 10 * 86400_000, now), { unit: 'days', n: 10 });
 });
 
-test('nextTrail:离开的标签页记在最前,最多 3 个,回到的标签页不再算足迹', () => {
+test('nextTrail:离开的标签页记在最前,最多 10 个,回到的标签页不再算足迹', () => {
   let rec = nextTrail(undefined, 1, 0);
   assert.deepEqual(rec, { active: 1, trail: [] });
   rec = nextTrail(rec, 2, 1000);
   assert.deepEqual(rec.trail, [{ id: 1, at: 1000 }]);
-  for (const [id, t] of [[3, 2000], [4, 3000], [5, 4000]]) rec = nextTrail(rec, id, t);
-  assert.deepEqual(rec.trail.map((x) => x.id), [4, 3, 2]);
-  rec = nextTrail(rec, 3, 5000);
-  assert.deepEqual(rec.trail.map((x) => x.id), [5, 4, 2]);
+  for (let id = 3; id <= 13; id++) rec = nextTrail(rec, id, id * 1000);
+  assert.deepEqual(rec.trail.map((x) => x.id), [12, 11, 10, 9, 8, 7, 6, 5, 4, 3]);
+  rec = nextTrail(rec, 5, 20000);
+  assert.deepEqual(rec.trail.map((x) => x.id), [13, 12, 11, 10, 9, 8, 7, 6, 4, 3]);
   // 原来的当前标签页已经关掉:不留足迹
   assert.deepEqual(nextTrail({ active: 9, trail: [] }, 1, 0, false).trail, []);
   // 切回同一个标签页(比如重复的 onActivated):不变
   assert.deepEqual(nextTrail({ active: 1, trail: [{ id: 2, at: 0 }] }, 1, 10).trail, [{ id: 2, at: 0 }]);
 });
 
-test('nextTrail:超过 10 分钟的足迹会被丢掉', () => {
+test('nextTrail:超过 10 分钟的也照样记着(只是不再显示),关掉当前标签页时还能往回走', () => {
   const rec = nextTrail({ active: 2, trail: [{ id: 1, at: 0 }] }, 3, TRAIL_TTL + 1);
-  assert.deepEqual(rec.trail, [{ id: 2, at: TRAIL_TTL + 1 }]);
+  assert.deepEqual(rec.trail, [{ id: 2, at: TRAIL_TTL + 1 }, { id: 1, at: 0 }]);
 });
 
 test('trailLeft:随离开的时间从 1 线性降到 0,10 分钟后为 0', () => {

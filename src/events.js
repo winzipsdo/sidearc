@@ -10,7 +10,7 @@ import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailOn, state, tabs, visibleTabs, windowId } from './store.js';
+import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
@@ -241,7 +241,7 @@ function bindBrowser() {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.trail) {
-      setTrailOn(changes.trail.newValue);
+      setTrailCount(changes.trail.newValue);
       refreshTrail();
     }
     if (area === 'local' && changes.lang) {

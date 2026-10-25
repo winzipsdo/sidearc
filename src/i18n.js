@@ -103,7 +103,8 @@ const MESSAGES = {
     langAuto: '跟随浏览器',
     footprints: '足迹',
     sponsor: '支持 Sidearc',
-    footprintsTip: '最近离开的 3 个标签页旁边显示一道竖条,10 分钟内慢慢缩短、变淡直到消失',
+    footprintsTip: '最近离开的几个标签页旁边显示一道竖条,10 分钟内慢慢缩短、变淡直到消失。点第几根就显示几个,点最左边的 ⊘ 就不显示',
+    footprintsOff: '不显示',
 
     // 对话框
     save: '保存',
@@ -243,7 +244,8 @@ const MESSAGES = {
     langAuto: 'Same as browser',
     footprints: 'Footprints',
     sponsor: 'Support Sidearc',
-    footprintsTip: 'Mark the last 3 tabs you left with a bar that shrinks and fades away over 10 minutes',
+    footprintsTip: 'Mark the last few tabs you left with a bar that shrinks and fades away over 10 minutes. Click a bar to show that many, or ⊘ on the left to turn it off',
+    footprintsOff: 'Off',
 
     save: 'Save',
     cancel: 'Cancel',
