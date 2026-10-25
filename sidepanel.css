@@ -411,7 +411,9 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 }
 /* 标题深浅表示开没开:开着的标签页(有没有别名都一样)用正常颜色,没开的固定标签变淡 */
 #pins .row:not(.open) .title { color: var(--fg-2); }
-#pins .row:not(.open) .alias { opacity: 0.65; }
+#pins .row:not(.open) .alias, #pins .row.discarded .alias { opacity: 0.65; }
+/* 休眠了的收藏:图标和标签页列表里一样变淡 */
+.tile.discarded .icon { opacity: 0.6; filter: saturate(0.6); }
 /* 固定标签里的文件夹 */
 /* 文件夹里的项:整行一起缩进(而不是只缩进内容),选中和悬停的底色也从缩进处开始;子标签也一样 */
 #pins .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }

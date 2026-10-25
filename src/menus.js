@@ -2,7 +2,7 @@
 
 import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
 import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems, TRAIL_SIZE } from './logic.js';
-import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
@@ -145,7 +145,10 @@ export function folderMenu(e, id) {
   showMenu(e, [
     { icon: 'edit', label: t('rename'), run: () => renameFolder(id) },
     { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleFolderNoHistory(id) },
-    { icon: 'sleep', label: t('sleepFolder'), disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(folderTabs) },
+    // 正在看的那个也一起休眠(先切走),所以只要有醒着的就能点
+    { icon: 'sleep', label: t('sleepFolder'), disabled: folderTabs.every(isUnloaded), title: folderTabs.every(isUnloaded) ? t('nothingToSleep') : null, run: () => discardTabs(folderTabs, { withActive: true }) },
+    // 一个都没开着时置灰
+    { icon: 'close', label: t('closeFolderTabs'), disabled: !folderTabs.length, title: folderTabs.length ? null : t('nothingToClose'), run: () => closeFolderTabs(id) },
     '-',
     { icon: 'trash', label: t('deleteFolder'), danger: true, run: () => deleteFolder(id) },
   ]);

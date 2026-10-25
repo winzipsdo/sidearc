@@ -4,8 +4,9 @@
 import { t } from './i18n.js';
 import { isFolder } from './logic.js';
 import { render } from './render.js';
-import { detachTab } from './items.js';
-import { activeSpace, bind, findItem, save, setBind, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind } from './store.js';
+import { closeItemTab, detachTab } from './items.js';
+import { activeSpace, bind, findItem, save, setBind, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js';
+import { createTab, returnBeforeClose } from './tabs.js';
 import { ask, pushUndo, toast } from './ui.js';
 
 export function findFolder(id) {
@@ -66,6 +67,31 @@ export async function toggleFolderNoHistory(id) {
     }
   }
   toast(t(folder.noHistory ? 'folderNoHistoryOn' : 'folderNoHistoryOff', { name: folder.name }));
+}
+
+// 关掉文件夹里所有开着的标签页,固定标签都留着(和单个固定标签的「关闭」一样,点一下就重新打开)。
+// 一下关好几个可能是手滑,所以可以撤销:先用浏览器的「最近关闭」恢复(保留前进后退记录),找不到就按固定的地址重新打开,再绑回原来的固定标签
+export async function closeFolderTabs(id) {
+  const folder = findFolder(id)?.folder;
+  if (!folder) return;
+  const open = folder.items.filter((i) => bind.has(i.id)).map((i) => ({ item: i, tab: tabs.find((t) => t.id === bind.get(i.id)) }));
+  if (!open.length) return;
+  await returnBeforeClose(new Set(open.map((x) => bind.get(x.item.id))));
+  for (const { item } of open) await closeItemTab(item);
+  pushUndo(t('closedTabs', { n: open.length }), async () => {
+    const recent = (await chrome.sessions.getRecentlyClosed().catch(() => [])).filter((s) => s.tab);
+    for (const { item, tab: was } of open) {
+      if (!findItem(item.id) || bind.has(item.id)) continue;
+      const url = was?.url || item.url;
+      const i = recent.findIndex((r) => r.tab.url === url);
+      let tab = i < 0 ? null : (await chrome.sessions.restore(recent.splice(i, 1)[0].tab.sessionId).catch(() => null))?.tab;
+      tab ??= await createTab({ url: item.url, windowId, active: false }).catch(() => null);
+      if (!tab) continue;
+      await detachTab(tab.id);
+      await setBind(item.id, tab.id);
+    }
+    render();
+  });
 }
 
 // 删除文件夹:连同里面的固定标签一起删。开着的标签页留下,变成这个空间里的普通标签页(和取消固定一样)

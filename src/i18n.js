@@ -81,6 +81,8 @@ const MESSAGES = {
     // 右键菜单:文件夹、空间、最近关闭
     rename: '重命名…',
     sleepFolder: '休眠文件夹内所有标签',
+    closeFolderTabs: '关闭文件夹内所有标签',
+    nothingToClose: '没有开着的标签页',
     sleepSpace: '休眠空间内所有标签',
     nothingToSleep: '没有可以休眠的标签页',
     turnOnNoHistory: '开启「不记录历史」',
@@ -222,6 +224,8 @@ const MESSAGES = {
 
     rename: 'Rename…',
     sleepFolder: 'Put all tabs in folder to sleep',
+    closeFolderTabs: 'Close all tabs in folder',
+    nothingToClose: 'No open tabs',
     sleepSpace: 'Put all tabs in space to sleep',
     nothingToSleep: 'No tabs can be put to sleep',
     turnOnNoHistory: "Don't keep history",

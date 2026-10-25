@@ -39,9 +39,19 @@ function nextTabAfter(tab, skip) {
   return order.find(awake) ?? order.find(ok) ?? null;
 }
 
+// 休眠当前标签页前切到哪个:和关闭时一样,先回到刚才所在的标签页(足迹里最近离开、侧边栏里显示着、
+// 不在这批里的,醒着的优先),没有再找侧边栏里它下面的
+function switchTarget(tab, skip) {
+  const shown = new Set(shownTabIds());
+  const ok = (id) => id !== tab.id && !skip.has(id) && shown.has(id);
+  const awake = (id) => ok(id) && !isUnloaded(tabs.find((x) => x.id === id));
+  const back = trail.map((x) => x.id);
+  return back.find(awake) ?? nextTabAfter(tab, skip) ?? back.find(ok) ?? null;
+}
+
 // 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。
-// Chrome 不能回收当前标签页:withActive 为真(用户点的就是它,或多选里包括它)时先切到旁边的标签页再休眠它;
-// 否则(休眠整个文件夹、空间)跳过当前标签页
+// Chrome 不能回收当前标签页:withActive 为真(用户点的就是它、多选里包括它、休眠整个文件夹)时先切走再休眠它;
+// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去
 export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
   const active = withActive && list.find((x) => x.active && !isUnloaded(x));
@@ -49,7 +59,7 @@ export async function discardTabs(list, { withActive = false } = {}) {
   // 不然切走、换编号、重画这几步会让整行先跳成别的样子再跳回来
   for (const tab of list) if (tab === active || canDiscard(tab)) markSlept(tab.id);
   if (active) {
-    const next = nextTabAfter(active, new Set(list.map((x) => x.id)));
+    const next = switchTarget(active, new Set(list.map((x) => x.id)));
     if (next != null) {
       await chrome.tabs.update(next, { active: true }).catch(() => {});
       active.active = false;

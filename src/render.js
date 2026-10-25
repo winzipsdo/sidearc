@@ -147,7 +147,8 @@ export function render() {
   const itemEl = (item, kind, inFolder) => {
     const open = bind.has(item.id);
     const tab = tabById.get(bind.get(item.id));
-    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active'].filter(Boolean).join(' ');
+    // 休眠了的(包括重启后还没加载的)和下面的标签页一样变淡
+    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active', tab && isUnloaded(tab) && 'discarded'].filter(Boolean).join(' ');
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
