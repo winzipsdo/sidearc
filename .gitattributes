@@ -1,0 +1,7 @@
+# 换行符统一用 LF:仓库里存的、签出到磁盘上的都是 LF,不受各自电脑上 core.autocrlf 的影响
+* text=auto eol=lf
+
+# 二进制文件不做任何转换
+*.png binary
+*.jpg binary
+*.zip binary

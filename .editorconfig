@@ -1,0 +1,7 @@
+# 编辑器统一设置:换行符用 LF,文件末尾留一个换行,UTF-8
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
