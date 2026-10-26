@@ -1,14 +1,15 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems } from './logic.js';
-import { createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
+import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems, TRAIL_SIZE } from './logic.js';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailOn, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
-import { $, faviconFor } from './dom.js';
+import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
+import { lastSessionCount, restoreLastSession } from './restore.js';
 import { copyText, showMenu } from './ui.js';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
@@ -28,11 +29,22 @@ function memoryItems(tab) {
   ];
 }
 
+// 硬性重新加载:不走缓存,整页重新从服务器取,和 Ctrl/⌘+Shift+R 一样(菜单里不标快捷键,免得菜单变宽)。没开着的项不显示
+function hardReloadItem(list) {
+  if (!list.length) return null;
+  return {
+    icon: 'reload',
+    label: t('hardReload'),
+    run: () => list.forEach((x) => chrome.tabs.reload(x.id, { bypassCache: true }).catch(() => {})),
+  };
+}
+
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
 function selectionMenu(e, list) {
   const n = list.length;
   showMenu(e, [
     { header: t('nTabs', { n }) },
+    hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
     '-',
     ...state.spaces
@@ -68,6 +80,7 @@ export function tabMenu(e, tab) {
     '-',
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab.url, t('copied')) },
     { icon: 'copy', label: t('duplicateTab'), run: () => chrome.tabs.duplicate(tab.id) },
+    hardReloadItem([tab]),
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
@@ -98,6 +111,7 @@ export function itemMenu(e, { item, kind, space, folder }) {
   showMenu(e, [
     { icon: 'edit', label: t('editItemAlias'), run: () => editItem(item.id) },
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab?.url || item.url, t('copied')) },
+    tab && hardReloadItem([tab]),
     away && { icon: 'back', label: kind === 'fav' ? t('backToFav') : t('backToPin'), run: () => backToItem(item) },
     // 对当前页面的操作:另存一份,或者拿它替换原来的地址;标签页本身不动
     away && '-',
@@ -131,7 +145,10 @@ export function folderMenu(e, id) {
   showMenu(e, [
     { icon: 'edit', label: t('rename'), run: () => renameFolder(id) },
     { icon: folder.noHistory ? 'eye' : 'eyeOff', label: folder.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleFolderNoHistory(id) },
-    { icon: 'sleep', label: t('sleepFolder'), disabled: !folderTabs.some(canDiscard), title: folderTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(folderTabs) },
+    // 正在看的那个也一起休眠(先切走),所以只要有醒着的就能点
+    { icon: 'sleep', label: t('sleepFolder'), disabled: folderTabs.every(isUnloaded), title: folderTabs.every(isUnloaded) ? t('nothingToSleep') : null, run: () => discardTabs(folderTabs, { withActive: true }) },
+    // 一个都没开着时置灰
+    { icon: 'close', label: t('closeFolderTabs'), disabled: !folderTabs.length, title: folderTabs.length ? null : t('nothingToClose'), run: () => closeFolderTabs(id) },
     '-',
     { icon: 'trash', label: t('deleteFolder'), danger: true, run: () => deleteFolder(id) },
   ]);
@@ -154,7 +171,46 @@ export function spaceMenu(e, id) {
   ]);
 }
 
-// 右下角的设置按钮:界面语言和足迹开关。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 足迹显示几个:一排 10 根小竖条(和列表里的足迹一个样子,越往后越淡),亮着几根就是显示几个(不另外写数字);
+// 最左边的「⊘」是第 0 格,点它就不显示。鼠标划过时预览,点哪格就是几个(再点一下亮着的最后一根也会关掉)。
+// 菜单不关,改完马上能看到
+function trailPicker() {
+  const off = h('i', {
+    class: 'off',
+    'aria-label': t('footprintsOff'),
+    onmouseenter: () => paint(0),
+    onclick: () => {
+      chrome.storage.local.set({ trail: 0 });
+      paint(0);
+    },
+  }, icon('ban'));
+  const bars = h('span', { class: 'bars' }, off);
+  const paint = (n) => {
+    bars.querySelectorAll('i:not(.off)').forEach((b, i) => b.classList.toggle('on', i < n));
+    off.classList.toggle('on', n === 0);
+  };
+  for (let n = 1; n <= TRAIL_SIZE; n++) {
+    bars.append(
+      h('i', {
+        style: `--k:${n - 1}`,
+        'aria-label': t('nTabs', { n }),
+        onmouseenter: () => paint(n),
+        onclick: () => {
+          const next = trailCount === n ? 0 : n;
+          chrome.storage.local.set({ trail: next });
+          paint(next);
+        },
+      })
+    );
+  }
+  bars.addEventListener('mouseleave', () => paint(trailCount));
+  paint(trailCount);
+  return h('div', { class: 'trail-pick', title: t('footprintsTip') }, icon('trail'), h('span', { class: 'label' }, t('footprints')), bars);
+}
+
+const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
+
+// 右下角的设置按钮:界面语言、足迹显示几个,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -165,8 +221,9 @@ export function settingsMenu(e) {
     pick('zh', LANGS.zh),
     pick('en', LANGS.en),
     '-',
-    // 开关:打开时前面打勾
-    { icon: trailOn ? 'check' : null, label: t('footprints'), title: t('footprintsTip'), run: () => chrome.storage.local.set({ trail: !trailOn }) },
+    { el: trailPicker() },
+    '-',
+    { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);
   const menu = $('#menu');
   menu.dataset.from = 'settings';
@@ -196,6 +253,8 @@ export async function recentMenu(e) {
       run: () => chrome.sessions.restore(tab.sessionId).catch(() => {}),
     })),
     '-',
+    // 上次没恢复的标签页:顶部的提示关掉了也能在这里恢复
+    lastSessionCount() > 0 && { icon: 'reload', label: t('restoreLastSession', { n: lastSessionCount() }), run: restoreLastSession },
     // 完整的浏览历史:Chrome 自己的历史记录页,右边标上它的快捷键
     {
       icon: 'external',

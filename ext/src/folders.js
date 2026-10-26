@@ -4,7 +4,9 @@
 import { t } from './i18n.js';
 import { isFolder } from './logic.js';
 import { render } from './render.js';
-import { activeSpace, bind, findItem, save, state, tabs, takeItem, uid } from './store.js';
+import { closeItemTab, detachTab } from './items.js';
+import { activeSpace, bind, findItem, save, setBind, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js';
+import { createTab, returnBeforeClose } from './tabs.js';
 import { ask, pushUndo, toast } from './ui.js';
 
 export function findFolder(id) {
@@ -67,22 +69,59 @@ export async function toggleFolderNoHistory(id) {
   toast(t(folder.noHistory ? 'folderNoHistoryOn' : 'folderNoHistoryOff', { name: folder.name }));
 }
 
-// 删除文件夹:里面的固定标签留下,放回文件夹原来的位置
+// 关掉文件夹里所有开着的标签页,固定标签都留着(和单个固定标签的「关闭」一样,点一下就重新打开)。
+// 一下关好几个可能是手滑,所以可以撤销:先用浏览器的「最近关闭」恢复(保留前进后退记录),找不到就按固定的地址重新打开,再绑回原来的固定标签
+export async function closeFolderTabs(id) {
+  const folder = findFolder(id)?.folder;
+  if (!folder) return;
+  const open = folder.items.filter((i) => bind.has(i.id)).map((i) => ({ item: i, tab: tabs.find((t) => t.id === bind.get(i.id)) }));
+  if (!open.length) return;
+  await returnBeforeClose(new Set(open.map((x) => bind.get(x.item.id))));
+  for (const { item } of open) await closeItemTab(item);
+  pushUndo(t('closedTabs', { n: open.length }), async () => {
+    const recent = (await chrome.sessions.getRecentlyClosed().catch(() => [])).filter((s) => s.tab);
+    for (const { item, tab: was } of open) {
+      if (!findItem(item.id) || bind.has(item.id)) continue;
+      const url = was?.url || item.url;
+      const i = recent.findIndex((r) => r.tab.url === url);
+      let tab = i < 0 ? null : (await chrome.sessions.restore(recent.splice(i, 1)[0].tab.sessionId).catch(() => null))?.tab;
+      tab ??= await createTab({ url: item.url, windowId, active: false }).catch(() => null);
+      if (!tab) continue;
+      await detachTab(tab.id);
+      await setBind(item.id, tab.id);
+    }
+    render();
+  });
+}
+
+// 删除文件夹:连同里面的固定标签一起删。开着的标签页留下,变成这个空间里的普通标签页(和取消固定一样)
 export async function deleteFolder(id) {
   const hit = findFolder(id);
   if (!hit) return;
   const { folder, space } = hit;
   const at = space.pinned.indexOf(folder);
-  space.pinned.splice(at, 1, ...folder.items);
+  space.pinned.splice(at, 1);
+  const opened = [];
+  for (const item of folder.items) {
+    const tabId = bind.get(item.id);
+    if (tabId == null) continue;
+    opened.push([item.id, tabId]);
+    await unbind(item.id);
+    await setTabSpace(tabId, space.id);
+    await setTabAlias(tabId, item.alias);
+  }
   await save();
   render();
   pushUndo(t('folderDeleted', { name: folder.name }), async () => {
     const s = state.spaces.find((x) => x.id === space.id);
     if (!s || findFolder(id)) return;
-    const ids = new Set(folder.items.map((i) => i.id));
-    const items = folder.items.map((i) => s.pinned.find((x) => x.id === i.id)).filter(Boolean);
-    s.pinned = s.pinned.filter((x) => !ids.has(x.id));
-    s.pinned.splice(Math.min(at, s.pinned.length), 0, { ...folder, items });
+    s.pinned.splice(Math.min(at, s.pinned.length), 0, folder);
+    // 标签页还开着的话重新绑回原来的固定标签
+    for (const [itemId, tabId] of opened) {
+      if (!(await chrome.tabs.get(tabId).catch(() => null))) continue;
+      await detachTab(tabId);
+      await setBind(itemId, tabId);
+    }
     await save();
     render();
   });

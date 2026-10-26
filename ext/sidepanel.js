@@ -9,7 +9,8 @@
 import { bindEvents } from './src/events.js';
 import { applyStaticText, setLangPref } from './src/i18n.js';
 import { render } from './src/render.js';
-import { applySession, normalize, refreshTabs, save, setState, setTrailOn, setWindowId } from './src/store.js';
+import { initRestore } from './src/restore.js';
+import { applySession, normalize, refreshTabs, save, setState, setTrailCount, setWindowId } from './src/store.js';
 
 async function init() {
   // 启动要读的几样互不依赖,一起读
@@ -21,7 +22,7 @@ async function init() {
   ]);
   // 语言要最先定:新建的默认空间的名字也看语言
   setLangPref(stored.lang);
-  setTrailOn(stored.trail);
+  setTrailCount(stored.trail);
   applyStaticText();
   setWindowId(win.id);
   setState(stored.state);
@@ -31,6 +32,7 @@ async function init() {
   bindEvents();
   await refreshTabs(tabs);
   render();
+  initRestore();
 }
 
 init();

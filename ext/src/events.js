@@ -5,12 +5,12 @@ import { bindDrag } from './drag.js';
 import { bindKeys } from './keys.js';
 import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
-import { toggleFolder } from './folders.js';
+import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailOn, state, tabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
@@ -83,7 +83,12 @@ function bindRows(root) {
       else if (act === 'mute') toggleItemMute(item);
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
-      else openItem(item);
+      else if (act === 'unfold') moveToFolder(item.id, null);
+      else {
+        // 开在别的窗口里:先播一下「跳出去」的动效,告诉你它去了另一个窗口
+        if (el.classList.contains('elsewhere-item')) markJump(item.id, e);
+        openItem(item);
+      }
     }
   });
 
@@ -129,7 +134,8 @@ function bindMenus(scroll) {
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
   // 列表滚动了:滚上去的内容在顶端渐渐淡掉(样式见 sidepanel.css 的 body.scrolled)
-  scroll.addEventListener('scroll', () => document.body.classList.toggle('scrolled', scroll.scrollTop > 0), { passive: true });
+  scroll.addEventListener('scroll', updateScrollFades, { passive: true });
+  addEventListener('resize', updateScrollFades);
   // 右键时侧边栏不一定拿到了焦点,之后点网页也就不会触发 blur。所以鼠标离开侧边栏一会儿就收起菜单;
   // 只是划出去又马上回来的,不收
   let leaveTimer;
@@ -145,6 +151,14 @@ function bindControls() {
     if (dot) switchSpace(dot.dataset.space);
   });
   $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
+  // 点空间名(或旁边的小箭头、折叠时的数量)折叠/展开这个空间的固定标签
+  $('#pins-toggle-area').addEventListener('click', () => {
+    const space = activeSpace();
+    if (space.pinsCollapsed) delete space.pinsCollapsed;
+    else space.pinsCollapsed = true;
+    save();
+    render();
+  });
   $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
 }
@@ -241,7 +255,7 @@ function bindBrowser() {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.trail) {
-      setTrailOn(changes.trail.newValue);
+      setTrailCount(changes.trail.newValue);
       refreshTrail();
     }
     if (area === 'local' && changes.lang) {

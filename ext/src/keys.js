@@ -7,7 +7,8 @@ import { hideMenu, openSearch } from './ui.js';
 
 let cursor = null; // { kind, id, index }
 
-const items = () => [...document.querySelectorAll('#favs .tile, #pins [data-kind], #new-tab, #tabs .row')];
+// 只算看得见的(折叠起来的固定标签不算)
+const items = () => [...document.querySelectorAll('#favs .tile, #pins [data-kind], #new-tab, #tabs .row')].filter((el) => el.offsetParent);
 const keyOf = (el) => ({ kind: el.dataset.kind ?? el.id, id: el.dataset.id ?? el.id });
 const current = () => {
   if (!cursor) return null;

@@ -5,15 +5,32 @@ import { t } from './i18n.js';
 import { canDiscard, isUnloaded, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { markSlept, render, schedule } from './render.js';
-import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, windowId } from './store.js';
+import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
 import { ask, closeSearch, pushUndo, toast } from './ui.js';
+
+// 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
+function shownTabIds() {
+  return [...document.querySelectorAll('[data-kind="fav"], [data-kind="pin"], [data-kind="tab"]')]
+    .map((el) => (el.dataset.kind === 'tab' ? +el.dataset.id : bind.get(el.dataset.id)))
+    .filter((id) => id != null && tabs.some((x) => x.id === id));
+}
+
+// 在侧边栏里关掉当前标签页:先切回刚才所在的标签页(足迹里最近离开、还在侧边栏里显示、这次不关的那个),
+// 而不是让 Chrome 跳到右边那个。比如在 A 里点开了 B,关掉 B 就回到 A;连着关就沿着足迹往回走。
+// 足迹里没有合适的就照 Chrome 原来的规则。顶部标签栏和 Ctrl/⌘+W 关的不管:要等 Chrome 切完再切回来,会闪一下
+export async function returnBeforeClose(ids) {
+  // 直接问浏览器哪个是当前标签页:侧边栏里记的可能还没刷新
+  const [active] = await chrome.tabs.query({ active: true, windowId });
+  if (!active || !ids.has(active.id)) return;
+  const shown = new Set(shownTabIds());
+  const back = trail.map((x) => x.id).find((id) => !ids.has(id) && shown.has(id));
+  if (back != null) await chrome.tabs.update(back, { active: true }).catch(() => {});
+}
 
 // 休眠当前标签页时先切到哪个:侧边栏里它下面最近的、不在这批里、醒着的标签页,下面没有就往上找(和关掉当前标签页的感觉一样)。
 // 收藏、固定标签、标签页列表按界面上的顺序一起算
 function nextTabAfter(tab, skip) {
-  const ids = [...document.querySelectorAll('[data-kind="fav"], [data-kind="pin"], [data-kind="tab"]')]
-    .map((el) => (el.dataset.kind === 'tab' ? +el.dataset.id : bind.get(el.dataset.id)))
-    .filter((id) => id != null && tabs.some((x) => x.id === id));
+  const ids = shownTabIds();
   const i = ids.indexOf(tab.id);
   const ok = (id) => id !== tab.id && !skip.has(id);
   // 先找醒着的(切到休眠的会把它唤醒、重新加载,白费);其他都在休眠时才退而求其次
@@ -22,9 +39,19 @@ function nextTabAfter(tab, skip) {
   return order.find(awake) ?? order.find(ok) ?? null;
 }
 
+// 休眠当前标签页前切到哪个:和关闭时一样,先回到刚才所在的标签页(足迹里最近离开、侧边栏里显示着、
+// 不在这批里的,醒着的优先),没有再找侧边栏里它下面的
+function switchTarget(tab, skip) {
+  const shown = new Set(shownTabIds());
+  const ok = (id) => id !== tab.id && !skip.has(id) && shown.has(id);
+  const awake = (id) => ok(id) && !isUnloaded(tabs.find((x) => x.id === id));
+  const back = trail.map((x) => x.id);
+  return back.find(awake) ?? nextTabAfter(tab, skip) ?? back.find(ok) ?? null;
+}
+
 // 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。
-// Chrome 不能回收当前标签页:withActive 为真(用户点的就是它,或多选里包括它)时先切到旁边的标签页再休眠它;
-// 否则(休眠整个文件夹、空间)跳过当前标签页
+// Chrome 不能回收当前标签页:withActive 为真(用户点的就是它、多选里包括它、休眠整个文件夹)时先切走再休眠它;
+// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去
 export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
   const active = withActive && list.find((x) => x.active && !isUnloaded(x));
@@ -32,7 +59,7 @@ export async function discardTabs(list, { withActive = false } = {}) {
   // 不然切走、换编号、重画这几步会让整行先跳成别的样子再跳回来
   for (const tab of list) if (tab === active || canDiscard(tab)) markSlept(tab.id);
   if (active) {
-    const next = nextTabAfter(active, new Set(list.map((x) => x.id)));
+    const next = switchTarget(active, new Set(list.map((x) => x.id)));
     if (next != null) {
       await chrome.tabs.update(next, { active: true }).catch(() => {});
       active.active = false;
@@ -76,7 +103,7 @@ export async function focusTab(tab) {
 }
 
 export async function editTabAlias(tabId) {
-  const out = await ask(t('setAliasTitle'), [{ key: 'alias', label: t('aliasClear'), value: tabAlias.get(tabId), optional: true }]);
+  const out = await ask(t('setAliasTitle'), [{ key: 'alias', label: t('alias'), value: tabAlias.get(tabId), placeholder: t('aliasClearHint'), optional: true }]);
   if (!out) return;
   await setTabAlias(tabId, out.alias);
   render();
@@ -114,6 +141,7 @@ export async function closeWithUndo(doomed, text) {
   // 留下来的标签页如果挂在要关的父标签下,先脱离,免得被连带关闭
   const orphans = tabs.filter((t) => !ids.has(t.id) && ids.has(tabParent.get(t.id))).map((t) => ({ id: t.id, parent: tabParent.get(t.id) }));
   for (const o of orphans) await setTabParent(o.id, null);
+  await returnBeforeClose(ids);
   await chrome.tabs.remove([...ids]).catch(() => {});
   pushUndo(text, () => reopenTabs(saved, orphans, spaceId));
 }

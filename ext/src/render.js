@@ -1,12 +1,12 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
+import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailOn, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -84,13 +84,54 @@ function refreshSleepAnim() {
   }
 }
 
+// 点了开在别的窗口里的收藏/固定标签:这一项往右冲一下再弹回,小窗口标记往右滑并变成主题色,表示「去另一个窗口了」。
+// 焦点会跳去别的窗口、本窗口可能紧接着重画,开始时间记在这里,重画后接着播
+const jumpAnim = new Map(); // itemId -> 开始时间
+const JUMP_MS = 500;
+// 跳完之后、鼠标动之前,这一项保持点下去时的悬停样子:焦点去了别的窗口,本窗口的悬停判断不一定还在,
+// 不定住的话鼠标没动减号也会消失
+const holdHover = new Set();
+// 内容在鼠标底下动(比如这次往右冲)时浏览器也会补发一个位置没变的 mousemove,不算
+let lastMouse = null;
+addEventListener('mousemove', (e) => {
+  const moved = !lastMouse || Math.hypot(e.screenX - lastMouse.x, e.screenY - lastMouse.y) > 2;
+  lastMouse = { x: e.screenX, y: e.screenY };
+  if (!holdHover.size || !moved) return;
+  holdHover.clear();
+  for (const el of document.querySelectorAll('.hold-hover')) el.classList.remove('hold-hover');
+});
+export function markJump(itemId, e) {
+  // 记下点的位置:之后鼠标离开这里才算动了
+  if (e) lastMouse = { x: e.screenX, y: e.screenY };
+  jumpAnim.set(itemId, Date.now());
+  holdHover.add(itemId);
+  refreshJumpAnim();
+  setTimeout(refreshJumpAnim, JUMP_MS + 50);
+}
+function refreshJumpAnim() {
+  for (const el of document.querySelectorAll('.jumping, .hold-hover')) el.classList.remove('jumping', 'hold-hover');
+  for (const id of holdHover) for (const el of document.querySelectorAll(`[data-kind="pin"][data-id="${id}"], [data-kind="fav"][data-id="${id}"]`)) el.classList.add('hold-hover');
+  const now = Date.now();
+  for (const [id, start] of jumpAnim) {
+    if (now - start >= JUMP_MS) {
+      jumpAnim.delete(id);
+      continue;
+    }
+    for (const el of document.querySelectorAll(`[data-kind="pin"][data-id="${id}"], [data-kind="fav"][data-id="${id}"]`)) {
+      el.classList.add('jumping');
+      el.style.setProperty('--jump-delay', `${start - now}ms`);
+    }
+  }
+}
+
 export function refreshTrail() {
   for (const el of document.querySelectorAll('.fp, .fp-out')) el.classList.remove('fp', 'fp-grow', 'fp-out');
   const now = Date.now();
   const byId = new Map(tabs.map((t) => [t.id, t]));
   const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
   const next = new Map();
-  if (trailOn) for (const x of trail) if (byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL) next.set(x.id, x.at);
+  // 最近离开、还开着、10 分钟以内的,取设置里选的个数
+  for (const x of trail.filter((x) => byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
   for (const [id, at] of next) {
     let s = trailShown.get(id);
     if (!s || s.at !== at) s = { at, start: trailOut.has(id) ? -Infinity : now };
@@ -146,7 +187,8 @@ export function render() {
   const itemEl = (item, kind, inFolder) => {
     const open = bind.has(item.id);
     const tab = tabById.get(bind.get(item.id));
-    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active'].filter(Boolean).join(' ');
+    // 休眠了的(包括重启后还没加载的)和下面的标签页一样变淡
+    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active', tab && isUnloaded(tab) && 'discarded'].filter(Boolean).join(' ');
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音
@@ -156,13 +198,23 @@ export function render() {
     const keep = keepAlive(tab, kind === 'fav' ? 'tile-keep' : 'keep');
     // 休眠:鼠标移上去时出现在关闭按钮左边;当前标签页和已经不在内存里的不显示
     const free = tab && !isUnloaded(tab) && freeButton();
+    // 开着的收藏或固定标签点进了别的页面
+    const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
+    // 绑定的标签页开在别的窗口里(本窗口的列表里找不到它):点了会跳到那个窗口,先标出来
+    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere' }, icon('windows'));
+    // 文件夹里的固定标签多一个「移出文件夹」,和子标签的「移出为顶级标签页」一样放在最左边:移出、休眠、关闭
+    const unfold = inFolder && h('button', { class: 'btn x', title: t('moveOutOfFolder'), data: { act: 'unfold' } }, icon('outdent'));
     if (kind === 'fav') {
-      // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭
-      const close = open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
-      return h('div', { class: cls, draggable: true, title: tip, data: { kind, id: item.id } }, img, sound, keep, close);
+      // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭。
+      // 点进了别的页面时和固定标签一样,先回家再关:这个按钮换成回到收藏地址,图标是当前页面的
+      const close = away
+        ? h('button', { class: 'tile-close back', title: t('backToFav'), data: { act: 'back' } }, icon('back'))
+        : open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
+      const title = away ? t('favAwayTip', { name: item.alias || item.title, current: tab.title || tab.url, fav: item.url }) : tip;
+      return h('div', { class: (away ? cls + ' away' : cls) + (elsewhere ? ' elsewhere-item' : ''), draggable: true, title: elsewhere ? `${title}\n${t('inOtherWindow')}` : title, data: { kind, id: item.id } }, img, sound, keep, elsewhere, close);
     }
-    // 开着的固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
-    if (tab && isAway(item.url, tab.url || tab.pendingUrl)) {
+    // 固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
+    if (away) {
       return h(
         'div',
         { class: cls + ' away', draggable: true, title: t('awayTip', { current: tab.url, pinned: item.url }), style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
@@ -171,18 +223,21 @@ export function render() {
         h('span', { class: 'title' }, tab.title || tab.url),
         keep,
         sound,
+        unfold,
         free,
         h('button', { class: 'btn back', title: t('backToPinned'), data: { act: 'back' } }, icon('back'))
       );
     }
     return h(
       'div',
-      { class: cls, draggable: true, title: item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, title: elsewhere ? `${item.url}\n${t('inOtherWindow')}` : item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      elsewhere,
       keep,
       sound,
+      unfold,
       free,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
@@ -218,6 +273,15 @@ export function render() {
     return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', true)), !kids.length && h('div', { class: 'folder-empty' }, t('folderEmpty'))].filter(Boolean);
   });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, t('pinsHint'))]));
+  // 固定标签折叠了(点空间名切换,每个空间各记各的):行都还画着,由样式藏起来,只留当前正在看的那个;
+  // 拖拽时样式会临时全部放出来,方便拖进去。搜索时不折叠
+  const collapsed = !!space.pinsCollapsed && !query;
+  $('#pins').classList.toggle('pins-collapsed', collapsed);
+  document.body.classList.toggle('pins-collapsed', collapsed);
+  // 折叠时空间名后面标着里面开着几个标签页(一个都没开就不标)
+  const openPins = pinnedItems(space).filter((i) => bind.has(i.id)).length;
+  $('#pins-count').hidden = !collapsed || !openPins;
+  $('#pins-count').textContent = `· ${openPins}`;
 
   // 选中了不止一个(多选)时,当前标签页也标成选中:它本来就在多选里
   const multi = tabs.filter((x) => x.highlighted).length > 1;
@@ -256,8 +320,17 @@ export function render() {
   );
   refreshTrail();
   refreshSleepAnim();
+  refreshJumpAnim();
+  updateScrollFades();
   applyCursor();
   saveSnapshot();
+}
+
+// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断
+export function updateScrollFades() {
+  const el = $('#scroll');
+  document.body.classList.toggle('scrolled', el.scrollTop > 0);
+  document.body.classList.toggle('more-below', el.scrollTop + el.clientHeight < el.scrollHeight - 1);
 }
 
 // 把这次画出来的样子存一份,下次打开侧边栏时 boot.js 先把它显示出来,免得先空一下

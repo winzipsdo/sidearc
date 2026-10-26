@@ -7,6 +7,9 @@
 import { buildLayout, groupColor, pinnedItems } from './logic.js';
 import { hasPrefix, KEY, PREFIX } from './protocol.js';
 
+// 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
+const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;
+
 // 这之前发生的移动、分组变化是自己引起的,不当作用户操作
 let ownUntil = 0;
 const own = (ms = 800) => (ownUntil = Date.now() + ms);
@@ -18,6 +21,8 @@ const lastSpace = new Map();
 // 连续多次同步都没能排好(比如浏览器不按预期移动),先停一会儿,免得来回挪个不停
 let busyRuns = 0;
 let pausedUntil = 0;
+// 安排一次同步(startGroupSync 里设置)。暂停期间的变化都被跳过了,暂停结束时要靠它再排一次
+let resync = () => {};
 
 async function syncWindow(windowId, state, all) {
   const set = {};
@@ -26,12 +31,14 @@ async function syncWindow(windowId, state, all) {
   const nativePinned = allTabs.filter((t) => t.pinned).length;
   const groups = await chrome.tabGroups.query({ windowId });
 
-  // 分组 -> 空间:记过的;或者和某个空间同名的(浏览器重启后分组 id 会变,标题还在)
+  // 分组 -> 空间:记过的;或者和某个空间同名的(浏览器重启后分组 id 会变,标题还在)。
+  // 同一个空间有好几个分组(比如重启后新标签页先建了一个,恢复上次的标签页时又冒出一个同名的)也都算它的,
+  // 只留第一个,其余分组里的标签页会被挪进第一个,空了的分组浏览器自己会删掉
   const spaceIds = new Set(state.spaces.map((s) => s.id));
   const groupSpace = new Map();
   for (const g of groups) {
     const sid = all[KEY.group(g.id)] ?? state.spaces.find((s) => s.name === g.title)?.id;
-    if (spaceIds.has(sid) && ![...groupSpace.values()].includes(sid)) {
+    if (spaceIds.has(sid)) {
       groupSpace.set(g.id, sid);
       if (all[KEY.group(g.id)] !== sid) set[KEY.group(g.id)] = sid;
     }
@@ -61,13 +68,15 @@ async function syncWindow(windowId, state, all) {
 
   const layout = buildLayout(state, all, tabs);
   const order = layout.flatMap((c) => c.ids);
-  const groupOfSpace = new Map([...groupSpace].map(([g, s]) => [s, g]));
-  // 窗口里只有一个空间的标签页、也还没有空间分组时,不建分组:分开空间的作用用不上,
-  // 而 Chrome 会把关掉的窗口里的分组都存到书签栏上,临时开的新窗口每关一个就多一个同名分组。
-  // 有了第二个空间再分组;分组建了就一直用,不来回拆
-  const grouping = new Set(layout.map((c) => c.spaceId).filter((s) => s != null)).size > 1 || layout.some((c) => groupOfSpace.has(c.spaceId));
-  const wantGroup = (c) => (c.spaceId == null ? -1 : (groupOfSpace.get(c.spaceId) ?? (grouping ? undefined : -1)));
+  const groupOfSpace = new Map();
+  for (const [g, s] of groupSpace) if (!groupOfSpace.has(s)) groupOfSpace.set(s, g);
   const byId = new Map(tabs.map((t) => [t.id, t]));
+  // 空间的标签页放进空间的分组,哪怕窗口里只有一个空间的标签页(收藏的标签页不进分组)。
+  // 只是这个空间还没有分组、而它的标签页全是新标签页时先不建:Chrome 会把每个分组都存到书签栏上,
+  // 每次打开浏览器(启动时打开新标签页)、临时开个空窗口都建一个的话,书签栏上的同名分组就越积越多。
+  // 打开了真正的网页(或者恢复了上次的标签页)再建
+  const isNewTab = (id) => NEW_TAB.test(byId.get(id).url || byId.get(id).pendingUrl || '');
+  const wantGroup = (c) => (c.spaceId == null ? -1 : (groupOfSpace.get(c.spaceId) ?? (c.ids.every(isNewTab) ? -1 : undefined)));
   // 排好了 = 要管的标签页按顺序排在前面,别人的分组整组在最后面
   const strip = allTabs.filter((t) => !t.pinned).map((t) => t.id);
   const settled =
@@ -131,6 +140,9 @@ async function syncAll() {
     console.warn('Sidearc: 标签页分组多次没能排好,暂停 10 秒');
     pausedUntil = Date.now() + 10000;
     busyRuns = 0;
+    // 比如一下恢复几十个标签页:一个个建出来、休眠时又一个个换编号,很容易连着几次没排好。
+    // 暂停期间的变化都跳过了,结束时不再排一次的话,要等下一次标签页变化才会分组
+    setTimeout(() => resync(), 10050);
   }
 }
 
@@ -161,8 +173,10 @@ export function startGroupSync(serial) {
     clearTimeout(timer);
     timer = setTimeout(() => serial(syncAll), 150);
   };
+  resync = schedule;
   for (const ev of ['onCreated', 'onRemoved', 'onAttached', 'onDetached', 'onActivated']) chrome.tabs[ev].addListener(schedule);
-  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info) && schedule());
+  // 网址变了也要排:只有新标签页时没建分组,打开了真正的网页就该建了
+  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info || 'url' in info) && schedule());
   chrome.tabs.onMoved.addListener((tabId, info) => {
     if (!isOwn()) serial(() => userMoved(tabId, info));
     schedule();

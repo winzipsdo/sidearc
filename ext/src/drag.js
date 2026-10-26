@@ -17,6 +17,7 @@ function clearMarks() {
 
 function finishDrag() {
   setDragging(null);
+  document.body.classList.remove('drag-on');
   clearMarks();
   for (const el of document.querySelectorAll('.dragging')) el.classList.remove('dragging');
   if (renderPending) render();
@@ -214,6 +215,9 @@ export function bindDrag() {
   });
   document.addEventListener('dragover', (e) => {
     if (!dragging) return;
+    // 固定标签折叠着:拖到空间名那一行或固定区上时临时放出来,方便拖进去(样式见 sidepanel.css 的 body.drag-on)。
+    // 只在拖到这儿时才放,免得在下面列表里排序时列表突然被往下挤
+    if (e.target.closest?.('.space-head, #pins')) document.body.classList.add('drag-on');
     clearMarks();
     const target = dropTarget(e);
     if (!target) return;

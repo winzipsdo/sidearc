@@ -180,13 +180,15 @@ export const sleptFor = (since, now = Date.now()) => durationParts(now - since);
 // 能手动休眠:在内存里,而且不是当前正在看的标签页(Chrome 不允许回收当前标签页)
 export const canDiscard = (tab) => !!tab && !tab.active && !isUnloaded(tab);
 
-// 足迹:每个窗口最近离开的几个标签页,侧边栏在它们左边画一道越来越淡的竖条。
-export const TRAIL_SIZE = 3;
+// 足迹:每个窗口最近离开的标签页,记最近 10 个(在侧边栏里关掉当前标签页时沿着它往回走,见 tabs.js 的 returnBeforeClose)。
+// 侧边栏在其中最近的几个(个数在设置里选,默认 3 个)左边画一道越来越淡的竖条,离开 10 分钟后不再画
+export const TRAIL_SIZE = 10;
 export const TRAIL_TTL = 10 * 60000;
+export const TRAIL_SHOW = 3;
 // 切到 tabId 之后的足迹。rec 是原来的 { active, trail };prevAlive 为假表示原来的当前标签页已经关掉了,不留足迹
 export function nextTrail(rec, tabId, now, prevAlive = true) {
   const prev = rec?.active;
-  let trail = (rec?.trail ?? []).filter((x) => x.id !== tabId && now - x.at < TRAIL_TTL);
+  let trail = (rec?.trail ?? []).filter((x) => x.id !== tabId);
   if (prev != null && prev !== tabId && prevAlive) trail = [{ id: prev, at: now }, ...trail.filter((x) => x.id !== prev)];
   return { active: tabId, trail: trail.slice(0, TRAIL_SIZE) };
 }

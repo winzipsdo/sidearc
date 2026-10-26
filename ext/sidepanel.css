@@ -47,14 +47,18 @@ svg { display: block; }
 
 /* 地址 / 搜索栏 */
 header { padding: 12px 12px 0; }
-/* 收藏夹和空间名在顶部、不随列表滚动(参考 Arc);列表滚动后,滚上去的内容在顶端一小段里渐渐淡掉,
-   不画硬边的分隔线 */
+/* 收藏夹和空间名在顶部、不随列表滚动(参考 Arc);列表两头用渐隐代替硬边的分隔线 */
 header #favs { transition: margin 0.18s; }
 body.searching header #favs { margin-top: 8px; }
-body.scrolled #scroll {
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+/* 列表两头的渐隐:滚下去了,顶端一小段淡掉;下面还有没露出来的,底端一小段淡掉(见 render.js 的 updateScrollFades) */
+#scroll {
+  --fade-top: 0px;
+  --fade-bottom: 0px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
 }
+body.scrolled #scroll { --fade-top: 16px; }
+body.more-below #scroll { --fade-bottom: 24px; }
 .search {
   display: flex;
   align-items: center;
@@ -90,6 +94,8 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* 键盘选中的光圈弹出时会放大到超出列表宽度,横向不滚动,只裁掉 */
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   /* 底部多留一截:滚到最下面时,最后几行不会被底部的提示条挡住 */
@@ -154,6 +160,9 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   color: var(--fg-2);
 }
 .tile .tile-sound svg { width: 11px; height: 11px; }
+/* 收藏点进了别的页面:关闭按钮换成主题色的「回到收藏地址」,和固定标签的回家按钮一样 */
+.tile .tile-close.back { color: var(--accent); }
+.tile .tile-close.back svg { width: 11px; height: 11px; }
 .tile .tile-sound:hover { color: var(--fg); }
 /* 正在发出声音:喇叭变成主题色,两道声波一前一后闪动,让人注意到是哪个标签页在响 */
 .playing { color: var(--accent) !important; }
@@ -185,6 +194,45 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
 }
 .tile .tile-keep svg { width: 10px; height: 10px; }
 .row .keep { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); }
+/* 标签页开在别的窗口里的收藏和固定标签:固定标签在标题右边、收藏在磁贴里的左下角显示一个带往外箭头的小窗口。
+   只是状态,不是按钮:灰色、没有底和阴影,也不接鼠标(点到它就是点这一项,说明写在整项的鼠标提示里) */
+.row .elsewhere { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); pointer-events: none; }
+.row .elsewhere svg { width: 12px; height: 12px; }
+.tile .tile-elsewhere {
+  position: absolute;
+  left: 5px;
+  bottom: 4px;
+  display: grid;
+  color: var(--fg-3);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.tile .tile-elsewhere svg { width: 11px; height: 11px; }
+/* 点了开在别的窗口里的项:不闪按下的底色,换成「跳出去」的动效(见 render.js 的 markJump):
+   整项往右冲一下再弹回,小窗口标记往右滑、变成主题色再回来 */
+/* 按下时保持悬停的样子(行是 --fill、磁贴是 --fill-hover),磁贴也不缩 */
+.row.elsewhere-item:active { background: var(--fill); }
+.tile.elsewhere-item:active { background: var(--fill-hover); transform: none; }
+.jumping { animation: jump-out 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) var(--jump-delay, 0s) both; }
+/* 跳的时候和跳完、鼠标还没动之前(hold-hover),样子定在点下去时的悬停状态:
+   往右冲时鼠标会一会儿在上面一会儿不在,焦点跳去别的窗口后本窗口的悬停也可能没了,底色和悬停按钮就会闪、
+   按钮让出位置时小窗口标记还会跳。鼠标一动就交回给浏览器自己判断(见 render.js 的 markJump) */
+#pins .row:is(.jumping, .hold-hover) { background: var(--fill); }
+#favs .tile:is(.jumping, .hold-hover) { background: var(--fill-hover); }
+.row:is(.jumping, .hold-hover) .x, .tile:is(.jumping, .hold-hover) .tile-close { display: grid; }
+.tile:is(.jumping, .hold-hover) .tile-sound { display: none; }
+.jumping :is(.elsewhere, .tile-elsewhere) { animation: jump-mark 0.5s ease-out var(--jump-delay, 0s) both; }
+@keyframes jump-out {
+  0%, 100% { translate: 0; }
+  35% { translate: 5px 0; }
+}
+@keyframes jump-mark {
+  0%, 100% { translate: 0; color: var(--fg-3); }
+  40% { translate: 3px 0; color: var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jumping, .jumping :is(.elsewhere, .tile-elsewhere) { animation: none; }
+}
 .row .keep svg { width: 12px; height: 12px; }
 .tile .icon { width: 20px; height: 20px; border-radius: 5px; }
 .tile:not(.open) .icon { opacity: 0.85; }
@@ -200,7 +248,65 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   text-align: center;
 }
 
+/* 上次的标签页没有回来时顶部的提示。出现时高度从 0 展开(下面的内容跟着平滑让开),
+   同时淡入、从上面轻轻落下来;收起时反过来。高度用 grid 的 0fr → 1fr 过渡,不用写死高度 */
+#restore-bar {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: top center;
+  pointer-events: none;
+  transition: grid-template-rows 0.42s var(--ease), margin 0.42s var(--ease), transform 0.42s var(--ease), opacity 0.2s ease-out;
+}
+#restore-bar.show {
+  grid-template-rows: 1fr;
+  margin-bottom: 8px;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition: grid-template-rows 0.42s var(--ease), margin 0.42s var(--ease), transform 0.42s var(--ease), opacity 0.3s ease-out 0.06s;
+}
+#restore-bar > div { min-height: 0; overflow: hidden; }
+#restore-bar .card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 12px;
+  border-radius: 11px;
+  background: var(--card-soft);
+  box-shadow: inset 0 0 0 1px var(--line);
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  #restore-bar, #restore-bar.show { transition: none; }
+}
+#restore-bar span { flex: 1; min-width: 0; color: var(--fg-2); }
+#restore-bar .restore {
+  flex: none;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--accent);
+  font-weight: 600;
+}
+#restore-bar .restore:hover { background: var(--fill-hover); }
+#restore-bar .ghost svg { width: 10px; height: 10px; }
+
 /* 空间标题 / 分隔线 */
+/* 固定标签折叠(点空间名切换):行由样式藏起来,只留当前正在看的那个;拖到空间名上时全部放出来,方便拖进去。
+   空间名旁的小箭头平时鼠标移上去才出现,折叠时一直在、转向右边,后面标着里面开着几个标签页 */
+/* 空间名、小箭头、数字合成一个点击区域,中间没有空隙 */
+#pins-toggle-area { display: flex; align-items: center; gap: 3px; min-width: 0; height: 100%; padding-right: 6px; cursor: pointer; }
+#pins-toggle { display: grid; place-items: center; flex: none; color: var(--fg-3); opacity: 0; transition: opacity 0.15s, transform 0.2s; }
+#pins-toggle-area:hover #pins-toggle, body.pins-collapsed #pins-toggle { opacity: 1; }
+#pins-toggle-area:hover #space-name { color: var(--fg); }
+body.pins-collapsed #pins-toggle { transform: rotate(-90deg); }
+#pins-count { flex: none; color: var(--fg-3); font-weight: 500; }
+body:not(.drag-on) #pins.pins-collapsed > :not(.row.active) { display: none; }
+body:not(.drag-on) #pins.pins-collapsed > .row.active { --depth: 0 !important; }
 .space-head {
   display: flex;
   align-items: center;
@@ -300,7 +406,7 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   overflow: hidden;
   white-space: nowrap;
   /* 标题过长时渐隐,而不是省略号 */
-  mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent);
 }
 /* 子标签:按层级缩进 */
 #tabs .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
@@ -359,7 +465,9 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 }
 /* 标题深浅表示开没开:开着的标签页(有没有别名都一样)用正常颜色,没开的固定标签变淡 */
 #pins .row:not(.open) .title { color: var(--fg-2); }
-#pins .row:not(.open) .alias { opacity: 0.65; }
+#pins .row:not(.open) .alias, #pins .row.discarded .alias { opacity: 0.65; }
+/* 休眠了的收藏:图标和标签页列表里一样变淡 */
+.tile.discarded .icon { opacity: 0.6; filter: saturate(0.6); }
 /* 固定标签里的文件夹 */
 /* 文件夹里的项:整行一起缩进(而不是只缩进内容),选中和悬停的底色也从缩进处开始;子标签也一样 */
 #pins .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
@@ -408,13 +516,16 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 .row .btn + .btn { margin-left: -6px; }
 .row .x { display: none; }
 .row:hover .x { display: grid; }
+/* 鼠标移上去出现的按钮紧跟在标题后面时,和标题之间比行里别处的间隔(10px)紧一点,只留 6px */
+.row .title + .x { margin-left: -4px; }
 
+/* 拖拽时正在当落点的那一行(画插入线、小圆点,也用 ::before)暂时不画足迹,免得两个叠在一起,圆点被拉成足迹的形状 */
 /* 足迹:最近离开的几个标签页,左边一道主题色竖条(收藏在底部一道短横线)。每个各自倒计时 10 分钟,
    从两头往中间缩短、同时变淡,最短缩成一个圆点、最淡 20%(fp-life,--fp-age 是负的「已经离开多久」,见 render.js 的 refreshTrail)。
    改的是长度不是 scale,圆角不会被压扁,最后是个真正的圆点。
    新出现的从中间长出来(fp-grow);到时间、切回去或被挤掉的从当前样子缩小淡出(fp-out,--fp-left 是那时还剩多少) */
 .row:is(.fp, .fp-out), .tile:is(.fp, .fp-out) { position: relative; }
-.row:is(.fp, .fp-out)::before, .tile:is(.fp, .fp-out)::before {
+.row:is(.fp, .fp-out):not(.drop-before, .drop-after)::before, .tile:is(.fp, .fp-out):not(.drop-before, .drop-after)::before {
   content: "";
   position: absolute;
   border-radius: 999px;
@@ -422,15 +533,15 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   pointer-events: none;
 }
 /* 竖条:行高 36px,上下各留 7px(长 22px)到上下各留 16.5px(长 3px,和宽一样,是个圆点) */
-.row:is(.fp, .fp-out)::before { left: 3px; width: 3px; top: calc(16.5px - 9.5px * var(--fp-left, 1)); bottom: calc(16.5px - 9.5px * var(--fp-left, 1)); }
+.row:is(.fp, .fp-out):not(.drop-before, .drop-after)::before { left: 3px; width: 3px; top: calc(16.5px - 9.5px * var(--fp-left, 1)); bottom: calc(16.5px - 9.5px * var(--fp-left, 1)); }
 /* 短横线:宽 16px 到 3px,始终居中 */
-.tile:is(.fp, .fp-out)::before { bottom: 3px; height: 3px; width: calc(3px + 13px * var(--fp-left, 1)); left: calc(50% - 1.5px - 6.5px * var(--fp-left, 1)); }
-.row.fp::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
-.tile.fp::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+.tile:is(.fp, .fp-out):not(.drop-before, .drop-after)::before { bottom: 3px; height: 3px; width: calc(3px + 13px * var(--fp-left, 1)); left: calc(50% - 1.5px - 6.5px * var(--fp-left, 1)); }
+.row.fp:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+.tile.fp:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
 /* 长出来用 transform,和缩短改的长度是不同的属性,可以叠在一起 */
-.row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both, fp-grow-y 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
-.tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both, fp-grow-x 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
-.row.fp-out::before, .tile.fp-out::before { animation: fp-out 0.3s ease-in var(--fp-delay, 0s) both; }
+.row.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both, fp-grow-y 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.tile.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both, fp-grow-x 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.row.fp-out:not(.drop-before, .drop-after)::before, .tile.fp-out:not(.drop-before, .drop-after)::before { animation: fp-out 0.3s ease-in var(--fp-delay, 0s) both; }
 @keyframes fp-life-y {
   from { opacity: 0.75; top: 7px; bottom: 7px; }
   to { opacity: 0.2; top: 16.5px; bottom: 16.5px; }
@@ -446,9 +557,9 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   to { opacity: 0; transform: scale(0.3); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
-  .tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
-  .row.fp-out::before, .tile.fp-out::before { animation: none; opacity: 0; }
+  .row.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+  .tile.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+  .row.fp-out:not(.drop-before, .drop-after)::before, .tile.fp-out:not(.drop-before, .drop-after)::before { animation: none; opacity: 0; }
 }
 
 /* 拖拽 */
@@ -677,6 +788,28 @@ body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings 
 #menu button.link .i { color: var(--fg); }
 #menu button.link:hover .i { color: inherit; }
 #menu button.danger:hover { background: #e5484d; color: #fff; }
+/* 足迹个数的选择条(见 menus.js 的 trailPicker):和菜单项一样的一行,右边一排小竖条 */
+#menu .trail-pick { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 10px 0 8px; }
+#menu .trail-pick > svg { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
+#menu .trail-pick > .label { flex: 1; }
+#menu .trail-pick .bars { display: flex; align-items: center; height: 100%; }
+/* 每根竖条左右留点空,鼠标好点中;亮着的用主题色,越往后越淡(像足迹慢慢变淡) */
+#menu .trail-pick .bars i { display: grid; place-items: center; width: 8px; height: 100%; cursor: pointer; }
+#menu .trail-pick .bars i::before {
+  content: "";
+  width: 3px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.12s, opacity 0.12s, transform 0.12s;
+}
+#menu .trail-pick .bars i.on::before { background: var(--accent); opacity: calc(1 - var(--k) * 0.07); }
+#menu .trail-pick .bars i:hover::before { transform: scaleY(1.2); }
+/* 最左边的「不显示」:一个小 ⊘,选中(或鼠标划过预览)时变深,和竖条之间多留一点空 */
+#menu .trail-pick .bars i.off { width: 18px; margin-right: 3px; color: var(--fg-3); opacity: 0.55; transition: opacity 0.12s, color 0.12s; }
+#menu .trail-pick .bars i.off::before { content: none; }
+#menu .trail-pick .bars i.off svg { width: 12px; height: 12px; }
+#menu .trail-pick .bars i.off.on, #menu .trail-pick .bars i.off:hover { color: var(--fg); opacity: 1; }
 #menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
 
 /* 对话框 */
