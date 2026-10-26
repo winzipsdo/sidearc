@@ -5,7 +5,7 @@ import { bindDrag } from './drag.js';
 import { bindKeys } from './keys.js';
 import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
-import { toggleFolder } from './folders.js';
+import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
@@ -83,6 +83,7 @@ function bindRows(root) {
       else if (act === 'mute') toggleItemMute(item);
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
+      else if (act === 'unfold') moveToFolder(item.id, null);
       else openItem(item);
     }
   });

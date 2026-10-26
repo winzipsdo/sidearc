@@ -160,6 +160,8 @@ export function render() {
     const free = tab && !isUnloaded(tab) && freeButton();
     // 开着的收藏或固定标签点进了别的页面
     const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
+    // 文件夹里的固定标签多一个「移出文件夹」,和子标签的「移出为顶级标签页」一样放在最左边:移出、休眠、关闭
+    const unfold = inFolder && h('button', { class: 'btn x', title: t('moveOutOfFolder'), data: { act: 'unfold' } }, icon('outdent'));
     if (kind === 'fav') {
       // 开着的收藏:鼠标移上去时右上角出现小关闭按钮(只关标签页,收藏还在);它会盖住发声的小喇叭。
       // 点进了别的页面时和固定标签一样,先回家再关:这个按钮换成回到收藏地址,图标是当前页面的
@@ -179,6 +181,7 @@ export function render() {
         h('span', { class: 'title' }, tab.title || tab.url),
         keep,
         sound,
+        unfold,
         free,
         h('button', { class: 'btn back', title: t('backToPinned'), data: { act: 'back' } }, icon('back'))
       );
@@ -191,6 +194,7 @@ export function render() {
       h('span', { class: 'title' }, item.title),
       keep,
       sound,
+      unfold,
       free,
       // 开着时「−」关闭标签页、保留固定;没开时换成取消固定
       open
