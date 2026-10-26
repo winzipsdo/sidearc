@@ -465,12 +465,13 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 /* 鼠标移上去出现的按钮紧跟在标题后面时,和标题之间比行里别处的间隔(10px)紧一点,只留 6px */
 .row .title + .x { margin-left: -4px; }
 
+/* 拖拽时正在当落点的那一行(画插入线、小圆点,也用 ::before)暂时不画足迹,免得两个叠在一起,圆点被拉成足迹的形状 */
 /* 足迹:最近离开的几个标签页,左边一道主题色竖条(收藏在底部一道短横线)。每个各自倒计时 10 分钟,
    从两头往中间缩短、同时变淡,最短缩成一个圆点、最淡 20%(fp-life,--fp-age 是负的「已经离开多久」,见 render.js 的 refreshTrail)。
    改的是长度不是 scale,圆角不会被压扁,最后是个真正的圆点。
    新出现的从中间长出来(fp-grow);到时间、切回去或被挤掉的从当前样子缩小淡出(fp-out,--fp-left 是那时还剩多少) */
 .row:is(.fp, .fp-out), .tile:is(.fp, .fp-out) { position: relative; }
-.row:is(.fp, .fp-out)::before, .tile:is(.fp, .fp-out)::before {
+.row:is(.fp, .fp-out):not(.drop-before, .drop-after)::before, .tile:is(.fp, .fp-out):not(.drop-before, .drop-after)::before {
   content: "";
   position: absolute;
   border-radius: 999px;
@@ -478,15 +479,15 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   pointer-events: none;
 }
 /* 竖条:行高 36px,上下各留 7px(长 22px)到上下各留 16.5px(长 3px,和宽一样,是个圆点) */
-.row:is(.fp, .fp-out)::before { left: 3px; width: 3px; top: calc(16.5px - 9.5px * var(--fp-left, 1)); bottom: calc(16.5px - 9.5px * var(--fp-left, 1)); }
+.row:is(.fp, .fp-out):not(.drop-before, .drop-after)::before { left: 3px; width: 3px; top: calc(16.5px - 9.5px * var(--fp-left, 1)); bottom: calc(16.5px - 9.5px * var(--fp-left, 1)); }
 /* 短横线:宽 16px 到 3px,始终居中 */
-.tile:is(.fp, .fp-out)::before { bottom: 3px; height: 3px; width: calc(3px + 13px * var(--fp-left, 1)); left: calc(50% - 1.5px - 6.5px * var(--fp-left, 1)); }
-.row.fp::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
-.tile.fp::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+.tile:is(.fp, .fp-out):not(.drop-before, .drop-after)::before { bottom: 3px; height: 3px; width: calc(3px + 13px * var(--fp-left, 1)); left: calc(50% - 1.5px - 6.5px * var(--fp-left, 1)); }
+.row.fp:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+.tile.fp:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
 /* 长出来用 transform,和缩短改的长度是不同的属性,可以叠在一起 */
-.row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both, fp-grow-y 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
-.tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both, fp-grow-x 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
-.row.fp-out::before, .tile.fp-out::before { animation: fp-out 0.3s ease-in var(--fp-delay, 0s) both; }
+.row.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both, fp-grow-y 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.tile.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both, fp-grow-x 0.45s cubic-bezier(0.3, 1.5, 0.6, 1) var(--fp-delay, 0s) both; }
+.row.fp-out:not(.drop-before, .drop-after)::before, .tile.fp-out:not(.drop-before, .drop-after)::before { animation: fp-out 0.3s ease-in var(--fp-delay, 0s) both; }
 @keyframes fp-life-y {
   from { opacity: 0.75; top: 7px; bottom: 7px; }
   to { opacity: 0.2; top: 16.5px; bottom: 16.5px; }
@@ -502,9 +503,9 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   to { opacity: 0; transform: scale(0.3); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .row.fp-grow::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
-  .tile.fp-grow::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
-  .row.fp-out::before, .tile.fp-out::before { animation: none; opacity: 0; }
+  .row.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-y 600s linear var(--fp-age, 0s) both; }
+  .tile.fp-grow:not(.drop-before, .drop-after)::before { animation: fp-life-x 600s linear var(--fp-age, 0s) both; }
+  .row.fp-out:not(.drop-before, .drop-after)::before, .tile.fp-out:not(.drop-before, .drop-after)::before { animation: none; opacity: 0; }
 }
 
 /* 拖拽 */
