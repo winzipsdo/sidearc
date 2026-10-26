@@ -362,6 +362,10 @@ export class Browser {
           return Array.isArray(ids) ? moved : moved[0];
         }),
         discard: fn('tabs.discard', (id) => pub(b.discard(id))),
+        reload: fn('tabs.reload', (id) => {
+          const t = id == null ? b.active : b.tab(id);
+          b.navigate(t, t.url, 'reload');
+        }),
         duplicate: fn('tabs.duplicate', (id) => {
           const t = b.tab(id);
           return pub(b.create({ url: t.url, index: t.index + 1 }, { transition: 'reload' }));
