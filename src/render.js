@@ -84,6 +84,46 @@ function refreshSleepAnim() {
   }
 }
 
+// 点了开在别的窗口里的收藏/固定标签:这一项往右冲一下再弹回,小窗口标记往右滑并变成主题色,表示「去另一个窗口了」。
+// 焦点会跳去别的窗口、本窗口可能紧接着重画,开始时间记在这里,重画后接着播
+const jumpAnim = new Map(); // itemId -> 开始时间
+const JUMP_MS = 500;
+// 跳完之后、鼠标动之前,这一项保持点下去时的悬停样子:焦点去了别的窗口,本窗口的悬停判断不一定还在,
+// 不定住的话鼠标没动减号也会消失
+const holdHover = new Set();
+// 内容在鼠标底下动(比如这次往右冲)时浏览器也会补发一个位置没变的 mousemove,不算
+let lastMouse = null;
+addEventListener('mousemove', (e) => {
+  const moved = !lastMouse || Math.hypot(e.screenX - lastMouse.x, e.screenY - lastMouse.y) > 2;
+  lastMouse = { x: e.screenX, y: e.screenY };
+  if (!holdHover.size || !moved) return;
+  holdHover.clear();
+  for (const el of document.querySelectorAll('.hold-hover')) el.classList.remove('hold-hover');
+});
+export function markJump(itemId, e) {
+  // 记下点的位置:之后鼠标离开这里才算动了
+  if (e) lastMouse = { x: e.screenX, y: e.screenY };
+  jumpAnim.set(itemId, Date.now());
+  holdHover.add(itemId);
+  refreshJumpAnim();
+  setTimeout(refreshJumpAnim, JUMP_MS + 50);
+}
+function refreshJumpAnim() {
+  for (const el of document.querySelectorAll('.jumping, .hold-hover')) el.classList.remove('jumping', 'hold-hover');
+  for (const id of holdHover) for (const el of document.querySelectorAll(`[data-kind="pin"][data-id="${id}"], [data-kind="fav"][data-id="${id}"]`)) el.classList.add('hold-hover');
+  const now = Date.now();
+  for (const [id, start] of jumpAnim) {
+    if (now - start >= JUMP_MS) {
+      jumpAnim.delete(id);
+      continue;
+    }
+    for (const el of document.querySelectorAll(`[data-kind="pin"][data-id="${id}"], [data-kind="fav"][data-id="${id}"]`)) {
+      el.classList.add('jumping');
+      el.style.setProperty('--jump-delay', `${start - now}ms`);
+    }
+  }
+}
+
 export function refreshTrail() {
   for (const el of document.querySelectorAll('.fp, .fp-out')) el.classList.remove('fp', 'fp-grow', 'fp-out');
   const now = Date.now();
@@ -160,6 +200,8 @@ export function render() {
     const free = tab && !isUnloaded(tab) && freeButton();
     // 开着的收藏或固定标签点进了别的页面
     const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
+    // 绑定的标签页开在别的窗口里(本窗口的列表里找不到它):点了会跳到那个窗口,先标出来
+    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere' }, icon('windows'));
     // 文件夹里的固定标签多一个「移出文件夹」,和子标签的「移出为顶级标签页」一样放在最左边:移出、休眠、关闭
     const unfold = inFolder && h('button', { class: 'btn x', title: t('moveOutOfFolder'), data: { act: 'unfold' } }, icon('outdent'));
     if (kind === 'fav') {
@@ -169,7 +211,7 @@ export function render() {
         ? h('button', { class: 'tile-close back', title: t('backToFav'), data: { act: 'back' } }, icon('back'))
         : open && h('button', { class: 'tile-close', title: t('close'), data: { act: 'close' } }, icon('close'));
       const title = away ? t('favAwayTip', { name: item.alias || item.title, current: tab.title || tab.url, fav: item.url }) : tip;
-      return h('div', { class: away ? cls + ' away' : cls, draggable: true, title, data: { kind, id: item.id } }, img, sound, keep, close);
+      return h('div', { class: (away ? cls + ' away' : cls) + (elsewhere ? ' elsewhere-item' : ''), draggable: true, title: elsewhere ? `${title}\n${t('inOtherWindow')}` : title, data: { kind, id: item.id } }, img, sound, keep, elsewhere, close);
     }
     // 固定标签点进了别的页面:显示当前页面,前面标上固定的名字,右边的按钮改为回到固定地址
     if (away) {
@@ -188,10 +230,11 @@ export function render() {
     }
     return h(
       'div',
-      { class: cls, draggable: true, title: item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, title: elsewhere ? `${item.url}\n${t('inOtherWindow')}` : item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      elsewhere,
       keep,
       sound,
       unfold,
@@ -268,6 +311,7 @@ export function render() {
   );
   refreshTrail();
   refreshSleepAnim();
+  refreshJumpAnim();
   applyCursor();
   saveSnapshot();
 }

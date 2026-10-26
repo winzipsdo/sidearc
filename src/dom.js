@@ -42,6 +42,8 @@ const ICONS = {
   trail: svg('<path d="M4 4v8M8 5.5v5M12 7v2"/>'),
   heart: svg('<path d="M8 13.5S2.5 10.2 2.5 6.3A2.8 2.8 0 018 4.6a2.8 2.8 0 015.5 1.7c0 3.9-5.5 7.2-5.5 7.2z"/>'),
   sleep: svg('<path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/>'),
+  // 窗口加一个往外的箭头:标签页开在别的窗口里
+  windows: svg('<path d="M9 13H3.5A1.5 1.5 0 012 11.5v-7A1.5 1.5 0 013.5 3h9A1.5 1.5 0 0114 4.5V8"/><path d="M2 6h12"/><path d="M10.5 11.5h4M12.8 9.7l1.8 1.8-1.8 1.8"/>'),
   lock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/>'),
   unlock: svg('<rect x="3.5" y="7" width="9" height="6.5" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 014.8-1"/>'),
   check: svg('<path d="M3.5 8.5l3 3 6-6.5"/>'),

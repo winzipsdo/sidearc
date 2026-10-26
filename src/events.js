@@ -8,7 +8,7 @@ import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
 import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
@@ -84,7 +84,11 @@ function bindRows(root) {
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
       else if (act === 'unfold') moveToFolder(item.id, null);
-      else openItem(item);
+      else {
+        // 开在别的窗口里:先播一下「跳出去」的动效,告诉你它去了另一个窗口
+        if (el.classList.contains('elsewhere-item')) markJump(item.id, e);
+        openItem(item);
+      }
     }
   });
 

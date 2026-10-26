@@ -190,6 +190,45 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
 }
 .tile .tile-keep svg { width: 10px; height: 10px; }
 .row .keep { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); }
+/* 标签页开在别的窗口里的收藏和固定标签:固定标签在标题右边、收藏在磁贴里的左下角显示一个带往外箭头的小窗口。
+   只是状态,不是按钮:灰色、没有底和阴影,也不接鼠标(点到它就是点这一项,说明写在整项的鼠标提示里) */
+.row .elsewhere { flex: none; display: grid; place-items: center; width: 16px; height: 16px; color: var(--fg-3); pointer-events: none; }
+.row .elsewhere svg { width: 12px; height: 12px; }
+.tile .tile-elsewhere {
+  position: absolute;
+  left: 5px;
+  bottom: 4px;
+  display: grid;
+  color: var(--fg-3);
+  opacity: 0.85;
+  pointer-events: none;
+}
+.tile .tile-elsewhere svg { width: 11px; height: 11px; }
+/* 点了开在别的窗口里的项:不闪按下的底色,换成「跳出去」的动效(见 render.js 的 markJump):
+   整项往右冲一下再弹回,小窗口标记往右滑、变成主题色再回来 */
+/* 按下时保持悬停的样子(行是 --fill、磁贴是 --fill-hover),磁贴也不缩 */
+.row.elsewhere-item:active { background: var(--fill); }
+.tile.elsewhere-item:active { background: var(--fill-hover); transform: none; }
+.jumping { animation: jump-out 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) var(--jump-delay, 0s) both; }
+/* 跳的时候和跳完、鼠标还没动之前(hold-hover),样子定在点下去时的悬停状态:
+   往右冲时鼠标会一会儿在上面一会儿不在,焦点跳去别的窗口后本窗口的悬停也可能没了,底色和悬停按钮就会闪、
+   按钮让出位置时小窗口标记还会跳。鼠标一动就交回给浏览器自己判断(见 render.js 的 markJump) */
+#pins .row:is(.jumping, .hold-hover) { background: var(--fill); }
+#favs .tile:is(.jumping, .hold-hover) { background: var(--fill-hover); }
+.row:is(.jumping, .hold-hover) .x, .tile:is(.jumping, .hold-hover) .tile-close { display: grid; }
+.tile:is(.jumping, .hold-hover) .tile-sound { display: none; }
+.jumping :is(.elsewhere, .tile-elsewhere) { animation: jump-mark 0.5s ease-out var(--jump-delay, 0s) both; }
+@keyframes jump-out {
+  0%, 100% { translate: 0; }
+  35% { translate: 5px 0; }
+}
+@keyframes jump-mark {
+  0%, 100% { translate: 0; color: var(--fg-3); }
+  40% { translate: 3px 0; color: var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jumping, .jumping :is(.elsewhere, .tile-elsewhere) { animation: none; }
+}
 .row .keep svg { width: 12px; height: 12px; }
 .tile .icon { width: 20px; height: 20px; border-radius: 5px; }
 .tile:not(.open) .icon { opacity: 0.85; }
