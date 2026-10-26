@@ -13,6 +13,10 @@
 - **文件夹里的固定标签可以一键移出。** 鼠标移上去时,关闭按钮左边多了一个「移出文件夹」按钮,和子标签的「移出」一样。 [`1ed9634`](https://github.com/winzipsdo/sidearc/commit/1ed9634)
 - **右键文件夹可以「关闭文件夹内所有标签」。** 关掉里面开着的标签页,固定标签都留着;可以撤销,撤销时恢复原来的页面并绑回固定标签。 [`6f512bc`](https://github.com/winzipsdo/sidearc/commit/6f512bc)
 
+### 变更
+
+- **列表底部也渐隐。** 下面还有内容时,最下面一小段淡进底部那一行;滚到底就不淡了。 [`f959464`](https://github.com/winzipsdo/sidearc/commit/f959464)
+
 ### 修复
 
 - **拖到带足迹的收藏或标签上时,插入线顶上的小圆圈会被拉扁、跑到图标中间。** 当落点的那一刻不再画足迹。 [`bb9c46f`](https://github.com/winzipsdo/sidearc/commit/bb9c46f)
