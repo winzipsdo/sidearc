@@ -10,7 +10,7 @@ import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
 import { switchSpace } from './spaces.js';
-import { applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
@@ -150,6 +150,14 @@ function bindControls() {
     if (dot) switchSpace(dot.dataset.space);
   });
   $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
+  // 点空间名(或旁边的小箭头、折叠时的数量)折叠/展开这个空间的固定标签
+  $('#pins-toggle-area').addEventListener('click', () => {
+    const space = activeSpace();
+    if (space.pinsCollapsed) delete space.pinsCollapsed;
+    else space.pinsCollapsed = true;
+    save();
+    render();
+  });
   $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
 }

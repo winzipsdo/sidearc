@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder, isUnloaded, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
+import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { recentMenu, settingsMenu } from './menus.js';
@@ -273,6 +273,15 @@ export function render() {
     return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', true)), !kids.length && h('div', { class: 'folder-empty' }, t('folderEmpty'))].filter(Boolean);
   });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, t('pinsHint'))]));
+  // 固定标签折叠了(点空间名切换,每个空间各记各的):行都还画着,由样式藏起来,只留当前正在看的那个;
+  // 拖拽时样式会临时全部放出来,方便拖进去。搜索时不折叠
+  const collapsed = !!space.pinsCollapsed && !query;
+  $('#pins').classList.toggle('pins-collapsed', collapsed);
+  document.body.classList.toggle('pins-collapsed', collapsed);
+  // 折叠时空间名后面标着里面开着几个标签页(一个都没开就不标)
+  const openPins = pinnedItems(space).filter((i) => bind.has(i.id)).length;
+  $('#pins-count').hidden = !collapsed || !openPins;
+  $('#pins-count').textContent = `· ${openPins}`;
 
   // 选中了不止一个(多选)时,当前标签页也标成选中:它本来就在多选里
   const multi = tabs.filter((x) => x.highlighted).length > 1;

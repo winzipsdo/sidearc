@@ -292,6 +292,17 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
 #restore-bar .ghost svg { width: 10px; height: 10px; }
 
 /* 空间标题 / 分隔线 */
+/* 固定标签折叠(点空间名切换):行由样式藏起来,只留当前正在看的那个;拖到空间名上时全部放出来,方便拖进去。
+   空间名旁的小箭头平时鼠标移上去才出现,折叠时一直在、转向右边,后面标着里面开着几个标签页 */
+/* 空间名、小箭头、数字合成一个点击区域,中间没有空隙 */
+#pins-toggle-area { display: flex; align-items: center; gap: 3px; min-width: 0; height: 100%; padding-right: 6px; cursor: pointer; }
+#pins-toggle { display: grid; place-items: center; flex: none; color: var(--fg-3); opacity: 0; transition: opacity 0.15s, transform 0.2s; }
+#pins-toggle-area:hover #pins-toggle, body.pins-collapsed #pins-toggle { opacity: 1; }
+#pins-toggle-area:hover #space-name { color: var(--fg); }
+body.pins-collapsed #pins-toggle { transform: rotate(-90deg); }
+#pins-count { flex: none; color: var(--fg-3); font-weight: 500; }
+body:not(.drag-on) #pins.pins-collapsed > :not(.row.active) { display: none; }
+body:not(.drag-on) #pins.pins-collapsed > .row.active { --depth: 0 !important; }
 .space-head {
   display: flex;
   align-items: center;
