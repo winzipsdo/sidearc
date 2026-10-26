@@ -321,8 +321,16 @@ export function render() {
   refreshTrail();
   refreshSleepAnim();
   refreshJumpAnim();
+  updateScrollFades();
   applyCursor();
   saveSnapshot();
+}
+
+// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断
+export function updateScrollFades() {
+  const el = $('#scroll');
+  document.body.classList.toggle('scrolled', el.scrollTop > 0);
+  document.body.classList.toggle('more-below', el.scrollTop + el.clientHeight < el.scrollHeight - 1);
 }
 
 // 把这次画出来的样子存一份,下次打开侧边栏时 boot.js 先把它显示出来,免得先空一下

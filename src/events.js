@@ -8,7 +8,7 @@ import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule } from './render.js';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
@@ -134,7 +134,8 @@ function bindMenus(scroll) {
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
   // 列表滚动了:滚上去的内容在顶端渐渐淡掉(样式见 sidepanel.css 的 body.scrolled)
-  scroll.addEventListener('scroll', () => document.body.classList.toggle('scrolled', scroll.scrollTop > 0), { passive: true });
+  scroll.addEventListener('scroll', updateScrollFades, { passive: true });
+  addEventListener('resize', updateScrollFades);
   // 右键时侧边栏不一定拿到了焦点,之后点网页也就不会触发 blur。所以鼠标离开侧边栏一会儿就收起菜单;
   // 只是划出去又马上回来的,不收
   let leaveTimer;
