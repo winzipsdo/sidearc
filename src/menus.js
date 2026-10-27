@@ -1,6 +1,6 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
 import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems, TRAIL_SIZE } from './logic.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
@@ -111,6 +111,8 @@ export function itemMenu(e, { item, kind, space, folder }) {
   showMenu(e, [
     { icon: 'edit', label: t('editItemAlias'), run: () => editItem(item.id) },
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab?.url || item.url, t('copied')) },
+    // 复制:在它正下方多一个一样的收藏/固定标签(见 items.js 的 duplicateItem)
+    { icon: 'copy', label: t('duplicateTab'), run: () => duplicateItem(item.id) },
     tab && hardReloadItem([tab]),
     away && { icon: 'back', label: kind === 'fav' ? t('backToFav') : t('backToPin'), run: () => backToItem(item) },
     // 对当前页面的操作:另存一份,或者拿它替换原来的地址;标签页本身不动
