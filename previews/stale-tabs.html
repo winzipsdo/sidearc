@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>旧标签预览</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --accent: #6b7cff;
+  --bg1: color-mix(in oklch, var(--accent) 26%, #fff);
+  --bg2: color-mix(in oklch, var(--accent) 13%, #f7f7f9);
+  --fg: color-mix(in oklch, var(--accent) 22%, #14151a);
+  --fg-2: color-mix(in srgb, var(--fg) 62%, transparent);
+  --fg-3: color-mix(in srgb, var(--fg) 38%, transparent);
+  --fill: color-mix(in srgb, var(--fg) 6%, transparent);
+  --fill-hover: color-mix(in srgb, var(--fg) 10%, transparent);
+  --card: rgba(255, 255, 255, 0.92);
+  --shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.08), 0 3px 8px rgba(0, 0, 0, 0.05);
+  --dust: 70, 60, 50;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg1: color-mix(in oklch, var(--accent) 24%, #17181c);
+    --bg2: color-mix(in oklch, var(--accent) 9%, #131417);
+    --fg: color-mix(in oklch, var(--accent) 12%, #f2f3f7);
+    --card: rgba(255, 255, 255, 0.17);
+    --shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.1), 0 1px 3px rgba(0, 0, 0, 0.35);
+    --dust: 220, 215, 205;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, var(--bg1), var(--bg2)) fixed;
+  color: var(--fg);
+  font: 500 13px/1.35 system-ui, -apple-system, "PingFang SC", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: 24px 16px;
+}
+h1 { font-size: 16px; margin: 0 0 4px; }
+.lead { color: var(--fg-2); margin: 0 0 20px; font-weight: 400; }
+.panels { display: flex; flex-wrap: wrap; gap: 28px; }
+.panel { width: 300px; }
+.panel h2 { font-size: 13px; margin: 0 0 2px; }
+.panel p { margin: 0 0 12px; color: var(--fg-2); font-weight: 400; font-size: 12px; line-height: 1.5; }
+.list { display: flex; flex-direction: column; gap: 2px; }
+.row {
+  position: relative;
+  display: flex; align-items: center; gap: 10px;
+  height: 36px; padding: 0 7px 0 10px;
+  border-radius: 11px; cursor: pointer;
+  transition: background 0.12s;
+  overflow: hidden;
+}
+.row:hover { background: var(--fill); }
+.row.active { background: var(--card); box-shadow: var(--shadow); }
+.icon {
+  width: 16px; height: 16px; flex: none; border-radius: 4px;
+  display: grid; place-items: center; color: #fff; font-size: 10px; font-weight: 700;
+}
+.title { flex: 1; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(90deg, #000 calc(100% - 14px), transparent); }
+.meta { flex: none; color: var(--fg-3); font-size: 11px; font-weight: 400; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.x {
+  display: none; place-items: center; flex: none; width: 22px; height: 22px; border-radius: 7px;
+  color: var(--fg-2); border: 0; background: none; cursor: pointer; font: inherit;
+}
+.x:hover { background: var(--fill-hover); color: var(--fg); }
+.row:hover .x { display: grid; }
+.row:hover .meta.hide-on-hover { display: none; }
+.label { color: var(--fg-3); font-size: 11px; margin: 10px 4px 4px; font-weight: 400; }
+
+/* 现有的休眠样式,做对比 */
+.row.discarded .title { color: var(--fg-2); }
+.row.discarded .icon { opacity: 0.6; filter: saturate(0.6); }
+
+/* ---- 1 褪色 ---- */
+.fade .row { --age: 0; }
+.fade .row .icon {
+  filter: grayscale(var(--age)) sepia(calc(var(--age) * var(--warm, 0)));
+  opacity: calc(1 - var(--age) * 0.25);
+  transition: filter 0.6s ease, opacity 0.6s ease;
+}
+.fade .row .title {
+  color: color-mix(in srgb, var(--fg) calc(100% - var(--age) * 45%), transparent);
+  transition: color 0.6s ease;
+}
+.fade.warm { --warm: 0.35; }
+/* 回血:点进去后颜色从中心往外亮起来 */
+.fade .row.revive .icon { animation: revive 0.7s ease-out; }
+@keyframes revive {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.fade .row .tip, #leaf-list .row .tip { display: none; }
+#leaf-list .row:hover .tip { display: inline; }
+.fade .row:hover .tip { display: inline; }
+
+/* 扫干净:整行轻轻亮一下 */
+.row.swept { animation: swept 0.9s ease-out; }
+@keyframes swept {
+  0% { background: color-mix(in srgb, #f6c86b 28%, transparent); }
+  100% { background: transparent; }
+}
+
+/* ---- 2 落灰 ---- */
+.dust canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.dust .row.closing { transition: height 0.35s 0.45s ease, margin 0.35s 0.45s ease, background 0.2s; height: 0; margin-top: -2px; }
+.dust .row.closing > :not(canvas) { transition: opacity 0.35s ease, filter 0.35s ease; opacity: 0; filter: blur(2px); }
+
+.controls { display: flex; gap: 8px; align-items: center; margin: 0 0 10px; font-size: 12px; color: var(--fg-2); font-weight: 400; }
+.controls button {
+  font: inherit; color: var(--fg); background: var(--card); border: 0; border-radius: 8px;
+  padding: 4px 10px; box-shadow: var(--shadow); cursor: pointer;
+}
+.controls label { display: flex; gap: 4px; align-items: center; cursor: pointer; }
+</style>
+</head>
+<body>
+<h1>「旧标签」预览</h1>
+<p class="lead">示例数据，宽度和侧边栏一样。鼠标移上去、点一下、点 × 试试。</p>
+
+<div class="panels">
+  <section class="panel">
+    <h2>1 褪色</h2>
+    <p>图标随天数慢慢变灰，标题跟着变淡。点一下就是「点进去」，颜色会恢复回来。悬停时显示多久没来。</p>
+    <div class="controls">
+      <button id="fade-reset">重置</button>
+      <label><input type="checkbox" id="warm"> 偏暖（旧纸色）</label>
+    </div>
+    <div class="list fade" id="fade-list"></div>
+  </section>
+
+  <section class="panel">
+    <h2>2 落灰</h2>
+    <p>越久灰越多。鼠标划过会把灰吹开，然后慢慢落回去。点 × 关掉时整行化成灰飘走。</p>
+    <div class="controls"><button id="dust-reset">重置</button></div>
+    <div class="list dust" id="dust-list"></div>
+  </section>
+
+  <section class="panel">
+    <h2>3 落叶</h2>
+    <p>越久没来，盖的叶子越多。鼠标划过叶子会被拨开、翻个身，再慢慢落回去；点进去叶子被一阵风吹散；点 × 关掉时叶子连同这一行一起被吹走。<b>鼠标在一行上左右快速来回扫几下，叶子就被扫干净</b>，这一行不再算旧（没有打开它）。</p>
+    <div class="controls">
+      <button id="leaf-reset">重置</button>
+    </div>
+    <div class="controls">
+      <label>每 <input type="number" id="leaf-hours" value="12" min="1" max="168" style="width:48px"> 小时落一片，最多 8 片</label>
+    </div>
+    <div class="controls">
+      <button id="ff-12">快进 12 小时</button>
+      <button id="ff-72">快进 3 天</button>
+      <span id="sim-clock"></span>
+    </div>
+    <div class="list dust" id="leaf-list"></div>
+  </section>
+
+  <section class="panel">
+    <h2>1 + 2 组合</h2>
+    <p>平时只褪色，不落灰，保持干净；关掉旧标签时才化成灰飘走。</p>
+    <div class="controls"><button id="combo-reset">重置</button></div>
+    <div class="list fade dust" id="combo-list"></div>
+  </section>
+</div>
+
+<script>
+const TABS = [
+  { t: '周报草稿 - 文档', c: '#3b82f6', l: '文', d: 0, active: true },
+  { t: '设计稿评审意见汇总', c: '#ec4899', l: '设', d: 0.02 },
+  { t: 'useEffect 的清理时机 - 技术博客', c: '#10b981', l: 'R', d: 1 },
+  { t: '周末去哪儿玩 - 攻略合集', c: '#f59e0b', l: '游', d: 2 },
+  { t: '线上问题排查记录', c: '#8b5cf6', l: '排', d: 3, sleep: true },
+  { t: 'CSS mask-image 用法示例', c: '#06b6d4', l: 'C', d: 5 },
+  { t: '机械键盘轴体对比', c: '#ef4444', l: '键', d: 9 },
+  { t: '一篇读了一半的长文', c: '#84cc16', l: '读', d: 16 },
+];
+// 0 天不旧,1 天开始变,10 天以后全灰
+const ageOf = (d) => Math.min(1, Math.max(0, (d - 0.5) / 9.5));
+const ago = (d) => d < 0.5 ? '' : d < 7 ? `${Math.round(d)}天` : `${Math.round(d / 7)}周`;
+const agoLong = (d) => d < 7 ? `${Math.round(d)} 天没来了` : `${Math.round(d / 7)} 周没来了`;
+
+function rowHTML(tab, { meta }) {
+  return `<span class="icon" style="background:${tab.c}">${tab.l}</span>
+    <span class="title">${tab.t}</span>${meta}
+    <button class="x" title="关闭">✕</button>`;
+}
+
+/* ---- 1 褪色 ---- */
+function buildFade(list, withDust) {
+  list.innerHTML = '';
+  for (const tab of TABS) {
+    const row = document.createElement('div');
+    row.className = 'row' + (tab.active ? ' active' : '') + (tab.sleep ? ' discarded' : '');
+    const old = tab.d >= 0.5;
+    const meta = tab.sleep
+      ? `<span class="meta">休眠 2小时</span>`
+      : old ? `<span class="meta tip">${agoLong(tab.d)}</span>` : '';
+    row.innerHTML = rowHTML(tab, { meta });
+    row.style.setProperty('--age', ageOf(tab.d));
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.x')) return;
+      for (const r of list.querySelectorAll('.row')) r.classList.remove('active');
+      row.classList.add('active');
+      if (parseFloat(row.style.getPropertyValue('--age')) > 0) {
+        row.style.setProperty('--age', 0);
+        row.querySelector('.tip')?.remove();
+        row.classList.remove('revive'); void row.offsetWidth; row.classList.add('revive');
+      }
+    });
+    row.querySelector('.x').addEventListener('click', () => withDust ? dustAway(row, true) : row.remove());
+    list.append(row);
+  }
+}
+
+/* ---- 2 落灰 ---- */
+const dpr = devicePixelRatio || 1;
+const dustColor = () => getComputedStyle(document.documentElement).getPropertyValue('--dust').trim();
+const rows = new Set();
+
+function addDust(row, density, kind = 'dust', tab) {
+  const cv = document.createElement('canvas');
+  row.prepend(cv);
+  const st = { kind, row, cv, ctx: cv.getContext('2d'), ps: [], mouse: null, away: false, t0: 0 };
+  const W = 300, H = 36;
+  cv.width = W * dpr; cv.height = H * dpr;
+  st.ctx.scale(dpr, dpr);
+  if (kind === 'leaf') {
+    st.tab = tab;
+    st.n = 0;
+    syncLeaves(st, false);
+  } else {
+  const n = Math.round(density * 110);
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * W, y = Math.random() * H;
+    st.ps.push({ hx: x, hy: y, x, y, vx: 0, vy: 0, r: Math.random() < 0.85 ? 0.6 + Math.random() * 0.5 : 1.1 + Math.random() * 0.6, a: 0.12 + Math.random() * 0.22 });
+  }
+  }
+  row.addEventListener('mousemove', (e) => {
+    const b = row.getBoundingClientRect();
+    const m = { x: e.clientX - b.left, y: e.clientY - b.top };
+    st.mouse = { ...m, dx: st.mouse ? m.x - st.mouse.x : 0, dy: st.mouse ? m.y - st.mouse.y : 0 };
+  });
+  row.addEventListener('mouseleave', () => (st.mouse = null));
+  rows.add(st);
+  row._dust = st;
+  return st;
+}
+
+function dustAway(row, sprinkle) {
+  let st = row._dust;
+  // 组合模式:平时没有灰,关的时候临时撒一层
+  if (!st && sprinkle) st = addDust(row, 0.9);
+  if (!st) return row.remove();
+  st.away = true;
+  st.t0 = performance.now();
+  for (const p of st.ps) {
+    p.vx = 0.6 + Math.random() * 1.8;
+    p.vy = -0.4 - Math.random() * 1.2;
+    if (st.kind === 'leaf') { p.vx = 2 + Math.random() * 2.5; p.vy = -0.6 - Math.random() * 1.2; p.vr = (Math.random() - 0.3) * 0.4; }
+  }
+  // 灰飘走的时候文字先模糊消失,然后这一行收起来
+  row.classList.add('closing');
+  setTimeout(() => { rows.delete(st); row.remove(); }, 900);
+}
+
+// 秋叶的颜色:压低饱和度,免得在界面里太跳
+const LEAF_COLORS = ['#c98a3a', '#b5652f', '#a8743c', '#d2a24a', '#9a5a34', '#8f8a3e'];
+function drawLeaf(ctx, p, life) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.globalAlpha = p.a * life;
+  const s = p.s;
+  ctx.beginPath();
+  ctx.moveTo(-s, 0);
+  ctx.quadraticCurveTo(-s * 0.1, -s * 1.15, s, 0);
+  ctx.quadraticCurveTo(-s * 0.1, s * 1.15, -s, 0);
+  ctx.fillStyle = p.c;
+  ctx.fill();
+  // 叶脉和叶柄
+  ctx.strokeStyle = 'rgba(80, 45, 20, 0.45)';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.moveTo(-s * 1.35, 0); ctx.lineTo(s * 0.8, 0); ctx.stroke();
+  ctx.restore();
+}
+
+/* ---- 落叶的时间:离上次访问每满 N 小时落一片,最多 8 片 ---- */
+const HOUR = 3600e3;
+const LEAF_MAX = 8;
+let simNow = Date.now(); // 预览里的「现在」,快进按钮往后拨
+let hoursPerLeaf = 12;
+// 同一个标签的第 i 片叶子永远落在同一个地方:用标签和序号当随机种子
+function rng(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const hash = (str) => [...str].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261);
+const leafTarget = (tab) => Math.min(LEAF_MAX, Math.floor((simNow - tab.visit) / HOUR / hoursPerLeaf));
+function makeLeaf(tab, i, fall) {
+  const r = rng(hash(tab.t) + i * 7919);
+  const x = 4 + r() * 292, y = 36 * (0.3 + r() * 0.42), rot = r() * 6.283;
+  return { hx: x, hy: y, x, y: fall ? -10 : y, vx: 0, vy: 0, s: 5.5 + r() * 4, rot, hrot: rot, vr: 0,
+    c: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)], a: 1, hp: 2 + Math.floor(r() * 2), falling: fall, t0: performance.now() + (fall ? r() * 500 : 0) };
+}
+// 补齐到该有的片数;fall 为真时新的叶子从行的上方飘下来
+function syncLeaves(st, fall) {
+  const n = leafTarget(st.tab);
+  while (st.n < n) st.ps.push(makeLeaf(st.tab, st.n++, fall));
+}
+function freshen(st, quiet) {
+  st.tab.visit = simNow;
+  st.n = 0;
+  st.quiet = quiet;
+}
+
+function tick(now) {
+  const rgb = dustColor();
+  for (const st of rows) {
+    const { ctx, ps, mouse } = st;
+    ctx.clearRect(0, 0, 300, 36);
+    const life = st.away ? Math.max(0, 1 - (now - st.t0) / 800) : 1;
+    for (const p of ps) {
+      let fade = 1;
+      if (p.falling) {
+        // 飘落:左右晃着往下,边晃边转
+        if (now < p.t0) continue;
+        const t = now - p.t0;
+        p.y += 0.45;
+        p.x = p.hx + Math.sin(t / 260) * 6;
+        p.rot = p.hrot + Math.sin(t / 300) * 0.9;
+        if (p.y >= p.hy) p.falling = false;
+      } else if (p.gone) {
+        // 被扫掉的叶子:顺着扫的方向飞出去,边飞边淡
+        p.x += p.vx; p.y += p.vy + Math.sin(now / 90 + p.hx) * 0.5; p.vy += 0.04; p.rot += p.vr;
+        fade = Math.max(0, 1 - (now - p.gone) / 600);
+      } else if (st.away && st.kind === 'leaf') {
+        // 被风卷走:往右飘,上下晃,一边打转
+        p.x += p.vx; p.y += p.vy + Math.sin(now / 90 + p.hx) * 0.6; p.vy += 0.03; p.rot += p.vr;
+      } else if (st.away) {
+        p.x += p.vx; p.y += p.vy; p.vy -= 0.02; p.vx *= 1.01;
+      } else {
+        if (mouse) {
+          const dx = p.x - mouse.x, dy = p.y - mouse.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 26) {
+            // 被吹开:离鼠标越近吹得越远,再顺着鼠标移动的方向带一点
+            const f = (1 - dist / 26) * 1.4;
+            p.vx += (dx / (dist || 1)) * f + mouse.dx * 0.08;
+            p.vy += (dy / (dist || 1)) * f + mouse.dy * 0.08;
+            if (st.kind === 'leaf') {
+              p.vr += (mouse.dx * 0.01 + (dx > 0 ? 0.03 : -0.03)) * f;
+              // 扫:鼠标横着划得够快才算一下,同一片叶子 250ms 内只算一次。
+              // 每扫一下叶子被往那边推一段,扫两三下(或推出了行外)就飞走
+              if (Math.abs(mouse.dx) > 3 && now - (p.cd || 0) > 250) {
+                p.cd = now;
+                p.hp--;
+                p.hx += Math.sign(mouse.dx) * (10 + Math.random() * 14);
+                if (p.hp <= 0 || p.hx < 0 || p.hx > 300) {
+                  p.gone = now;
+                  p.vx = Math.sign(mouse.dx) * (2.5 + Math.random() * 2.5);
+                  p.vy = -0.6 - Math.random() * 1.2;
+                  p.vr = (Math.random() - 0.5) * 0.5;
+                }
+              }
+            }
+          }
+        }
+        // 慢慢落回原处
+        p.vx += (p.hx - p.x) * 0.012; p.vy += (p.hy - p.y) * 0.012;
+        p.vx *= 0.86; p.vy *= 0.86;
+        p.x += p.vx; p.y += p.vy;
+        if (st.kind === 'leaf') { p.vr += (p.hrot - p.rot) * 0.004; p.vr *= 0.9; p.rot += p.vr; }
+      }
+      if (st.kind === 'leaf') drawLeaf(ctx, p, life * fade);
+      else {
+        ctx.fillStyle = `rgba(${rgb}, ${p.a * life})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+      }
+    }
+    if (mouse) { mouse.dx = 0; mouse.dy = 0; }
+    // 扫干净了:等最后一片飞完,这一行就算「还要」,不再显得旧
+    if (st.kind === 'leaf' && !st.away && ps.length && ps.every((p) => p.gone && now - p.gone > 600)) {
+      st.ps = [];
+      if (!st.quiet) {
+        freshen(st, false);
+        st.row.style.setProperty('--age', 0);
+        st.row.classList.add('swept');
+        setTimeout(() => st.row.classList.remove('swept'), 900);
+      }
+      st.quiet = false;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function buildDust(list, kind = 'dust') {
+  for (const st of [...rows]) if (list.contains(st.row)) rows.delete(st);
+  list.innerHTML = '';
+  for (const tab of TABS) {
+    const row = document.createElement('div');
+    row.className = 'row' + (tab.active ? ' active' : '') + (tab.sleep ? ' discarded' : '');
+    const meta = tab.sleep ? `<span class="meta">休眠 2小时</span>` : '';
+    row.innerHTML = rowHTML(tab, { meta });
+    row.style.setProperty('--age', ageOf(tab.d));
+    if (tab.d >= 0.5) addDust(row, ageOf(tab.d), kind);
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.x')) return;
+      for (const r of list.querySelectorAll('.row')) r.classList.remove('active');
+      row.classList.add('active');
+      // 点进去:灰一下子全吹走
+      if (row._dust && !row._dust.away) {
+        const st = row._dust;
+        for (const p of st.ps) {
+          p.vx = (Math.random() - 0.5) * 6; p.vy = (Math.random() - 0.5) * 3;
+          if (kind === 'leaf') { p.vx = 2 + Math.random() * 3; p.vy = -0.5 - Math.random(); p.vr = (Math.random() - 0.5) * 0.5; }
+        }
+        row.style.setProperty('--age', 0);
+        st.away = true; st.t0 = performance.now();
+        setTimeout(() => { rows.delete(st); st.cv.remove(); row._dust = null; }, 800);
+      }
+    });
+    row.querySelector('.x').addEventListener('click', () => dustAway(row));
+    list.append(row);
+  }
+}
+
+/* ---- 3 落叶 ---- */
+let leafTabs = [];
+const DAY = 24 * HOUR;
+const daysOf = (tab) => (simNow - tab.visit) / DAY;
+function agoText(tab) {
+  const h = (simNow - tab.visit) / HOUR;
+  return h < 1 ? '' : h < 24 ? `${Math.floor(h)} 小时没来了` : h < 24 * 7 ? `${Math.floor(h / 24)} 天没来了` : `${Math.floor(h / 24 / 7)} 周没来了`;
+}
+function refreshLeafRows(fall) {
+  for (const row of $('#leaf-list').children) {
+    const st = row._dust;
+    if (row.classList.contains('active')) freshen(st, true);
+    syncLeaves(st, fall);
+    row.querySelector('.tip').textContent = agoText(st.tab);
+  }
+  const h = Math.round((simNow - leafStart) / HOUR);
+  $('#sim-clock').textContent = h ? `已快进 ${h >= 24 ? (h / 24).toFixed(h % 24 ? 1 : 0) + ' 天' : h + ' 小时'}` : '';
+}
+let leafStart = simNow;
+function buildLeaves() {
+  const list = $('#leaf-list');
+  for (const st of [...rows]) if (list.contains(st.row)) rows.delete(st);
+  list.innerHTML = '';
+  leafTabs = TABS.map((t) => ({ ...t, visit: simNow - t.d * DAY }));
+  for (const tab of leafTabs) {
+    const row = document.createElement('div');
+    row.className = 'row' + (tab.active ? ' active' : '') + (tab.sleep ? ' discarded' : '');
+    row.innerHTML = rowHTML(tab, { meta: (tab.sleep ? `<span class="meta">休眠 2小时</span>` : '') + `<span class="meta tip"></span>` });
+    const st = addDust(row, 0, 'leaf', tab);
+    row.addEventListener('click', (e) => {
+      if (e.target.closest('.x')) return;
+      for (const r of list.querySelectorAll('.row')) r.classList.remove('active');
+      row.classList.add('active');
+      // 点进去:叶子被一阵风吹散,从现在重新计时
+      const now = performance.now();
+      for (const p of st.ps) {
+        if (p.gone) continue;
+        p.gone = now; p.falling = false;
+        p.vx = 2 + Math.random() * 3; p.vy = -0.5 - Math.random(); p.vr = (Math.random() - 0.5) * 0.5;
+      }
+      freshen(st, true);
+      refreshLeafRows(false);
+    });
+    row.querySelector('.x').addEventListener('click', () => dustAway(row));
+    list.append(row);
+  }
+  refreshLeafRows(false);
+}
+
+const $ = (s) => document.querySelector(s);
+const resetCombo = () => { for (const st of [...rows]) if ($('#combo-list').contains(st.row)) rows.delete(st); buildFade($('#combo-list'), true); };
+buildFade($('#fade-list'));
+buildDust($('#dust-list'));
+resetCombo();
+buildLeaves();
+$('#leaf-reset').onclick = () => { simNow = leafStart = Date.now(); buildLeaves(); };
+$('#leaf-hours').onchange = (e) => { hoursPerLeaf = Math.max(1, +e.target.value || 12); buildLeaves(); };
+$('#ff-12').onclick = () => { simNow += 12 * HOUR; refreshLeafRows(true); };
+$('#ff-72').onclick = () => { simNow += 72 * HOUR; refreshLeafRows(true); };
+$('#fade-reset').onclick = () => buildFade($('#fade-list'));
+$('#dust-reset').onclick = () => buildDust($('#dust-list'));
+$('#combo-reset').onclick = resetCombo;
+$('#warm').onchange = (e) => $('#fade-list').classList.toggle('warm', e.target.checked);
+</script>
+</body>
+</html>
