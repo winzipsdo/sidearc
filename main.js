@@ -1,6 +1,6 @@
 // 主页的脚本:切换中英文、在线试用和任务清单、视频的播放按钮、复制命令。
 
-import { mountDemo } from './demo/demo.js?v=9adb7b00';
+import { mountDemo } from './demo/demo.js?v=f8812642';
 
 const root = document.documentElement;
 const store = {
@@ -86,6 +86,12 @@ const TASKS = [
     on: ['undo'],
     zh: ['关掉,再找回来', '关掉一个标签页,点提示条上的「撤销」,或者在侧边栏里按 Ctrl/⌘+Z。'],
     en: ['Close a tab, then get it back', 'Close a tab, then click Undo on the toast, or press Ctrl/⌘+Z in the sidebar.'],
+  },
+  {
+    id: 'leaves',
+    on: ['leaves'],
+    zh: ['扫掉落叶', 'Hacker News 好几天没看了,上面落了叶子。鼠标在那一行上左右快速来回扫几下。'],
+    en: ['Sweep away the leaves', 'Hacker News hasn’t been visited in days and has gathered leaves. Sweep the mouse quickly back and forth over its row.'],
   },
   {
     id: 'keys',

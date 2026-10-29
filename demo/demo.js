@@ -2,8 +2,8 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=937ac549';
-import { GLOBE, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=07135f86';
+import { Browser } from './sim.js?v=805a0ed7';
+import { GLOBE, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=8a7c6255';
 import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js';
 import { KEY, MSG } from '../ext/src/protocol.js';
 
@@ -43,7 +43,7 @@ function setup(b, lang) {
       discarded: !!d.slept,
       playing: !!d.playing,
       audible: !!d.playing && !d.slept,
-      lastAccessed: now - (tabs.length - i) * 60000,
+      lastAccessed: now - (d.idle ? d.idle * 3600000 : (tabs.length - i) * 60000),
     });
     b.history.set(t.id, { list: [d.url], pos: 0 });
     b.tabs.push(t);
@@ -52,6 +52,7 @@ function setup(b, lang) {
     if (d.item) session[KEY.bind(d.item)] = t.id;
     if (d.alias) session[KEY.alias(t.id)] = d.alias;
     if (d.slept) session[KEY.slept(t.id)] = now - d.slept * 60000;
+    if (d.idle) session[KEY.seen(t.id)] = now - d.idle * 3600000;
   });
   for (const d of tabs) if (d.parent) session[KEY.parent(byKey[d.key].id)] = byKey[d.parent].id;
   const layout = buildLayout(state, session, b.tabs);
@@ -277,6 +278,8 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
       if (name === 'sessions.restore') onAction('undo');
       if (name === 'tabs.update' && args[1]?.url) onAction('pinBack');
       if (name === 'storage.local.set' && args[0]?.state && args[0].state.activeSpaceId !== b.store.local.state?.activeSpaceId) onAction('space');
+      // 扫干净了落叶:侧边栏从现在重新计时
+      if (name === 'storage.session.set' && Object.keys(args[0] ?? {}).some((k) => k.startsWith(KEY.seen('')))) onAction('leaves');
     }
     if (ctx === 'background' && name === 'storage.local.set' && args[0]?.state && args[0].state.activeSpaceId !== b.store.local.state?.activeSpaceId) onAction('space');
     if (name === 'runtime.sendMessage' && (args[0]?.[MSG.deduped] || args[0]?.[MSG.adopted])) onAction('dedupe');

@@ -15,7 +15,7 @@ const ARP = [0, 1, 2, 3, 2, 1, 3, 2]; // 每小节 8 个八分音符,取和弦�
 // 各声部从第几秒开始(对应视频里的段落)
 const BASS_FROM = 4;
 const GROOVE_FROM = 8.2;
-const GROOVE_TO = 56.8;
+const GROOVE_TO = 64.8;
 
 const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 

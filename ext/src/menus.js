@@ -1,11 +1,11 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, durationParts, isAway, isUnloaded, pinnedItems, TRAIL_SIZE } from './logic.js';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
+import { canDiscard, durationParts, isAway, isUnloaded, LEAF_CHOICES, pinnedItems, TRAIL_SIZE } from './logic.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, leafHours, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
@@ -111,6 +111,8 @@ export function itemMenu(e, { item, kind, space, folder }) {
   showMenu(e, [
     { icon: 'edit', label: t('editItemAlias'), run: () => editItem(item.id) },
     { icon: 'link', label: t('copyLink'), run: () => copyText(tab?.url || item.url, t('copied')) },
+    // 复制:在它正下方多一个一样的收藏/固定标签(见 items.js 的 duplicateItem)
+    { icon: 'copy', label: t('duplicateTab'), run: () => duplicateItem(item.id) },
     tab && hardReloadItem([tab]),
     away && { icon: 'back', label: kind === 'fav' ? t('backToFav') : t('backToPin'), run: () => backToItem(item) },
     // 对当前页面的操作:另存一份,或者拿它替换原来的地址;标签页本身不动
@@ -208,9 +210,25 @@ function trailPicker() {
   return h('div', { class: 'trail-pick', title: t('footprintsTip') }, icon('trail'), h('span', { class: 'label' }, t('footprints')), bars);
 }
 
+// 落叶多久落一片:一排选项(6 小时、12 小时、1 天、3 天),最左边的「⊘」是不落。菜单不关,改完马上能看到
+function leafPicker() {
+  const opts = h('span', { class: 'opts' });
+  const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', +el.dataset.v === v));
+  const pick = (v) => {
+    chrome.storage.local.set({ leaves: v });
+    paint(v);
+  };
+  opts.append(
+    h('i', { class: 'off', 'aria-label': t('leavesOff'), title: t('leavesOff'), data: { v: 0 }, onclick: () => pick(0) }, icon('ban')),
+    ...LEAF_CHOICES.map((n) => h('i', { data: { v: n }, onclick: () => pick(n) }, formatDuration(n % 24 ? { unit: 'hours', n } : { unit: 'days', n: n / 24 })))
+  );
+  paint(leafHours);
+  return h('div', { class: 'leaf-pick', title: t('leavesTip') }, icon('leaf'), h('span', { class: 'label' }, t('leaves')), opts);
+}
+
 const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
 
-// 右下角的设置按钮:界面语言、足迹显示几个,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -222,6 +240,7 @@ export function settingsMenu(e) {
     pick('en', LANGS.en),
     '-',
     { el: trailPicker() },
+    { el: leafPicker() },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);

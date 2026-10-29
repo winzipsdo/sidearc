@@ -1,7 +1,8 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
 import { t } from './i18n.js';
-import { addressOf, pinnedItems, toUrl } from './logic.js';
+import { addressOf, isAway, pinnedItems, toUrl } from './logic.js';
+import { MSG } from './protocol.js';
 import { render, schedule } from './render.js';
 import {
   activeSpace,
@@ -10,6 +11,7 @@ import {
   itemByTab,
   save,
   setBind,
+  setRenderHeld,
   setTabAlias,
   setTabParent,
   setTabSpace,
@@ -24,6 +26,38 @@ import {
 } from './store.js';
 import { createTab, focusTab, returnBeforeClose } from './tabs.js';
 import { ask, pushUndo, toast } from './ui.js';
+
+// 复制一个收藏/固定标签:副本放在它正下方(在文件夹里就还在这个文件夹里)。
+// 原来开着的,副本也用 Chrome 的复制打开(连前进后退记录)并绑上;没开的副本也先不开。
+// 原来的点进了别的页面(有返回按钮):副本就以当前页面为地址和名称,不带返回状态,别名也不带(那是原来地址的)
+export async function duplicateItem(id) {
+  const hit = findItem(id);
+  if (!hit) return;
+  const { item, list } = hit;
+  const tab = tabs.find((t) => t.id === bind.get(id));
+  const away = tab && isAway(item.url, tab.url);
+  const copy = away ? { id: uid(), title: tab.title || tab.url, url: tab.url } : { id: uid(), title: item.title, url: item.url };
+  if (!away && item.alias) copy.alias = item.alias;
+  if (!away && item.named) copy.named = true;
+  list.splice(list.indexOf(item) + 1, 0, copy);
+  await save();
+  const tabId = bind.get(id);
+  if (tabId != null) {
+    // 复制出来的标签页在绑上之前不重画,免得先出现在下面的标签页列表里再跳上来
+    setRenderHeld(true);
+    try {
+      const tab = await chrome.tabs.duplicate(tabId).catch(() => null);
+      if (tab) {
+        await chrome.runtime.sendMessage({ [MSG.keepTab]: tab.id }).catch(() => {});
+        await detachTab(tab.id);
+        await setBind(copy.id, tab.id);
+      }
+    } finally {
+      setRenderHeld(false);
+    }
+  }
+  render();
+}
 
 export async function openItem(item) {
   const boundId = bind.get(item.id);

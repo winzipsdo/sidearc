@@ -8,8 +8,10 @@
 import { BRAND_ICONS } from '../../demo/brand-icons.js';
 import { iconFor, page } from '../../demo/web.js';
 
-const DURATION = 62.5;
-const POSTER = 15.9; // 封面取这一刻:两边刚同步完
+const LEAVES_AT = 48.4; // 落叶这一幕开始
+const END = LEAVES_AT + 8; // 窗口淡出,后面是功能卡片、隐私和结尾
+const DURATION = END + 14.1;
+const POSTER = LEAVES_AT + 3.25; // 封面取这一刻:标签页上刚落满叶子,镜头还没推近
 const SLEEP_AT = 40.6; // 点月亮让 Hacker News 休眠的时刻
 const CLICKS = []; // 点击和按键的时间点,music.js 在这些地方加音效
 
@@ -68,6 +70,7 @@ function changedAt(el, t) {
 }
 function seek(t) {
   for (const a of anims) a.currentTime = t * 1000;
+  if (doc) drawLeaves(t);
   for (const [el, names] of initial) {
     const want = new Set(names);
     for (const c of classes) {
@@ -269,7 +272,7 @@ function stripHtml() {
 }
 
 // 右边的网页:每个会切到的页面一层
-const PAGES = ['docs', 'figma', 'wiki', 'notion', 'weekly', 'lofi', 'mdn'];
+const PAGES = ['docs', 'figma', 'wiki', 'notion', 'weekly', 'lofi', 'mdn', 'tg'];
 function pageHtml(key) {
   const p = P(key);
   const links = (p.links ?? []).map((l, i) => `<a class="sb-link" id="l-${key}-${i}">${l.label}${l.newTab ? `<span class="sb-new-badge">${ICON.newtab}</span>` : ''}</a>`).join('');
@@ -513,25 +516,50 @@ function scenes() {
   activate(q('#t-docs'), st('docs'), 'docs', 47.1);
   tw($('#keys'), 48, 0.3, { opacity: [1, 0] });
   copyOut($('#copy-7'), 48.1);
-  tw(win, 48.4, 0.6, { opacity: [1, 0], transform: ['none', 'translateY(24px) scale(.97)'] }, EASE.in);
 
-  // 48.9–53.6 更多功能
+  // LEAVES_AT 起 8 秒:落叶。「三天后」,很久没进去的标签页落上叶子;扫干净一行,点开另一行叶子被吹走(鼠标在 pointer() 里)
+  const L = LEAVES_AT;
+  copyIn($('#copy-8'), L);
+  const lapse = $('#lapse');
+  tw(lapse, L + 0.5, 0.5, { opacity: [0, 1], transform: ['translateY(10px) scale(.94)', 'none'] }, EASE.spring);
+  tw(lapse, L + 2.6, 0.4, { opacity: [1, 0] });
+  // 三天过去:足迹早就消失了,Hacker News 已经睡了 3 天
+  for (const el of trail) {
+    cls(el, L + 0.8, 'fp-grow', false);
+    cls(el, L + 0.8, 'fp', false);
+  }
+  trail = [];
+  const slept = q('#t-hn .slept');
+  const slept3 = slept.cloneNode();
+  slept3.textContent = '3 天';
+  slept.after(slept3);
+  set(slept3, 0, { display: 'none' });
+  set(slept, L + 0.8, { display: 'none' });
+  set(slept3, L + 0.8, { display: 'inline' });
+  // 每 12 小时一片:三天是 6 片;Hacker News 更早就没进去过,落满 8 片
+  [['t-lofi', 6], ['t-hn', 8], ['t-mdn', 6], ['t-tg', 6], ['t-mv3', 6]].forEach(([id, n], i) => leafPile(q('#' + id), L + 0.7 + i * 0.14, n));
+  pile(q('#t-tg')).blowAt = L + 6.3;
+  activate(q('#t-tg'), st('tg'), 'tg', L + 6.3);
+  copyOut($('#copy-8'), L + 7.4);
+  tw(win, END, 0.6, { opacity: [1, 0], transform: ['none', 'translateY(24px) scale(.97)'] }, EASE.in);
+
+  // 更多功能
   const more = $('#more');
-  tw(more.children[0], 48.9, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] });
-  tw(more.children[1], 49, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] });
-  [...$('#cards').children].forEach((el, i) => tw(el, 49.3 + i * 0.1, 0.7, { opacity: [0, 1], transform: ['translateY(26px) scale(.96)', 'none'] }));
-  tw(more, 53.3, 0.5, { opacity: [1, 0], transform: ['none', 'scale(.97)'] }, EASE.in);
+  tw(more.children[0], END + 0.5, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] });
+  tw(more.children[1], END + 0.6, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] });
+  [...$('#cards').children].forEach((el, i) => tw(el, END + 0.9 + i * 0.1, 0.7, { opacity: [0, 1], transform: ['translateY(26px) scale(.96)', 'none'] }));
+  tw(more, END + 4.9, 0.5, { opacity: [1, 0], transform: ['none', 'scale(.97)'] }, EASE.in);
 
-  // 53.9–56.6 隐私
+  // 隐私
   const privacy = $('#privacy');
-  [...privacy.children].slice(0, 3).forEach((el, i) => tw(el, 53.9 + i * 0.1, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] }));
-  [...$('#pills').children].forEach((el, i) => tw(el, 54.4 + i * 0.12, 0.6, { opacity: [0, 1], transform: ['translateY(14px) scale(.95)', 'none'] }, EASE.spring));
-  tw(privacy, 56.4, 0.5, { opacity: [1, 0], transform: ['none', 'scale(.97)'] }, EASE.in);
+  [...privacy.children].slice(0, 3).forEach((el, i) => tw(el, END + 5.5 + i * 0.1, 0.7, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] }));
+  [...$('#pills').children].forEach((el, i) => tw(el, END + 6 + i * 0.12, 0.6, { opacity: [0, 1], transform: ['translateY(14px) scale(.95)', 'none'] }, EASE.spring));
+  tw(privacy, END + 8, 0.5, { opacity: [1, 0], transform: ['none', 'scale(.97)'] }, EASE.in);
 
-  // 57– 结尾:在线试用和仓库地址
+  // 结尾:在线试用和仓库地址
   const [olog, ...olines] = $('#outro').children;
-  tw(olog, 56.9, 0.95, { opacity: [0, 1], transform: ['scale(.55) rotate(-10deg)', 'none'] }, EASE.spring);
-  olines.forEach((el, i) => tw(el, 57.3 + i * 0.18, 0.75, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] }));
+  tw(olog, END + 8.5, 0.95, { opacity: [0, 1], transform: ['scale(.55) rotate(-10deg)', 'none'] }, EASE.spring);
+  olines.forEach((el, i) => tw(el, END + 8.9 + i * 0.18, 0.75, { opacity: [0, 1], transform: ['translateY(18px)', 'none'] }));
 }
 
 // 鼠标的路线,以及需要先量位置的动画:拖拽时各行和顶部标签页的位移
@@ -650,6 +678,199 @@ function pointer() {
   move(39.8, 0.6, [left + (mx - left) * ZOOM, hnY + (my - hnY) * ZOOM]);
   click(SLEEP_AT);
   move(41.4, 1.6, [cur[0] - 40, cur[1] + 140]);
+
+  // 落叶:镜头推近到 MDN 和下面两行;鼠标在 MDN 那一行上左右扫,扫干净后点开 chrome.tabGroups 那一行
+  const L = LEAVES_AT;
+  const LZ = 1.6;
+  build();
+  const mdn = q('#t-mdn');
+  const [, mdnY] = at(L + 2, mdn);
+  const [, tgY] = at(L + 2, q('#t-tg'));
+  const oy = (mdnY + tgY) / 2;
+  set(win, L + 3.25, { transformOrigin: `0px ${oy - win.getBoundingClientRect().top}px` });
+  tw(win, L + 3.3, 0.7, { transform: ['none', `scale(${LZ})`] }, EASE.inOut);
+  tw(win, L + 6.7, 0.8, { transform: [`scale(${LZ})`, 'none'] }, EASE.inOut);
+  const zoomed = ([x, y]) => [left + (x - left) * LZ, oy + (y - oy) * LZ];
+  seek(L + 2);
+  const r = mdn.getBoundingClientRect();
+  const fr = frame().getBoundingClientRect();
+  // 扫:在这一行的后半段左右来回,和侧边栏里的落叶共用同一条路线
+  const sweep = { t0: L + 4.2, t1: L + 5.8, x: (t) => r.width * (0.62 + 0.36 * Math.sin((2 * Math.PI * (t - L - 4.2)) / 0.5 - Math.PI / 2)), y: () => 19 };
+  pile(mdn).sweep = sweep;
+  tw(cursor, L + 3.9, 0.3, { opacity: [0, 1] });
+  cur = zoomed([fr.left + r.left + sweep.x(sweep.t0), fr.top + r.top + 19]);
+  set(cursor, L + 3.9, { transform: `translate(${cur[0]}px,${cur[1]}px)` });
+  const N = 60;
+  const path = Array.from({ length: N + 1 }, (_, i) => {
+    const t = sweep.t0 + ((sweep.t1 - sweep.t0) * i) / N;
+    const [x, y] = zoomed([fr.left + r.left + sweep.x(t), fr.top + r.top + sweep.y(t)]);
+    return `translate(${x}px,${y}px)`;
+  });
+  tw(cursor, sweep.t0, sweep.t1 - sweep.t0, { transform: path }, EASE.linear);
+  cur = path.at(-1).match(/-?[\d.]+/g).map(Number);
+  const tg = q('#t-tg');
+  const tr = tg.getBoundingClientRect();
+  move(L + 5.85, 0.4, zoomed([fr.left + tr.left + tr.width * 0.4, fr.top + tr.top + tr.height / 2]));
+  click(L + 6.3);
+  tw(cursor, L + 7.2, 0.3, { opacity: [1, 0] });
+}
+
+// ---------- 落叶:和插件 src/leaves.js 一样的叶子和物理,只是按视频时间一步步算,同一时刻总是同一个样子 ----------
+
+const LEAF_H = 36;
+const LEAF_COLORS = ['#c98a3a', '#b5652f', '#a8743c', '#d2a24a', '#9a5a34', '#8f8a3e'];
+const LEAF_DT = 1 / 60; // 插件按每秒 60 帧算的物理,这里也一样
+const piles = new Map(); // row -> { row, cv, ctx, W, drops: [{ t, n }], blowAt, sweep, 模拟状态 }
+
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function pile(row) {
+  if (!piles.has(row)) {
+    const cv = doc.createElement('canvas');
+    cv.className = 'leaves';
+    row.append(cv);
+    piles.set(row, { row, cv, ctx: cv.getContext('2d'), W: 0, drops: [], blowAt: null, sweep: null, simT: Infinity });
+  }
+  return piles.get(row);
+}
+// 第 t 秒起往这一行上落 n 片叶子
+function leafPile(row, t, n) {
+  pile(row).drops.push({ t, n });
+}
+function resetPile(p) {
+  Object.assign(p, { ps: [], n: 0, simT: Math.min(...p.drops.map((d) => d.t)), done: new Set(), blown: false, glow: 0, sweeping: false, mouse: null, rnd: seeded(p.row.id.length * 7919 + 17) });
+}
+function makeLeaf(p, i, t0) {
+  const r = seeded([...p.row.id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7) * 7919 + i * 104729);
+  const fx = 0.45 + r() * 0.52;
+  const hy = LEAF_H * (0.3 + r() * 0.42);
+  const rot = r() * Math.PI * 2;
+  return { i, fx, hy, x: null, y: -10, vx: 0, vy: 0, vr: 0, rot, hrot: rot, s: 5 + r() * 3.5, c: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)], hp: 2 + Math.floor(r() * 2), falling: true, t0: t0 + r() * 0.6, gone: 0, cd: 0 };
+}
+// 推进一步(1/60 秒)
+function stepPile(p, t) {
+  const ms = t * 1000;
+  for (const [k, d] of p.drops.entries()) {
+    if (p.done.has(k) || t < d.t) continue;
+    p.done.add(k);
+    for (let i = 0; i < d.n; i++) p.ps.push(makeLeaf(p, p.n++, d.t));
+  }
+  if (p.blowAt != null && !p.blown && t >= p.blowAt) {
+    p.blown = true;
+    for (const l of p.ps) if (!l.gone) Object.assign(l, { gone: ms, falling: false, vx: 2 + p.rnd() * 3, vy: -0.5 - p.rnd(), vr: (p.rnd() - 0.5) * 0.5 });
+  }
+  const sw = p.sweep;
+  if (sw && t >= sw.t0 && t <= sw.t1) {
+    const x = sw.x(t);
+    const y = sw.y(t);
+    p.mouse = { x, y, dx: p.mouse ? x - p.mouse.x : 0, dy: p.mouse ? y - p.mouse.y : 0 };
+  } else p.mouse = null;
+  const W = p.W;
+  for (const l of p.ps) {
+    const hx = l.fx * W;
+    l.x ??= hx;
+    if (l.falling) {
+      if (t < l.t0) continue;
+      const e = ms - l.t0 * 1000;
+      l.y += 0.45;
+      l.x = hx + Math.sin(e / 260) * 6;
+      l.rot = l.hrot + Math.sin(e / 300) * 0.9;
+      if (l.y >= l.hy) l.falling = false;
+    } else if (l.gone) {
+      l.x += l.vx;
+      l.y += l.vy + Math.sin(ms / 90 + l.fx * 50) * 0.5;
+      l.vy += 0.04;
+      l.rot += l.vr;
+    } else {
+      if (p.mouse) pushLeaf(p, l, p.mouse, ms);
+      l.vx = (l.vx + (hx - l.x) * 0.012) * 0.86;
+      l.vy = (l.vy + (l.hy - l.y) * 0.012) * 0.86;
+      l.vr = (l.vr + (l.hrot - l.rot) * 0.004) * 0.9;
+      l.x += l.vx;
+      l.y += l.vy;
+      l.rot += l.vr;
+    }
+  }
+  p.ps = p.ps.filter((l) => !l.gone || ms - l.gone < 600);
+  // 扫干净了:最后一片飞走时整行亮一下
+  if (p.sweeping && !p.ps.some((l) => !l.gone)) {
+    p.sweeping = false;
+    p.glow = ms;
+  }
+}
+function pushLeaf(p, l, m, ms) {
+  const dx = l.x - m.x;
+  const dy = l.y - m.y;
+  const dist = Math.hypot(dx, dy);
+  if (dist >= 26) return;
+  const f = (1 - dist / 26) * 1.4;
+  l.vx += (dx / (dist || 1)) * f + m.dx * 0.08;
+  l.vy += (dy / (dist || 1)) * f + m.dy * 0.08;
+  l.vr += (m.dx * 0.01 + (dx > 0 ? 0.03 : -0.03)) * f;
+  if (Math.abs(m.dx) <= 3 || ms - l.cd < 250) return;
+  l.cd = ms;
+  l.hp--;
+  l.fx += (Math.sign(m.dx) * (10 + p.rnd() * 14)) / p.W;
+  if (l.hp > 0 && l.fx > 0 && l.fx < 1) return;
+  Object.assign(l, { gone: ms, vx: Math.sign(m.dx) * (2.5 + p.rnd() * 2.5), vy: -0.6 - p.rnd() * 1.2, vr: (p.rnd() - 0.5) * 0.5 });
+  p.sweeping = true;
+}
+function drawLeaves(t) {
+  for (const p of piles.values()) {
+    const W = p.row.clientWidth;
+    if (W && W !== p.W) {
+      // 画面放大 1.5 倍截图,镜头还会再推近 1.7 倍:画布按 3 倍分辨率画,放大后也清楚
+      p.W = W;
+      p.cv.width = W * 3;
+      p.cv.height = LEAF_H * 3;
+      p.ctx.setTransform(3, 0, 0, 3, 0, 0);
+      p.simT = Infinity;
+    }
+    if (!p.drops.length) continue;
+    if (t < p.simT) resetPile(p);
+    while (p.simT + LEAF_DT <= t) stepPile(p, (p.simT += LEAF_DT));
+    const { ctx } = p;
+    ctx.clearRect(0, 0, p.W, LEAF_H);
+    const ms = t * 1000;
+    if (p.glow) {
+      const k = 1 - (ms - p.glow) / 900;
+      if (k > 0) {
+        ctx.fillStyle = `rgba(246, 200, 107, ${0.3 * k})`;
+        ctx.fillRect(0, 0, p.W, LEAF_H);
+      }
+    }
+    for (const l of p.ps) {
+      if (l.falling && t < l.t0) continue;
+      const a = l.gone ? Math.max(0, 1 - (ms - l.gone) / 600) : 1;
+      if (l.y > -12) drawLeaf(ctx, l, a);
+    }
+  }
+}
+function drawLeaf(ctx, l, alpha) {
+  const s = l.s;
+  ctx.save();
+  ctx.translate(l.x, l.y);
+  ctx.rotate(l.rot);
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.moveTo(-s, 0);
+  ctx.quadraticCurveTo(-s * 0.1, -s * 1.15, s, 0);
+  ctx.quadraticCurveTo(-s * 0.1, s * 1.15, -s, 0);
+  ctx.fillStyle = l.c;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(80, 45, 20, 0.45)';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath();
+  ctx.moveTo(-s * 1.35, 0);
+  ctx.lineTo(s * 0.8, 0);
+  ctx.stroke();
+  ctx.restore();
 }
 
 // ---------- 搭画面 ----------
@@ -660,8 +881,8 @@ async function setup() {
     ['#6b7cff', ICON.back, '什么都能撤销', 'Ctrl/⌘+Z 一步步撤销', 'Undo everything, step by step'],
     ['#e5687a', ICON.copy, '相同网址只开一份', '已经开着的,直接切过去', 'No duplicate tabs'],
     ['#2f9bd6', ICON.select, '多选一起操作', 'Ctrl/⌘ 多选、Shift 连选', 'Multi-select, drag them together'],
-    ['#4fae6e', ICON.recent, '最近关闭', '点一下就恢复', 'Recently closed, one click back'],
-    ['#8a63d2', ICON.eyeOff, '不记录历史的空间', '访问过的网址立刻删除', 'No-history spaces and folders'],
+    ['#4fae6e', ICON.recent, '恢复上次的标签页', '空间、层级、别名都在', 'Bring back last session, as it was'],
+    ['#8a63d2', ICON.folder, '折叠固定标签', '点空间名,只留正在看的', 'Fold pinned tabs away'],
     ['#f0913f', ICON.theme, '中文 / English · 深浅色', '跟随浏览器和系统', 'Follows your language and theme'],
   ];
   $('#cards').innerHTML = CARDS.map(

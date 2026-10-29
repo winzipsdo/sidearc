@@ -16,9 +16,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/logo.svg?v=852405be" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/128.png">
-<link rel="stylesheet" href="style.css?v=9508df44">
+<link rel="stylesheet" href="style.css?v=779fc651">
 <link rel="stylesheet" href="demo/demo.css?v=642fb0f5">
-<link rel="modulepreload" href="demo/demo.js?v=9adb7b00">
+<link rel="modulepreload" href="demo/demo.js?v=f8812642">
 <script>
   // 在页面画出来之前先定好语言:地址里的 ?lang= 优先,其次是上次的选择,再次看浏览器语言
   (() => {
@@ -87,7 +87,7 @@
         <aside class="quests" aria-live="polite">
           <div class="q-head">
             <b><span data-l="zh">试试这几件事</span><span data-l="en">Things to try</span></b>
-            <span class="q-count" id="q-count">0/8</span>
+            <span class="q-count" id="q-count">0/9</span>
           </div>
           <div class="q-bar"><i id="q-bar"></i></div>
           <ol class="q-list" id="q-list"></ol>
@@ -105,7 +105,7 @@
     <div class="wrap">
       <h2 class="title"><span data-l="zh">1 分钟看懂 Sidearc</span><span data-l="en">Sidearc in a minute</span></h2>
       <figure class="player" id="player">
-        <video id="intro" src="assets/intro.mp4?v=dcecd999" poster="assets/intro-poster.jpg?v=141e2501" controls playsinline preload="none" width="1920" height="1080"></video>
+        <video id="intro" src="assets/intro.mp4?v=08e1cb8c" poster="assets/intro-poster.jpg?v=ae26cdcc" controls playsinline preload="none" width="1920" height="1080"></video>
         <button class="play" id="play" type="button" hidden>
           <span class="circle"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg></span>
           <span class="label"><span data-l="zh">播放介绍视频</span><span data-l="en">Play the intro</span></span>
@@ -185,6 +185,12 @@
     <div class="wrap">
       <h2 class="title"><span data-l="zh">还有这些小心思</span><span data-l="en">And the small touches</span></h2>
       <div class="grid">
+        <div class="item" style="--c:#c98a3a">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M3 13c0-6 3.5-9.5 10-10 .3 6.2-3.5 10-10 10z"/><path d="M3 13l5.5-5.5"/></svg></span>
+          <h3><span data-l="zh">落叶</span><span data-l="en">Fallen leaves</span> <span class="new">1.8</span></h3>
+          <p><span data-l="zh">很久没进去过的标签页会慢慢落上叶子,每 12 小时一片,提醒你它也许可以关了。鼠标左右扫几下就扫干净,点进去叶子被风吹走。</span><span data-l="en">Tabs you haven't visited in a while slowly gather leaves, one every 12 hours, a hint they might be ready to close. Sweep the mouse over them to clear them; open the tab and they blow away.</span></p>
+          <button class="try-btn small" type="button" data-task="leaves"><span data-l="zh">试试</span><span data-l="en">Try it</span> ↑</button>
+        </div>
         <div class="item" style="--c:#6b7cff">
           <span class="ic"><svg viewBox="0 0 16 16"><path d="M4 2.5v11"/><path d="M8 5v6" opacity=".6"/><path d="M12 7v2" opacity=".35"/></svg></span>
           <h3><span data-l="zh">足迹</span><span data-l="en">Footprints</span></h3>
@@ -218,6 +224,16 @@
           <span class="ic"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4" rx="1.2"/><rect x="2.5" y="9.5" width="11" height="4" rx="1.2"/></svg></span>
           <h3><span data-l="zh">多选</span><span data-l="en">Multi-select</span></h3>
           <p><span data-l="zh">Ctrl/⌘+点击多选、Shift+点击连选,和顶部标签栏的选择同步;拖一个就一起移动,右键一起关闭、休眠或换空间。</span><span data-l="en">Ctrl/⌘+click to pick tabs and Shift+click for a range, shared with the tab strip; drag one to move them all, or right-click to close, sleep or move them together.</span></p>
+        </div>
+        <div class="item" style="--c:#3aa7b8">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/></svg></span>
+          <h3><span data-l="zh">恢复上次的标签页</span><span data-l="en">Bring back last session</span></h3>
+          <p><span data-l="zh">Chrome 启动时没有恢复上次的标签页,侧边栏会提醒,一点就按原来的空间、层级和别名开回来。左下角还有最近关闭的列表。</span><span data-l="en">If Chrome didn't restore last time's tabs, the sidebar offers to, with their spaces, nesting and aliases intact. Recently closed tabs sit at the bottom left.</span></p>
+        </div>
+        <div class="item" style="--c:#a06be0">
+          <span class="ic"><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 009 2.5H4A1.5 1.5 0 002.5 4v5A1.5 1.5 0 004 10.5h1.5"/></svg></span>
+          <h3><span data-l="zh">创建副本、硬性重新加载</span><span data-l="en">Copies and hard reload</span></h3>
+          <p><span data-l="zh">收藏和固定标签可以就地创建副本;右键菜单里有不走缓存的「硬性重新加载」。关掉当前标签页,会回到刚才所在的那个。</span><span data-l="en">Duplicate a favorite or pinned tab in place; hard reload skips the cache from the context menu. Close the current tab and you're back where you just were.</span></p>
         </div>
       </div>
     </div>
@@ -318,6 +334,6 @@
     </nav>
   </div>
 </footer>
-<script type="module" src="main.js?v=5130e187"></script>
+<script type="module" src="main.js?v=44e75df5"></script>
 </body>
 </html>

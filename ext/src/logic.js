@@ -192,5 +192,12 @@ export function nextTrail(rec, tabId, now, prevAlive = true) {
   if (prev != null && prev !== tabId && prevAlive) trail = [{ id: prev, at: now }, ...trail.filter((x) => x.id !== prev)];
   return { active: tabId, trail: trail.slice(0, TRAIL_SIZE) };
 }
+// 落叶:很久没进去过的标签页,离上次离开每满 N 小时落一片叶子,最多 LEAF_MAX 片。
+// N 在设置里选(LEAF_CHOICES 之一,0 = 不落),没设置过是 LEAF_HOURS
+export const LEAF_MAX = 8;
+export const LEAF_HOURS = 12;
+export const LEAF_CHOICES = [6, 12, 24, 72];
+export const leafCount = (since, now, hours) => (hours > 0 && since ? Math.min(LEAF_MAX, Math.max(0, Math.floor((now - since) / (hours * 3600000)))) : 0);
+
 // 足迹还剩多少(1 = 刚离开,0 = 到 10 分钟):竖条的长度和深浅都按它缩小、变淡
 export const trailLeft = (at, now) => Math.min(1, Math.max(0, 1 - (now - at) / TRAIL_TTL));

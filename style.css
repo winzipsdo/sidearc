@@ -169,6 +169,7 @@ kbd {
 .item .ic { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: color-mix(in srgb, var(--c) 15%, transparent); color: var(--c); }
 .item .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .item h3 { margin-top: 16px; font-size: 18px; }
+.item h3 .new { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--grad); color: #fff; font-size: 12px; font-weight: 700; vertical-align: 2px; }
 .item p { margin-top: 6px; color: var(--fg-2); font-size: 15px; }
 
 /* 安装 */

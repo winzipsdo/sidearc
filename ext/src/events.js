@@ -9,8 +9,9 @@ import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
+import { bindLeaves, refreshLeaves } from './leaves.js';
 import { switchSpace } from './spaces.js';
-import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
@@ -258,6 +259,10 @@ function bindBrowser() {
       setTrailCount(changes.trail.newValue);
       refreshTrail();
     }
+    if (area === 'local' && changes.leaves) {
+      setLeafHours(changes.leaves.newValue);
+      refreshLeaves();
+    }
     if (area === 'local' && changes.lang) {
       setLangPref(changes.lang.newValue);
       applyStaticText();
@@ -275,11 +280,12 @@ function bindBrowser() {
 }
 
 export function bindEvents() {
-  // 「休眠了多久」每分钟更新一次文字
-  setInterval(() => (refreshSleptLabels(), refreshTrail()), 60000);
+  // 「休眠了多久」每分钟更新一次文字,顺便看看有没有该落的叶子
+  setInterval(() => (refreshSleptLabels(), refreshTrail(), refreshLeaves()), 60000);
   const scroll = $('#scroll');
   // 收藏夹在滚动区外面(顶部),行上的点击在整个页面上接
   bindRows(document.body);
+  bindLeaves($('#tabs'));
   bindMenus(scroll);
   bindControls();
   bindSearch();
