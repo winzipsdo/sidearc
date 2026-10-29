@@ -3,7 +3,7 @@
   "name": "Sidearc",
   "description": "__MSG_description__",
   "default_locale": "en",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "minimum_chrome_version": "116",
   "permissions": ["sidePanel", "tabs", "storage", "favicon", "search", "clipboardWrite", "sessions", "history", "webNavigation", "tabGroups"],
   "background": { "service_worker": "background.js", "type": "module" },
