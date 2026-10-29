@@ -56,7 +56,7 @@ const MESSAGES = {
     pinTabTip: '固定到当前空间,只在这个空间里显示',
     addToFavs: '添加到收藏夹',
     copyLink: '复制链接地址',
-    duplicateTab: '复制',
+    duplicateTab: '创建副本',
     hardReload: '硬性重新加载',
     alreadyAsleepTip: '已经在休眠了',
     keepAwake: '保持唤醒',
