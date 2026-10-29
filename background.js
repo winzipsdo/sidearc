@@ -37,7 +37,7 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     const all = await chrome.storage.session.get(null);
     const set = {};
     const remove = [];
-    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept]) {
+    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen]) {
       if (!(key(removedId) in all)) continue;
       set[key(addedId)] = all[key(removedId)];
       remove.push(key(removedId));
@@ -69,7 +69,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
-  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId)];
+  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId), KEY.seen(tabId)];
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
@@ -172,6 +172,8 @@ async function restoreStep() {
     // 从上次关浏览器前最后一次使用时算起
     const asleep = tab.discarded || tab.status === 'unloaded';
     if (asleep && (e.z ?? r.time)) set[KEY.slept(tab.id)] = e.z ?? r.time;
+    // 上次离开的时间(落叶从这时算起):重启后 Chrome 的 lastAccessed 不一定靠得住,接着用原来记的
+    if (e.v) set[KEY.seen(tab.id)] = e.v;
   }
   // 父子关系要等两头都对上
   r.tabs.forEach((e, pos) => {
@@ -207,6 +209,7 @@ async function saveSnapshot() {
       p: pos.get(all[KEY.parent(t.id)]),
       b: binds.get(t.id),
       z: all[KEY.slept(t.id)],
+      v: all[KEY.seen(t.id)],
     })),
   };
   await chrome.storage.local.set({ snapshot });
@@ -337,7 +340,10 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) =>
     const rec = (await chrome.storage.session.get(key))[key];
     // 原来的当前标签页刚被关掉(关掉当前标签页时 Chrome 会切到别的),不给它留足迹
     const prevAlive = rec?.active == null || !closedTabs.has(rec.active);
-    await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, Date.now(), prevAlive) });
+    const now = Date.now();
+    // 同时记下离开原来那个标签页的时间,侧边栏的落叶从这时算起
+    const left = prevAlive && rec?.active != null && rec.active !== tabId ? { [KEY.seen(rec.active)]: now } : {};
+    await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, now, prevAlive), ...left });
   })
 );
 // 关掉的标签页从足迹里去掉;关掉的窗口整条删掉

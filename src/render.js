@@ -4,6 +4,7 @@ import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
+import { refreshLeaves } from './leaves.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
@@ -321,6 +322,7 @@ export function render() {
   refreshTrail();
   refreshSleepAnim();
   refreshJumpAnim();
+  refreshLeaves();
   updateScrollFades();
   applyCursor();
   saveSnapshot();
@@ -341,7 +343,7 @@ function saveSnapshot() {
   snapshotTimer = setTimeout(() => {
     try {
       // 键盘选中框不存进去,下次打开时不该出现
-      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML.replace(/ kb-(focus|pop)| fp(-\w+)?\b/g, '')]));
+      const html = Object.fromEntries(SNAPSHOT_PARTS.map((id) => [id, document.getElementById(id).innerHTML.replace(/ kb-(focus|pop)| fp(-\w+)?\b/g, '').replace(/<canvas class="leaves"[^>]*><\/canvas>/g, '')]));
       const accent = document.documentElement.style.getPropertyValue('--accent');
       // 页面里写死的文字也存一份当前语言的,免得用英文时先闪一下中文
       const text = {};

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -215,4 +215,16 @@ test('trailLeft:随离开的时间从 1 线性降到 0,10 分钟后为 0', () =>
   assert.equal(trailLeft(0, TRAIL_TTL), 0);
   assert.equal(trailLeft(0, TRAIL_TTL * 2), 0);
   assert.equal(TRAIL_TTL, 10 * 60000);
+});
+
+test('leafCount:离开后每满 N 小时一片,最多 LEAF_MAX 片;不落或没有时间就没有', () => {
+  const H = 3600000;
+  assert.equal(leafCount(0, 100 * H, 12), 0);
+  assert.equal(leafCount(1000, 1000 + 11.9 * H, 12), 0);
+  assert.equal(leafCount(1000, 1000 + 12 * H, 12), 1);
+  assert.equal(leafCount(1000, 1000 + 37 * H, 12), 3);
+  assert.equal(leafCount(1000, 1000 + 37 * H, 6), 6);
+  assert.equal(leafCount(1000, 1000 + 1000 * H, 12), LEAF_MAX);
+  assert.equal(leafCount(1000, 1000 + 1000 * H, 0), 0);
+  assert.equal(leafCount(5000, 1000, 12), 0);
 });

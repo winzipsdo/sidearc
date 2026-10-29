@@ -109,6 +109,9 @@ const MESSAGES = {
     sponsor: '支持 Sidearc',
     footprintsTip: '最近离开的几个标签页旁边显示一道竖条,10 分钟内慢慢缩短、变淡直到消失。点第几根就显示几个,点最左边的 ⊘ 就不显示',
     footprintsOff: '不显示',
+    leaves: '落叶',
+    leavesTip: '很久没进去过的标签页上会慢慢落上叶子,从上次离开算起每隔这么久落一片,最多 8 片。鼠标在上面左右来回扫几下就能扫干净;点最左边的 ⊘ 就不落',
+    leavesOff: '不落叶',
 
     // 对话框
     save: '保存',
@@ -254,6 +257,9 @@ const MESSAGES = {
     sponsor: 'Support Sidearc',
     footprintsTip: 'Mark the last few tabs you left with a bar that shrinks and fades away over 10 minutes. Click a bar to show that many, or ⊘ on the left to turn it off',
     footprintsOff: 'Off',
+    leaves: 'Fallen leaves',
+    leavesTip: 'Tabs you haven’t visited in a while slowly gather leaves: one every this often since you left, up to 8. Sweep the mouse back and forth over them to clear them; click ⊘ on the left to turn it off',
+    leavesOff: 'Off',
 
     save: 'Save',
     cancel: 'Cancel',

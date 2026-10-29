@@ -520,6 +520,10 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 .row .title + .x { margin-left: -4px; }
 
 /* 拖拽时正在当落点的那一行(画插入线、小圆点,也用 ::before)暂时不画足迹,免得两个叠在一起,圆点被拉成足迹的形状 */
+/* 落叶(见 leaves.js):盖在行上的一块画布,不接鼠标;行上的按钮压在叶子上面,鼠标移上去时不被挡住 */
+.row > canvas.leaves { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: inherit; pointer-events: none; z-index: 1; }
+.row .btn { position: relative; z-index: 2; }
+
 /* 足迹:最近离开的几个标签页,左边一道主题色竖条(收藏在底部一道短横线)。每个各自倒计时 10 分钟,
    从两头往中间缩短、同时变淡,最短缩成一个圆点、最淡 20%(fp-life,--fp-age 是负的「已经离开多久」,见 render.js 的 refreshTrail)。
    改的是长度不是 scale,圆角不会被压扁,最后是个真正的圆点。
@@ -810,6 +814,14 @@ body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings 
 #menu .trail-pick .bars i.off::before { content: none; }
 #menu .trail-pick .bars i.off svg { width: 12px; height: 12px; }
 #menu .trail-pick .bars i.off.on, #menu .trail-pick .bars i.off:hover { color: var(--fg); opacity: 1; }
+/* 落叶多久落一片的选择条(见 menus.js 的 leafPicker):和足迹那行一样,右边一排小字选项,选中的用主题色 */
+#menu .leaf-pick { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 6px 0 8px; }
+#menu .leaf-pick > .label { flex: 1; white-space: nowrap; }
+#menu .leaf-pick .opts { display: flex; align-items: center; gap: 1px; }
+#menu .leaf-pick .opts i { display: grid; place-items: center; height: 22px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: 11px; color: var(--fg-3); white-space: nowrap; cursor: pointer; transition: background 0.12s, color 0.12s; }
+#menu .leaf-pick .opts i:hover { background: var(--fill-hover); color: var(--fg); }
+#menu .leaf-pick .opts i.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); font-weight: 600; }
+#menu .leaf-pick .opts i.off svg { width: 12px; height: 12px; }
 #menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
 
 /* 对话框 */

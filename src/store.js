@@ -2,7 +2,7 @@
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
 import { t } from './i18n.js';
-import { buildTree, isAway, matchesQuery, pinnedItems, pinnedLists, TRAIL_SHOW } from './logic.js';
+import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, TRAIL_SHOW } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
@@ -17,7 +17,9 @@ export const tabAlias = new Map();
 export const tabParent = new Map();
 // 标签页开始休眠的时间:tabId -> 毫秒
 export const tabSlept = new Map();
-const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept };
+// 上次离开(或扫干净落叶)的时间:tabId -> 毫秒。没有记录的(装扩展之前就开着的)用 Chrome 的 lastAccessed
+export const tabSeen = new Map();
+const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen };
 
 export const tabs = [];
 export let windowId;
@@ -66,6 +68,9 @@ export let trail = [];
 // 以前存的是开关:true 算 3 个,false 算 0
 export let trailCount = TRAIL_SHOW;
 export const setTrailCount = (v) => (trailCount = typeof v === 'number' ? v : v === false ? 0 : TRAIL_SHOW);
+// 落叶多少小时落一片(右下角设置里选,0 = 不落),存在 chrome.storage.local 的 leaves 里
+export let leafHours = LEAF_HOURS;
+export const setLeafHours = (v) => (leafHours = v === 0 || LEAF_CHOICES.includes(v) ? v : LEAF_HOURS);
 
 export function applySession(key, value) {
   if (key === KEY.trail(windowId)) return (trail = value?.trail ?? []);
@@ -95,6 +100,10 @@ export function setTabParent(tabId, parentId) {
   }
   tabParent.set(tabId, parentId);
   return chrome.storage.session.set({ [KEY.parent(tabId)]: parentId });
+}
+export function setTabSeen(tabId, at) {
+  tabSeen.set(tabId, at);
+  return chrome.storage.session.set({ [KEY.seen(tabId)]: at });
 }
 export function setBind(itemId, tabId) {
   bind.set(itemId, tabId);
@@ -177,7 +186,7 @@ export function subtreeIds(tabId) {
 export const tabReplacedHooks = [];
 
 export function replaceTabId(added, removed) {
-  for (const map of [tabSpace, tabAlias, tabParent, tabSlept]) {
+  for (const map of [tabSpace, tabAlias, tabParent, tabSlept, tabSeen]) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }

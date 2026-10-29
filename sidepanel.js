@@ -10,19 +10,20 @@ import { bindEvents } from './src/events.js';
 import { applyStaticText, setLangPref } from './src/i18n.js';
 import { render } from './src/render.js';
 import { initRestore } from './src/restore.js';
-import { applySession, normalize, refreshTabs, save, setState, setTrailCount, setWindowId } from './src/store.js';
+import { applySession, normalize, refreshTabs, save, setLeafHours, setState, setTrailCount, setWindowId } from './src/store.js';
 
 async function init() {
   // 启动要读的几样互不依赖,一起读
   const [win, stored, session, tabs] = await Promise.all([
     chrome.windows.getCurrent(),
-    chrome.storage.local.get(['state', 'lang', 'trail']),
+    chrome.storage.local.get(['state', 'lang', 'trail', 'leaves']),
     chrome.storage.session.get(null),
     chrome.tabs.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }),
   ]);
   // 语言要最先定:新建的默认空间的名字也看语言
   setLangPref(stored.lang);
   setTrailCount(stored.trail);
+  setLeafHours(stored.leaves);
   applyStaticText();
   setWindowId(win.id);
   setState(stored.state);
