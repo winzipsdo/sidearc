@@ -10,6 +10,7 @@ import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
+import { deleteHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
@@ -60,6 +61,8 @@ function bindRows(root) {
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (el.dataset.kind === 'folder') return toggleFolder(el.dataset.id);
+    // 搜索结果里的历史记录:在新标签页打开(归入当前空间)
+    if (el.dataset.kind === 'hist') return act === 'close' ? deleteHistory(el.dataset.id) : chrome.tabs.create({ url: el.dataset.id, windowId });
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
       if (!tab) return;

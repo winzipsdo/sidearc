@@ -377,6 +377,12 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 /* 滚动区里的各段都不许被压扁:内容多了就滚动,而不是互相重叠 */
 #scroll > * { flex-shrink: 0; }
 #tabs { flex: 1 0 auto; min-height: 56px; }
+/* 搜索时的历史记录(见 history.js):接在标签页后面,这时标签页列表不再撑满,免得把它挤到最底下 */
+#tabs:has(+ #history:not([hidden])) { flex-grow: 0; min-height: 0; }
+#history .divider b { color: var(--fg-3); font-size: 11px; font-weight: 600; }
+.row.hist .title { color: var(--fg-2); }
+.row.hist:hover .ago { display: none; }
+.row.hist .ago { flex: none; color: var(--fg-3); font-size: 11px; font-weight: 400; white-space: nowrap; }
 .row {
   display: flex;
   align-items: center;

@@ -5,6 +5,7 @@ import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
+import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
@@ -323,6 +324,7 @@ export function render() {
   refreshSleepAnim();
   refreshJumpAnim();
   refreshLeaves();
+  refreshHistory();
   updateScrollFades();
   applyCursor();
   saveSnapshot();
