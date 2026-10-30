@@ -112,7 +112,7 @@ const MESSAGES = {
     historyHead: '历史记录',
     deleteHistory: '从历史记录中删除',
     leaves: '落叶',
-    leavesTip: '很久没进去过的标签页上会慢慢落上叶子,从上次离开算起每隔这么久落一片,最多 8 片。鼠标在上面左右来回扫几下就能扫干净;点最左边的 ⊘ 就不落',
+    leavesTip: '很久没进去过的标签页上会慢慢落上叶子:离开超过一天后,每隔这么久落一片,最多 12 片。鼠标在上面左右来回扫几下就能扫干净;点最左边的 ⊘ 就不落',
     leavesOff: '不落叶',
 
     // 对话框
@@ -262,7 +262,7 @@ const MESSAGES = {
     historyHead: 'History',
     deleteHistory: 'Remove from history',
     leaves: 'Fallen leaves',
-    leavesTip: 'Tabs you haven’t visited in a while slowly gather leaves: one every this often since you left, up to 8. Sweep the mouse back and forth over them to clear them; click ⊘ on the left to turn it off',
+    leavesTip: 'Tabs you haven’t visited in a while slowly gather leaves: once you’ve been away a day, one more every this often, up to 12. Sweep the mouse back and forth over them to clear them; click ⊘ on the left to turn it off',
     leavesOff: 'Off',
 
     save: 'Save',

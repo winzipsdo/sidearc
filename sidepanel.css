@@ -757,7 +757,7 @@ body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings 
   position: fixed;
   z-index: 10;
   min-width: 180px;
-  max-width: min(260px, calc(100vw - 8px));
+  max-width: min(280px, calc(100vw - 8px));
   /* 侧边栏太矮放不下整个菜单时,菜单内部滚动 */
   max-height: calc(100vh - 8px);
   overflow-y: auto;
@@ -820,13 +820,21 @@ body:has(#menu[data-from='settings']:not([hidden])) #spaces .space-dot.settings 
 #menu .trail-pick .bars i.off::before { content: none; }
 #menu .trail-pick .bars i.off svg { width: 12px; height: 12px; }
 #menu .trail-pick .bars i.off.on, #menu .trail-pick .bars i.off:hover { color: var(--fg); opacity: 1; }
-/* 落叶多久落一片的选择条(见 menus.js 的 leafPicker):和足迹那行一样,右边一排小字选项,选中的用主题色 */
-#menu .leaf-pick { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 6px 0 8px; }
-#menu .leaf-pick > .label { flex: 1; white-space: nowrap; }
-#menu .leaf-pick .opts { display: flex; align-items: center; gap: 1px; }
-#menu .leaf-pick .opts i { display: grid; place-items: center; height: 22px; padding: 0 5px; border-radius: 6px; font-style: normal; font-size: 11px; color: var(--fg-3); white-space: nowrap; cursor: pointer; transition: background 0.12s, color 0.12s; }
+/* 足迹和落叶两个选择条放在同一个网格里(见 menus.js 的 settingsMenu):图标、名字、选项各占一列,
+   两行的选项列一样宽,最左边的 ⊘ 和右边缘都对齐 */
+#menu .picks { display: grid; grid-template-columns: 16px auto auto; grid-auto-rows: 30px; align-items: center; column-gap: 9px; padding: 0 10px 0 8px; }
+#menu .picks > :is(.trail-pick, .leaf-pick) { display: contents; }
+#menu .picks .i { width: 16px; height: 16px; color: var(--fg-2); }
+#menu .picks .label { white-space: nowrap; padding-right: 6px; }
+#menu .picks :is(.bars, .opts) { justify-self: stretch; }
+#menu .picks :is(.bars, .opts) > .off + * { margin-left: auto; }
+/* 落叶多久落一片(见 menus.js 的 leafPicker):一排小字选项,选中的用主题色 */
+#menu .leaf-pick .opts { display: flex; align-items: center; gap: 1px; height: 100%; }
+#menu .leaf-pick .opts i { display: grid; place-items: center; height: 22px; padding: 0 5px; font-variant-numeric: tabular-nums; border-radius: 6px; font-style: normal; font-size: 11px; color: var(--fg-3); white-space: nowrap; cursor: pointer; transition: background 0.12s, color 0.12s; }
 #menu .leaf-pick .opts i:hover { background: var(--fill-hover); color: var(--fg); }
 #menu .leaf-pick .opts i.on { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); font-weight: 600; }
+#menu .leaf-pick .opts i.off { width: 18px; padding: 0; margin-right: 3px; opacity: 0.55; }
+#menu .leaf-pick .opts i.off.on, #menu .leaf-pick .opts i.off:hover { opacity: 1; background: none; color: var(--fg); }
 #menu .leaf-pick .opts i.off svg { width: 12px; height: 12px; }
 #menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
 
