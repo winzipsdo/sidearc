@@ -1,6 +1,6 @@
 // 主页的脚本:切换中英文、在线试用和任务清单、视频的播放按钮、复制命令。
 
-import { mountDemo } from './demo/demo.js?v=f8812642';
+import { mountDemo } from './demo/demo.js?v=6970b700';
 
 const root = document.documentElement;
 const store = {
@@ -18,25 +18,32 @@ const store = {
   },
 };
 
-// ---------- 语言:页面开头的脚本已经选好,这里只管切换,并记住选择 ----------
+// ---------- 语言:中文页和英文页是两个网址(source/pages.js 生成),右上角的按钮是到另一个的链接 ----------
+// 记住选择:下次直接打开另一种语言(页面开头的脚本会跳过去)
 
-const TITLES = { zh: 'Sidearc · Chrome 侧边标签栏', en: 'Sidearc · Arc-style vertical tabs for Chrome' };
-function setLang(lang) {
-  root.dataset.lang = lang;
-  root.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.title = TITLES[lang];
+document.getElementById('lang').addEventListener('click', () => store.set('lang', root.dataset.lang === 'zh' ? 'en' : 'zh'));
+
+// 第一次来、浏览器语言和这个页面不一样:顶部提示一句有另一种语言的版本。只提示不跳转,
+// 搜索引擎的爬虫(浏览器语言多半是英文)照样能收录中文页
+const browserLang = /^zh\b/i.test(navigator.language) ? 'zh' : 'en';
+if (browserLang !== root.dataset.lang && !store.get('lang')) {
+  const zh = browserLang === 'zh';
+  const bar = document.createElement('div');
+  bar.className = 'lang-hint';
+  bar.lang = zh ? 'zh-CN' : 'en';
+  bar.innerHTML = zh
+    ? '这个页面有中文版。<a href="../">查看中文版 →</a><button type="button" aria-label="关闭">×</button>'
+    : 'This page is also available in English. <a href="en/">View in English →</a><button type="button" aria-label="Close">×</button>';
+  bar.querySelector('a').addEventListener('click', () => store.set('lang', browserLang));
+  bar.querySelector('button').addEventListener('click', () => {
+    store.set('lang', root.dataset.lang);
+    bar.remove();
+  });
+  document.body.prepend(bar);
 }
-setLang(root.dataset.lang);
-document.getElementById('lang').addEventListener('click', () => {
-  const lang = root.dataset.lang === 'zh' ? 'en' : 'zh';
-  setLang(lang);
-  store.set('lang', lang);
-  // 试用里的插件界面和网页也换成这个语言(重新开始)
-  demo.reset(lang);
-});
 
 // 当前版本号(由 source/build.js 从 main 的 manifest.json 写进来)
-fetch('ext/version.json')
+fetch(new URL('ext/version.json', import.meta.url))
   .then((r) => r.json())
   .then(({ version }) => (document.getElementById('ver').textContent = 'v' + version))
   .catch(() => {});

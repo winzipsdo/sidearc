@@ -1,6 +1,6 @@
-// 给主页引用的文件加上版本号(?v=内容的哈希),推送前运行:node source/stamp.js(source/build.js 最后也会运行)。
+// 给主页引用的文件加上版本号(?v=内容的哈希)。由 source/pages.js 在生成页面后运行,一般不用单独运行。
 // GitHub Pages 让浏览器把文件缓存 10 分钟:不加版本号的话,更新后有人会拿到新的 index.html 配旧的样式和脚本,页面就乱了。
-// 改的是 index.html、main.js、demo/ 和 ext/ 的两个页面里的引用;插件代码(ext/src/)内部互相引用的模块不改。
+// 改的是中英文两个页面、main.js、demo/ 和 ext/ 的两个页面里的引用;插件代码(ext/src/)内部互相引用的模块不改。
 
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,7 @@ const hash = (file) => createHash('sha256').update(readFileSync(file)).digest('h
 const REF = /(["'])((?:\.{1,2}\/)?[\w./-]+\.(?:js|css|html|mp4|jpg|svg))(?:\?v=\w+)?\1/g;
 
 // 按依赖顺序处理:先处理被引用的文件,它的哈希才包含它自己里面的新版本号
-const FILES = ['demo/web.js', 'demo/sim.js', 'demo/inject.js', 'ext/sidepanel.html', 'ext/background.html', 'demo/demo.js', 'main.js', 'index.html'];
+const FILES = ['demo/web.js', 'demo/sim.js', 'demo/inject.js', 'ext/sidepanel.html', 'ext/background.html', 'demo/demo.js', 'main.js', 'index.html', 'en/index.html'];
 for (const name of FILES) {
   const file = join(SITE, name);
   const text = readFileSync(file, 'utf8');

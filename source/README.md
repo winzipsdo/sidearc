@@ -4,7 +4,9 @@
 
 | 位置 | 是什么 | 怎么来的 |
 | --- | --- | --- |
-| `index.html`、`style.css`、`main.js` | 主页本身(中英文写在一起) | 手写 |
+| `source/index.html` | 主页的源文件,中英文写在一起(`data-l` 标明语言) | 手写 |
+| `index.html`、`en/index.html`、`sitemap.xml` | 中文页、英文页和网站地图 | `source/pages.js` 从 `source/index.html` 生成,别手改 |
+| `style.css`、`main.js` | 主页的样式和脚本,两个页面共用 | 手写 |
 | `demo/` | 在线试用:模拟的 Chrome(`sim.js`)、假的浏览器窗口(`demo.js`、`demo.css`)、假网站和初始状态(`web.js`)、给插件页面注入接口的 `inject.js` | 手写;`brand-icons.js` 从 `main` 复制 |
 | `ext/` | 插件本身的代码,在线试用直接跑它 | `source/build.js` 从 `main` 复制,别手改 |
 | `store/`、`icons/` | 应用商店截图、插件图标 | `source/build.js` 从 `main` 复制 |
@@ -34,7 +36,20 @@ git add -A && git commit -m "Site: update the extension to <版本号>" && git p
 
 ## 修改主页文字
 
-直接改 `index.html`,运行 `node source/stamp.js` 更新引用文件的版本号(改了样式、脚本或视频时必须运行,否则浏览器会拿缓存里的旧文件配新页面),再提交推送。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
+改 `source/index.html`(中英文写在一起:同一处的两种语言各包在 `data-l="zh"`、`data-l="en"` 的元素里),然后运行:
+
+```bash
+node source/pages.js
+```
+
+它生成中文页 `index.html` 和英文页 `en/index.html`(各只留一种语言,有各自的标题、描述、canonical、hreflang 和结构化数据),写 `sitemap.xml`,再给引用的样式、脚本、视频加上版本号(否则浏览器会拿缓存里的旧文件配新页面)。改了 `style.css`、`main.js`、`demo/` 或重新生成了视频,也要运行一次。提交推送后几分钟内生效。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
+
+### 搜索引擎
+
+- 中文页和英文页是两个网址,互相用 hreflang 标明;右上角的语言按钮是到另一个页面的链接,选择会被记住,下次直接打开那种语言。浏览器语言和页面不一样时,顶部提示有另一种语言的版本,但不自动跳转,免得爬虫收录不到中文页。
+- 结构化数据(JSON-LD):`SoftwareApplication`(版本号取自 `ext/version.json`)和介绍视频的 `VideoObject`(时长从 MP4 读,上传时间是它最近一次提交的时间),都由 `source/pages.js` 生成。
+- `ext/` 的两个页面和 `source/video/scene.html` 带 `noindex`,不会被当成空页面收录。
+- 主页在 `winzipsdo.github.io` 的子目录里,根目录的 `robots.txt` 不归这个仓库管,`sitemap.xml`(https://winzipsdo.github.io/sidearc/sitemap.xml)要在 Google Search Console 里手动提交一次。
 
 ## 重新生成视频
 

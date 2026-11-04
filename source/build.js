@@ -22,7 +22,8 @@ rmSync(EXT, { recursive: true, force: true });
 mkdirSync(EXT, { recursive: true });
 for (const f of ['sidepanel.css', 'sidepanel.js', 'boot.js', 'background.js', 'src']) copy(f, join('ext', f));
 // 模拟的 chrome.* 接口要在插件自己的脚本之前就位
-const inject = (ctx) => `<script src="../demo/inject.js" data-ctx="${ctx}"></script>`;
+// 这两个页面只在在线试用里用,不要被搜索引擎收录
+const inject = (ctx) => `<meta name="robots" content="noindex">\n  <script src="../demo/inject.js" data-ctx="${ctx}"></script>`;
 const panel = readFileSync(join(MAIN, 'sidepanel.html'), 'utf8').replace(/<head>/i, `<head>\n  ${inject('panel')}`);
 writeFileSync(join(EXT, 'sidepanel.html'), panel);
 writeFileSync(join(EXT, 'background.html'), `<!doctype html>\n<meta charset="utf-8">\n<title>Sidearc background</title>\n${inject('background')}\n<script type="module" src="background.js"></script>\n`);
@@ -40,5 +41,5 @@ const { version } = JSON.parse(readFileSync(join(MAIN, 'manifest.json'), 'utf8')
 writeFileSync(join(EXT, 'version.json'), JSON.stringify({ version }) + '\n');
 console.log(`已从 ${MAIN} 复制插件 ${version} 的代码、截图和图标`);
 
-// 复制来的文件变了,引用它们的版本号也要跟着变
-await import('./stamp.js');
+// 复制来的文件变了:重新生成中英文页面,引用它们的版本号也要跟着变
+await import('./pages.js');

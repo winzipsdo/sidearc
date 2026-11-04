@@ -25,7 +25,8 @@ const ICON = {
 };
 const svg = (name, size = 14) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-const LOGO = 'assets/logo.svg';
+// 地址按这个脚本的位置算:中文页在根目录、英文页在 en/ 下,两边都能用
+const LOGO = new URL('../assets/logo.svg?v=852405be', import.meta.url).href;
 
 // 打开试用时的样子:按 web.js 的设定开好标签页、写好存储,再按侧边栏的顺序排好、分好组
 function setup(b, lang) {
@@ -304,7 +305,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = 'ext/background.html';
+    bg.src = new URL('../ext/background.html?v=f47dd662', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -313,7 +314,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = 'ext/sidepanel.html';
+    panel.src = new URL('../ext/sidepanel.html?v=ba7f2095', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

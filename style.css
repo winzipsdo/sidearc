@@ -79,6 +79,12 @@ kbd {
 .lang { border: 0; background: none; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .gh { display: grid; place-items: center; padding: 6px 8px; }
 
+/* 浏览器语言和页面不一样时,顶部提示另一种语言的版本(main.js) */
+.lang-hint { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 44px 9px 16px; position: relative; background: color-mix(in srgb, var(--accent) 14%, var(--bg)); color: var(--fg-2); font-size: 14px; text-align: center; }
+.lang-hint a { font-weight: 600; }
+.lang-hint button { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; border-radius: 8px; background: none; color: var(--fg-3); font-size: 18px; cursor: pointer; }
+.lang-hint button:hover { background: var(--bg-soft); color: var(--fg); }
+
 /* 首屏 */
 .hero { position: relative; padding: 64px 0 28px; text-align: center; }
 .hero::before {
