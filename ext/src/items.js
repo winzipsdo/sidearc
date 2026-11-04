@@ -90,9 +90,15 @@ export async function closeItemTab(item) {
   if (tabId == null) return;
   // 先解绑再关,后台就认不出它是固定项的标签页了:它的子标签要在这里先放开,免得被连带关闭
   for (const [child, parent] of [...tabParent]) if (parent === tabId) await setTabParent(child, null);
-  await unbind(item.id);
-  await returnBeforeClose(new Set([tabId]));
-  await chrome.tabs.remove(tabId).catch(() => {});
+  // 解绑到关掉之间不重画:不然它会先作为普通标签页在下面的列表里闪一下(连同积着的落叶),再被关掉
+  setRenderHeld(true);
+  try {
+    await unbind(item.id);
+    await returnBeforeClose(new Set([tabId]));
+    await chrome.tabs.remove(tabId).catch(() => {});
+  } finally {
+    setRenderHeld(false);
+  }
   render();
 }
 

@@ -3,7 +3,7 @@
 // 和在真的 Chrome 里一样:各自注册事件、读写同一份存储、互相发消息。
 // 事件的先后顺序尽量照着 Chrome 来,事件和返回值都是拷贝,插件改了也不会影响这里的数据。
 
-import { NEW_TAB, page } from './web.js?v=8a7c6255';
+import { NEW_TAB, page } from './web.js?v=cc03e038';
 
 const WIN = 1;
 const LOAD_MS = 300; // 网页「加载」多久
@@ -25,6 +25,7 @@ export class Browser {
     this.nextGroup = 1;
     this.nextSession = 1;
     this.history = new Map(); // tabId -> { list, pos } 前进后退
+    this.visits = new Map(); // 浏览历史:url -> { url, title, lastVisitTime, visitCount }
   }
 
   // ---------- 事件 ----------
@@ -154,7 +155,10 @@ export class Browser {
       transitionQualifiers: qualifiers,
       timeStamp: Date.now(),
     });
-    if (/^https?:/.test(url)) this.emit('history.onVisited', { id: String(Date.now()), url, title: page(url, this.lang).title, lastVisitTime: Date.now(), visitCount: 1, typedCount: 0 });
+    if (/^https?:/.test(url)) {
+      const v = this.visit(url, Date.now());
+      this.emit('history.onVisited', { id: v.id, url, title: v.title, lastVisitTime: v.lastVisitTime, visitCount: v.visitCount, typedCount: 0 });
+    }
     setTimeout(() => this.loaded(t, url, true), LOAD_MS);
   }
 
@@ -165,6 +169,14 @@ export class Browser {
     this.emit('tabs.onUpdated', t.id, { title: p.title, favIconUrl: p.icon }, pub(t));
     this.emit('tabs.onUpdated', t.id, { status: 'complete' }, pub(t));
     if (p.media && (autoplay || t.playing)) this.setAudible(t, true);
+  }
+
+  // 记一次访问(浏览历史)
+  visit(url, at) {
+    const v = this.visits.get(url) ?? { id: String(this.visits.size + 1), url, visitCount: 0, typedCount: 0 };
+    Object.assign(v, { title: page(url, this.lang).title, lastVisitTime: Math.max(v.lastVisitTime ?? 0, at), visitCount: v.visitCount + 1 });
+    this.visits.set(url, v);
+    return v;
   }
 
   setAudible(t, on) {
@@ -419,7 +431,17 @@ export class Browser {
         restore: fn('sessions.restore', (sessionId) => b.restore(sessionId)),
       },
       webNavigation: events('webNavigation', ['onCreatedNavigationTarget', 'onCommitted', 'onHistoryStateUpdated', 'onCompleted', 'onBeforeNavigate']),
-      history: { deleteUrl: fn('history.deleteUrl', () => {}), ...events('history', ['onVisited']) },
+      history: {
+        search: fn('history.search', ({ text = '', startTime = 0, maxResults = 100 } = {}) => {
+          const words = text.toLowerCase().split(/\s+/).filter(Boolean);
+          return [...b.visits.values()]
+            .filter((v) => v.lastVisitTime >= startTime && words.every((w) => (v.title + ' ' + v.url).toLowerCase().includes(w)))
+            .sort((x, y) => y.lastVisitTime - x.lastVisitTime)
+            .slice(0, maxResults);
+        }),
+        deleteUrl: fn('history.deleteUrl', ({ url }) => void b.visits.delete(url)),
+        ...events('history', ['onVisited']),
+      },
       search: { query: fn('search.query', ({ text }) => void b.create({ url: `https://www.google.com/search?q=${encodeURIComponent(text)}` }, { transition: 'generated' })) },
       sidePanel: { setPanelBehavior: fn('sidePanel.setPanelBehavior', () => {}), open: fn('sidePanel.open', () => {}) },
     };

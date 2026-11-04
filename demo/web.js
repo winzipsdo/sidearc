@@ -167,6 +167,27 @@ const PAGES = {
   'https://typst.app/docs/reference/math/': { title: L('数学公式 – Typst 文档', 'Math – Typst Documentation') },
 };
 
+// 浏览历史:打开试用时已经有的访问记录(网址,多少小时以前)。开着的标签页也会记上。
+// 搜索两个字以上时,侧边栏会在标签页下面列出匹配的历史记录
+export const HISTORY = [
+  ['https://www.notion.so/sidearc/weekly-notes', 3],
+  ['https://www.notion.so/sidearc/release-plan', 20],
+  ['https://developer.chrome.com/docs/extensions/reference/api/tabGroups', 5],
+  ['https://developer.chrome.com/docs/extensions/develop/migrate', 30],
+  ['https://developer.chrome.com/docs/extensions/reference/api/tabs', 52],
+  ['https://developer.mozilla.org/docs/Web/CSS/color_value/oklch', 8],
+  ['https://github.com/winzipsdo/sidearc/releases', 26],
+  ['https://github.com/winzipsdo/sidearc/blob/main/CHANGELOG.md', 49],
+  ['https://github.com/winzipsdo/sidearc/issues/42', 75],
+  ['https://www.youtube.com/watch?v=HZGCoVF3YvM', 100],
+  ['https://zh.wikipedia.org/wiki/条件概率', 120],
+  ['https://en.wikipedia.org/wiki/Conditional_probability', 120],
+  ['https://www.figma.com/design/home-v3', 6],
+  ['https://linear.app/sidearc/issue/SID-128', 28],
+  ['https://tabs.blog/80-tabs', 60],
+  ['https://chromium.dev/memory-saver', 150],
+];
+
 // 新标签页上的快捷方式。有几个已经开着(或是收藏):点它们能看到「相同网址只开一份」
 export const tiles = (lang) => [
   'https://news.ycombinator.com/',
@@ -202,7 +223,7 @@ export function page(url, lang) {
 // 打开试用时的样子。三个空间:个人(当前)、工作、学习。
 // tabs 里每一项是一个开着的标签页:space 归哪个空间;item 绑定到哪个收藏/固定项;parent 是父标签页;
 // slept 是已经休眠了多久(分钟);trail 是多少分钟前离开的(足迹);playing 是正在放声音;
-// idle 是多少小时没进去过(落叶:默认每 12 小时落一片)
+// idle 是多少小时没进去过(落叶:离开一天后开始落,之后默认每 12 小时一片)
 export function scenario(lang) {
   const z = lang === 'zh';
   const item = (id, url, alias) => ({ id, url, title: page(url, lang).title, ...(alias && { alias }) });
@@ -248,12 +269,12 @@ export function scenario(lang) {
     { key: 'docs', url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel', space: 's-me', alias: z ? '文档' : 'Docs', active: true },
     { key: 'mdn', url: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix', space: 's-me', parent: 'docs', trail: 2 },
     { key: 'lofi', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', space: 's-me', alias: 'BGM', playing: true },
-    { key: 'hn', url: 'https://news.ycombinator.com/', space: 's-me', slept: 135, idle: 80 },
+    { key: 'hn', url: 'https://news.ycombinator.com/', space: 's-me', slept: 135, idle: 120 },
     { key: 'linear', url: 'https://linear.app/sidearc/my-issues', item: 'p-linear' },
     { key: 'figma', url: 'https://www.figma.com/design/home-v3', space: 's-work' },
     { key: 'pr', url: 'https://github.com/winzipsdo/sidearc/pulls', space: 's-work' },
     { key: 'build', url: 'https://github.com/winzipsdo/sidearc/actions/runs/128', space: 's-work', parent: 'pr' },
-    { key: 'slack', url: 'https://app.slack.com/client/design', space: 's-work', slept: 50, idle: 40 },
+    { key: 'slack', url: 'https://app.slack.com/client/design', space: 's-work', slept: 50, idle: 60 },
     { key: 'anki', url: 'https://ankiweb.net/decks', item: 'p-anki' },
     { key: 'wiki', url: wiki, space: 's-study' },
     { key: '3b1b', url: 'https://www.youtube.com/watch?v=HZGCoVF3YvM', space: 's-study', parent: 'wiki' },

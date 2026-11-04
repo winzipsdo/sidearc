@@ -210,7 +210,7 @@ function trailPicker() {
   return h('div', { class: 'trail-pick', title: t('footprintsTip') }, icon('trail'), h('span', { class: 'label' }, t('footprints')), bars);
 }
 
-// 落叶多久落一片:一排选项(6 小时、12 小时、1 天、3 天),最左边的「⊘」是不落。菜单不关,改完马上能看到
+// 落叶多久落一片:一排选项(6h、8h、12h),最左边的「⊘」是不落。菜单不关,改完马上能看到
 function leafPicker() {
   const opts = h('span', { class: 'opts' });
   const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', +el.dataset.v === v));
@@ -220,7 +220,7 @@ function leafPicker() {
   };
   opts.append(
     h('i', { class: 'off', 'aria-label': t('leavesOff'), title: t('leavesOff'), data: { v: 0 }, onclick: () => pick(0) }, icon('ban')),
-    ...LEAF_CHOICES.map((n) => h('i', { data: { v: n }, onclick: () => pick(n) }, formatDuration(n % 24 ? { unit: 'hours', n } : { unit: 'days', n: n / 24 })))
+    ...LEAF_CHOICES.map((n) => h('i', { data: { v: n }, 'aria-label': formatDuration({ unit: 'hours', n }), onclick: () => pick(n) }, `${n}h`))
   );
   paint(leafHours);
   return h('div', { class: 'leaf-pick', title: t('leavesTip') }, icon('leaf'), h('span', { class: 'label' }, t('leaves')), opts);
@@ -239,8 +239,8 @@ export function settingsMenu(e) {
     pick('zh', LANGS.zh),
     pick('en', LANGS.en),
     '-',
-    { el: trailPicker() },
-    { el: leafPicker() },
+    // 两个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
+    { el: h('div', { class: 'picks' }, trailPicker(), leafPicker()) },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);

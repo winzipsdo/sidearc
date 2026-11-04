@@ -536,8 +536,8 @@ function scenes() {
   set(slept3, 0, { display: 'none' });
   set(slept, L + 0.8, { display: 'none' });
   set(slept3, L + 0.8, { display: 'inline' });
-  // 每 12 小时一片:三天是 6 片;Hacker News 更早就没进去过,落满 8 片
-  [['t-lofi', 6], ['t-hn', 8], ['t-mdn', 6], ['t-tg', 6], ['t-mv3', 6]].forEach(([id, n], i) => leafPile(q('#' + id), L + 0.7 + i * 0.14, n));
+  // 离开一天后开始落,之后每 12 小时一片:三天是 4 片;Hacker News 更早就没进去过,有 8 片
+  [['t-lofi', 4], ['t-hn', 8], ['t-mdn', 4], ['t-tg', 4], ['t-mv3', 4]].forEach(([id, n], i) => leafPile(q('#' + id), L + 0.7 + i * 0.14, n));
   pile(q('#t-tg')).blowAt = L + 6.3;
   activate(q('#t-tg'), st('tg'), 'tg', L + 6.3);
   copyOut($('#copy-8'), L + 7.4);

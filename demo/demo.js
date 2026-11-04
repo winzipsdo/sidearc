@@ -2,8 +2,8 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=805a0ed7';
-import { GLOBE, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=8a7c6255';
+import { Browser } from './sim.js?v=318edb7a';
+import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=cc03e038';
 import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js';
 import { KEY, MSG } from '../ext/src/protocol.js';
 
@@ -73,6 +73,9 @@ function setup(b, lang) {
   // 足迹:刚才离开的几个标签页
   const left = tabs.filter((d) => d.trail).sort((x, y) => x.trail - y.trail);
   session[KEY.trail(1)] = { active: active.id, trail: left.map((d) => ({ id: byKey[d.key].id, at: now - d.trail * 60000 })) };
+  // 浏览历史:以前看过的页面,加上开着的标签页
+  for (const [url, hours] of HISTORY) b.visit(url, now - hours * 3600000);
+  for (const t of b.tabs) b.visit(t.url, t.lastAccessed);
   b.store.local = { state, lang, trail: true };
   b.store.session = session;
 }
@@ -314,7 +317,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=ba7f2095', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=7d6d6ffc', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;
