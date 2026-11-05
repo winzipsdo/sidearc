@@ -89,6 +89,23 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   outline: none;
 }
 #search::placeholder { color: var(--fg-3); }
+/* 有搜索词时右边出现的清空按钮 */
+#search-clear {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-right: -5px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--fg-3);
+  cursor: pointer;
+}
+#search-clear:hover { background: var(--fill-hover); color: var(--fg); }
+.search:has(#search:placeholder-shown) #search-clear { display: none; }
 
 #scroll {
   flex: 1;

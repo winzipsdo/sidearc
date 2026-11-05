@@ -188,6 +188,12 @@ export async function submitSearch(force) {
   if (first) first.click();
   else if (toUrl(q)) await chrome.tabs.create({ url: toUrl(q), windowId });
   else await chrome.search.query({ text: q, disposition: 'NEW_TAB' });
+  endSearch();
+}
+
+// 从搜索结果里打开了一项:清空搜索词、收起搜索框,回到平常的列表
+export function endSearch() {
+  if (!query) return;
   $('#search').value = '';
   setQuery('');
   render();

@@ -13,7 +13,7 @@ import { bindLeaves, refreshLeaves } from './leaves.js';
 import { deleteHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
-import { clearTabs, closeTab, discardTabs, submitSearch } from './tabs.js';
+import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
@@ -61,8 +61,13 @@ function bindRows(root) {
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (el.dataset.kind === 'folder') return toggleFolder(el.dataset.id);
-    // 搜索结果里的历史记录:在新标签页打开(归入当前空间)
-    if (el.dataset.kind === 'hist') return act === 'close' ? deleteHistory(el.dataset.id) : chrome.tabs.create({ url: el.dataset.id, windowId });
+    // 搜索结果里的历史记录:在新标签页打开(归入当前空间)。
+    // 点开搜索结果里的任何一项(不是行上的按钮)都退出搜索
+    if (el.dataset.kind === 'hist') {
+      if (act === 'close') return deleteHistory(el.dataset.id);
+      chrome.tabs.create({ url: el.dataset.id, windowId });
+      return endSearch();
+    }
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
       if (!tab) return;
@@ -78,6 +83,7 @@ function bindRows(root) {
       } else {
         anchorId = tab.id;
         chrome.tabs.update(tab.id, { active: true });
+        endSearch();
       }
     } else {
       const item = findItem(el.dataset.id)?.item;
@@ -92,6 +98,7 @@ function bindRows(root) {
         // 开在别的窗口里:先播一下「跳出去」的动效,告诉你它去了另一个窗口
         if (el.classList.contains('elsewhere-item')) markJump(item.id, e);
         openItem(item);
+        endSearch();
       }
     }
   });
@@ -185,6 +192,14 @@ function bindSearch() {
   // 不管怎么进到搜索框(包括按 Tab 切进来),都展开;空着点到别处就收起来,有搜索词时留着
   search.addEventListener('focus', () => document.body.classList.add('searching'));
   search.addEventListener('blur', () => search.value || document.body.classList.remove('searching'));
+  // 清空按钮:只清掉搜索词,搜索框留着、光标还在里面,接着输入新的(按下时同样不让它失焦)
+  $('#search-clear').addEventListener('mousedown', (e) => e.preventDefault());
+  $('#search-clear').addEventListener('click', () => {
+    search.value = '';
+    setQuery('');
+    render();
+    search.focus();
+  });
   // 按下时不让搜索框失焦,否则空搜索框先因失焦收起,紧接着的点击又把它展开
   $('#search-toggle').addEventListener('mousedown', (e) => e.preventDefault());
   $('#search-toggle').addEventListener('click', () => (document.body.classList.contains('searching') && !search.value ? closeSearch() : openSearch()));

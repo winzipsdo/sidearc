@@ -4,7 +4,7 @@ import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, move
 import { canDiscard, durationParts, isAway, isUnloaded, LEAF_CHOICES, pinnedItems, TRAIL_SIZE } from './logic.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
-import { addSpace, deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
+import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, leafHours, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
@@ -164,7 +164,6 @@ export function spaceMenu(e, id) {
   const spaceTabs = tabs.filter((t) => pinnedTabIds.has(t.id) || (!byTab.has(t.id) && tabSpace.get(t.id) === id));
   showMenu(e, [
     { icon: 'edit', label: t('editSpace'), run: () => editSpace(id) },
-    { icon: 'plus', label: t('newSpaceMenu'), run: addSpace },
     id === activeSpace().id && { icon: 'folderPlus', label: t('newFolderMenu'), run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleNoHistory(id) },
     { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },

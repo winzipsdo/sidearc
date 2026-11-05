@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- README 动图的录制台:只放在线试用的浏览器窗口,外加一个画出来的鼠标指针(录屏里没有真的指针)。由 record.js 打开 -->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Sidearc README recording</title>
+<link rel="stylesheet" href="../../demo/demo.css">
+<style>
+  html, body { margin: 0; overflow: hidden; background: linear-gradient(135deg, #eef0ff, #f4f2fb 55%, #f7eef3); }
+  #demo { width: 1000px; margin: 20px; }
+  #demo .sb-window { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 18px 40px rgba(40, 30, 100, 0.18); }
+  #cursor { position: fixed; z-index: 10; left: 0; top: 0; width: 22px; height: 26px; pointer-events: none; transform-origin: 2px 1px; transition: transform 0.1s; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
+  #cursor.down { transform: scale(0.85); }
+</style>
+</head>
+<body>
+<div id="demo"></div>
+<svg id="cursor" viewBox="0 0 22 26"><path d="M2 1.5v19.2l4.9-4.6 3.3 7.4 3.1-1.4-3.3-7.2h6.8z" fill="#1d1d24" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+<script type="module">
+  import { mountDemo } from '../../demo/demo.js';
+  const lang = new URLSearchParams(location.search).get('lang') === 'en' ? 'en' : 'zh';
+  // 放大录制(record.js 的 crop):整个浏览器窗口按倍数放大
+  document.getElementById('demo').style.zoom = new URLSearchParams(location.search).get('zoom') || 1;
+  document.documentElement.lang = lang;
+  mountDemo(document.getElementById('demo'), { lang, onAction: () => {} });
+  const cursor = document.getElementById('cursor');
+  window.pointAt = (x, y, down) => {
+    cursor.style.left = `${x - 2}px`;
+    cursor.style.top = `${y - 1}px`;
+    cursor.classList.toggle('down', !!down);
+  };
+  window.pointAt(1100, 760);
+</script>
+</body>
+</html>

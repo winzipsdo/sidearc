@@ -51,6 +51,17 @@ node source/pages.js
 - `ext/` 的两个页面和 `source/video/scene.html` 带 `noindex`,不会被当成空页面收录。
 - 主页在 `winzipsdo.github.io` 的子目录里,根目录的 `robots.txt` 不归这个仓库管,`sitemap.xml`(https://winzipsdo.github.io/sidearc/sitemap.xml)要在 Google Search Console 里手动提交一次。
 
+## README 里的动图
+
+`main` 的 README 开头的三张动图(双向同步、空间、落叶)放在这个分支的 `assets/readme/<zh|en>/`,README 用 `https://winzipsdo.github.io/sidearc/assets/readme/...` 引用,`main` 上不放大文件。它们是在在线试用里(插件本身的代码)用脚本操作一遍录下来的,界面改了重新录:
+
+```bash
+NODE_PATH=$(npm root -g) node source/readme/record.js          # 全部
+NODE_PATH=$(npm root -g) node source/readme/record.js leaves   # 只录某一段:sync、spaces、leaves
+```
+
+需要 Playwright 和 ffmpeg。操作步骤在 `source/readme/record.js` 里,录制台是 `source/readme/stage.html`。
+
 ## 重新生成视频
 
 需要本机装有 Chrome 和 ffmpeg,先运行过一次 `source/build.js`(视频的侧边栏用 `ext/sidepanel.css`,网站内容用 `demo/web.js`):
