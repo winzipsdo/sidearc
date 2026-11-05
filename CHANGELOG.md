@@ -17,6 +17,7 @@
 
 ### 文档
 
+- **README 的功能介绍精简了。** 只留一句话一个功能,分成「整理」「找回来」「不添乱」三组,加了徽章;原来每个功能的完整说明挪到 `docs/features.md`(英文 `docs/features.en.md`)。 [`6b4635f`](https://github.com/winzipsdo/sidearc/commit/6b4635f)
 - **README 开头换成动图。** 静态截图下面换成三张动图:双向同步、空间就是顶部的分组、扫掉落叶;动图从在线试用里录制,放在主页上,`main` 不放大文件。顶部加了在线试用的链接。 [`21c01c3`](https://github.com/winzipsdo/sidearc/commit/21c01c3)
 
 ## 2026-11-03
