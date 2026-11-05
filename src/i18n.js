@@ -27,6 +27,7 @@ const MESSAGES = {
     // 行上的按钮和提示
     // 和 Chrome 自己的标签页菜单一致;右键菜单和行上按钮的鼠标提示都用它
     close: '关闭',
+    clearSearch: '清空',
     unpin: '取消固定',
     mute: '静音',
     unmute: '取消静音',
@@ -180,6 +181,7 @@ const MESSAGES = {
     defaultSpace: 'Personal',
 
     close: 'Close',
+    clearSearch: 'Clear',
     unpin: 'Unpin',
     mute: 'Mute',
     unmute: 'Unmute',
