@@ -1,6 +1,6 @@
 # Sidearc
 
-简体中文 | [English](README.en.md) | [主页](https://winzipsdo.github.io/sidearc/)
+简体中文 | [English](README.en.md) | [主页和在线试用](https://winzipsdo.github.io/sidearc/)
 
 把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。
 
@@ -8,9 +8,16 @@ Arc 风格的 Chrome 侧边标签栏。基于 Manifest V3 和 `chrome.sidePanel`
 
 ![垂直标签栏、收藏夹与固定标签](store/screenshot-1-tabs.jpg)
 
-| 子标签与别名 | 空间与深色模式 |
+**和 Chrome 顶部的标签栏双向同步**:Sidearc 不另画一份列表,而是让 Chrome 自己的标签栏跟着侧边栏走。在侧边栏里拖,顶部跟着变;在顶部拖,侧边栏也跟着变。
+
+![在侧边栏里拖动,顶部标签栏跟着变;在顶部拖动,侧边栏也跟着变](https://winzipsdo.github.io/sidearc/assets/readme/zh/sync.gif)
+
+| 空间就是顶部的标签页分组 | 很久没进去的标签页会落上叶子 |
 | --- | --- |
-| ![子标签与别名](store/screenshot-2-child-tabs.jpg) | ![空间与深色模式](store/screenshot-3-spaces-dark.jpg) |
+| ![点开顶部折叠的分组或底部圆点,切换空间](https://winzipsdo.github.io/sidearc/assets/readme/zh/spaces.gif) | ![鼠标左右扫几下,把落叶扫干净](https://winzipsdo.github.io/sidearc/assets/readme/zh/leaves.gif) |
+| 每个空间有自己的主题色、固定标签和标签页。点开顶部折叠起来的分组,或者点底部圆点,就切过去。 | 离开一天后开始落,之后每 12 小时一片,提醒你它也许可以关了;鼠标左右扫几下就扫干净。 |
+
+不用安装就能试:[在线试用](https://winzipsdo.github.io/sidearc/#try)跑的就是插件本身的代码,只有浏览器是模拟的。
 
 ## 功能
 

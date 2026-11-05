@@ -1,6 +1,6 @@
 # Sidearc
 
-[简体中文](README.md) | English | [Website](https://winzipsdo.github.io/sidearc/)
+[简体中文](README.md) | English | [Website and live demo](https://winzipsdo.github.io/sidearc/en/)
 
 An Arc-style vertical tabs sidebar for Chrome: child tabs, spaces, pinned tabs and favorites, kept in sync with Chrome's own tab strip.
 
@@ -8,9 +8,16 @@ Built on Manifest V3 and `chrome.sidePanel` with plain JS/CSS — no build step,
 
 ![Vertical tabs, favorites and pinned tabs](store/en/screenshot-1-tabs.jpg)
 
-| Child tabs and aliases | Spaces and dark mode |
+**Two-way sync with Chrome's tab strip**: instead of drawing a second list, Sidearc makes Chrome's own tab strip follow the sidebar. Drag in the sidebar and the strip follows; drag in the strip and the sidebar follows.
+
+![Dragging in the sidebar moves the tab strip, and dragging in the strip moves the sidebar](https://winzipsdo.github.io/sidearc/assets/readme/en/sync.gif)
+
+| Spaces are tab groups up top | Tabs you leave alone gather leaves |
 | --- | --- |
-| ![Child tabs and aliases](store/en/screenshot-2-child-tabs.jpg) | ![Spaces and dark mode](store/en/screenshot-3-spaces-dark.jpg) |
+| ![Open a collapsed group up top, or click a dot, to switch spaces](https://winzipsdo.github.io/sidearc/assets/readme/en/spaces.gif) | ![Sweep the mouse back and forth to clear the leaves](https://winzipsdo.github.io/sidearc/assets/readme/en/leaves.gif) |
+| Each space has its own color, pinned tabs and tabs. Open its collapsed group in the tab strip, or click its dot, to switch. | A day after you leave a tab, leaves start to fall, one every 12 hours, a hint it may be ready to close. Sweep them away with the mouse. |
+
+Try it without installing: the [live demo](https://winzipsdo.github.io/sidearc/en/#try) runs the extension's actual code; only the browser around it is simulated.
 
 ## Features
 
