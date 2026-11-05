@@ -83,7 +83,7 @@
 </script>
 <link rel="icon" href="../assets/logo.svg?v=852405be" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../icons/128.png">
-<link rel="stylesheet" href="../style.css?v=70dd4b5b">
+<link rel="stylesheet" href="../style.css?v=c5efa4d2">
 <link rel="stylesheet" href="../demo/demo.css?v=642fb0f5">
 <link rel="modulepreload" href="../demo/demo.js?v=5996c9f1">
 <script>
@@ -125,7 +125,7 @@
       <h1><span data-l="en">Vertical tabs that stay<br><span class="grad">in sync with Chrome</span></span></h1>
       <p class="lead">
         
-        <span data-l="en">Arc-style vertical tabs for Chrome, with child tabs, spaces, pinned tabs and favorites. It doesn't replace Chrome's tab strip; it keeps the two in step: each space is a tab group up top, and dragging on either side moves the other.</span>
+        <span data-l="en">Tabs stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.</span>
       </p>
       <div class="cta">
         <a class="btn primary" href="#try">
@@ -188,63 +188,37 @@
       <article class="feature">
         <div class="text">
           <p class="eyebrow"><span data-l="en">Two-way sync</span></p>
-          <h2><span data-l="en">One order, in the sidebar and the tab strip</span></h2>
-          <p>
-            
-            <span data-l="en">Most vertical tab extensions just draw a second list. Sidearc makes Chrome's own tab strip follow it: open favorites on the far left, then one group per space, pinned tabs first, then the list, with child tabs right after their parent.</span>
-          </p>
-          <ul>
-            <li><span data-l="en">Drag in the sidebar and the strip follows, and the other way round</span></li>
-            <li><span data-l="en">Drop a tab into another space's group up top to move it there</span></li>
-            <li><span data-l="en">Tab groups made by you or other extensions are left alone</span></li>
-          </ul>
+          <h2><span data-l="en">Not a second list. The same one.</span></h2>
+          <p><span data-l="en">Chrome's tab strip follows the sidebar: drag on either side and the other one moves with it. Groups you made yourself are left alone.</span></p>
           <button class="try-btn" type="button" data-task="drag"><span data-l="en">Try it above: drag a tab</span> ↑</button>
         </div>
         <div class="shot">
           
-          <img data-l="en" src="../store/en/screenshot-3-spaces-dark.jpg?v=a9e2ab7d" alt="Spaces and dark mode" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="../assets/readme/en/sync.gif" alt="Dragging in the sidebar moves the tab strip, and the other way round" loading="lazy">
         </div>
       </article>
-
       <article class="feature flip">
         <div class="text">
           <p class="eyebrow"><span data-l="en">Spaces</span></p>
-          <h2><span data-l="en">Work, study, life: a set of tabs for each</span></h2>
-          <p>
-            
-            <span data-l="en">Each space has its own color, pinned tabs and tabs, and the whole sidebar takes on its color. Up top, each space is a tab group: the current one open, the others collapsed into a chip. Open a chip and the sidebar switches with it.</span>
-          </p>
-          <ul>
-            <li><span data-l="en">Switch with the dots at the bottom; drop a tab on a dot to move it</span></li>
-            <li><span data-l="en">No-history spaces and folders: visited pages leave history right away</span></li>
-          </ul>
+          <h2><span data-l="en">Spaces are tab groups up top</span></h2>
+          <p><span data-l="en">Work, study, life: each gets its own tabs and color. Open its group up top or click its dot, and the whole sidebar switches.</span></p>
           <button class="try-btn" type="button" data-task="space"><span data-l="en">Try it above: open the “Work” group up top</span> ↑</button>
         </div>
         <div class="shot">
           
-          <img data-l="en" src="../store/en/screenshot-1-tabs.jpg?v=ee9572c6" alt="Vertical tabs, favorites and pinned tabs" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="../assets/readme/en/spaces.gif" alt="Open a collapsed group up top, or click a dot, to switch spaces" loading="lazy">
         </div>
       </article>
-
       <article class="feature">
         <div class="text">
-          <p class="eyebrow"><span data-l="en">Child tabs and pinned tabs</span></p>
-          <h2><span data-l="en">Tabs nest where they came from; pinned tabs know the way home</span></h2>
-          <p>
-            
-            <span data-l="en">Links you open from a page are indented under it and close with it. When a pinned tab wanders off, its row shows where it went, and ↩ takes it back home; you can also save the page it's on as a new favorite or pin.</span>
-          </p>
-          <ul>
-            <li><span data-l="en">Give tabs an alias: it shows before the title and matches in search</span></li>
-            <li><span data-l="en">Pinned tabs fit in folders; favorites are shared by every space</span></li>
-            <li><span data-l="en">Click the space name to fold its pinned tabs away, keeping the one you're on</span></li>
-            <li><span data-l="en">Favorites and pins open in another window are marked</span></li>
-          </ul>
-          <button class="try-btn" type="button" data-task="child"><span data-l="en">Try it above: click a link marked ↗</span> ↑</button>
+          <p class="eyebrow"><span data-l="en">Fallen leaves · 1.8</span></p>
+          <h2><span data-l="en">What to close shows itself</span></h2>
+          <p><span data-l="en">Leave a tab for a day and leaves start to fall. Sweep them off, or open it and they blow away.</span></p>
+          <button class="try-btn" type="button" data-task="leaves"><span data-l="en">Try it above: sweep Hacker News</span> ↑</button>
         </div>
         <div class="shot">
           
-          <img data-l="en" src="../store/en/screenshot-2-child-tabs.jpg?v=ad55892d" alt="Child tabs and aliases" width="1280" height="800" loading="lazy">
+          <img data-l="en" src="../assets/readme/en/leaves.gif" alt="Sweep the mouse back and forth to clear the leaves" loading="lazy">
         </div>
       </article>
     </div>
@@ -252,59 +226,61 @@
 
   <section class="more">
     <div class="wrap">
-      <h2 class="title"><span data-l="en">And the small touches</span></h2>
+      <h2 class="title"><span data-l="en">And more</span></h2>
       <div class="grid">
-        <div class="item" style="--c:#c98a3a">
-          <span class="ic"><svg viewBox="0 0 16 16"><path d="M3 13c0-6 3.5-9.5 10-10 .3 6.2-3.5 10-10 10z"/><path d="M3 13l5.5-5.5"/></svg></span>
-          <h3><span data-l="en">Fallen leaves</span> <span class="new">1.8</span></h3>
-          <p><span data-l="en">Tabs you haven't visited in a while slowly gather leaves: starting a day after you leave, then one every 12 hours (adjustable), a hint they might be ready to close. Sweep the mouse over them to clear them; open the tab and they blow away.</span></p>
-          <button class="try-btn small" type="button" data-task="leaves"><span data-l="en">Try it</span> ↑</button>
-        </div>
         <div class="item" style="--c:#6b7cff">
-          <span class="ic"><svg viewBox="0 0 16 16"><path d="M4 2.5v11"/><path d="M8 5v6" opacity=".6"/><path d="M12 7v2" opacity=".35"/></svg></span>
-          <h3><span data-l="en">Footprints</span></h3>
-          <p><span data-l="en">The last few tabs you left (3 by default, adjustable in Settings) get a colored bar that shrinks and fades over 10 minutes, so the page you were just on is easy to find.</span></p>
-        </div>
-        <div class="item" style="--c:#f0913f">
-          <span class="ic"><svg viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/></svg></span>
-          <h3><span data-l="en">Sleep</span></h3>
-          <p><span data-l="en">Click the moon to unload a tab while keeping it; the row shows how long it has slept. Whole folders and spaces can sleep, and music or chat can stay awake.</span></p>
-          <button class="try-btn small" type="button" data-task="sleep"><span data-l="en">Try it</span> ↑</button>
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M3 3.5h10"/><path d="M6 8h7M6 12.5h7"/><path d="M3 6v4.5"/></svg></span>
+          <h3><span data-l="en">Child tabs</span></h3>
+          <p><span data-l="en">Tabs land under the page you opened them from.</span></p>
+          <button class="try-btn small" type="button" data-task="child"><span data-l="en">Try it</span> ↑</button>
         </div>
         <div class="item" style="--c:#4fae6e">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M6 2.5h4M7 2.5v3.5L4.5 9h7L9 6V2.5M8 9v4.5"/></svg></span>
+          <h3><span data-l="en">Pinned tabs</span></h3>
+          <p><span data-l="en">Keep their spot when closed; wander off and ↩ takes you home.</span></p>
+          <button class="try-btn small" type="button" data-task="pin"><span data-l="en">Try it</span> ↑</button>
+        </div>
+        <div class="item" style="--c:#8a63d2">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M4 2.5v11"/><path d="M8 5v6" opacity=".6"/><path d="M12 7v2" opacity=".35"/></svg></span>
+          <h3><span data-l="en">Footprints</span></h3>
+          <p><span data-l="en">The tabs you just left keep a fading mark.</span></p>
+        </div>
+        <div class="item" style="--c:#2f9bd6">
+          <span class="ic"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg></span>
+          <h3><span data-l="en">Search</span></h3>
+          <p><span data-l="en">Press / to search tabs and recent history at once.</span></p>
+        </div>
+        <div class="item" style="--c:#3aa7b8">
           <span class="ic"><svg viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="9" rx="2"/><path d="M5.5 10.5h5M6 7l1.5 1.5L6 10" stroke-width="1.3"/></svg></span>
           <h3><span data-l="en">Keyboard</span></h3>
-          <p><span data-l="en">Click the sidebar and move a Switch-style cursor with the arrow keys; Enter opens, Delete closes, Shift+F10 opens the menu.</span></p>
+          <p><span data-l="en">Arrow keys move a Switch-style cursor.</span></p>
           <button class="try-btn small" type="button" data-task="keys"><span data-l="en">Try it</span> ↑</button>
         </div>
         <div class="item" style="--c:#e5687a">
           <span class="ic"><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 009 2.5H4A1.5 1.5 0 002.5 4v5A1.5 1.5 0 004 10.5h1.5"/></svg></span>
-          <h3><span data-l="en">No duplicate tabs</span></h3>
-          <p><span data-l="en">Open an address that's already open and you jump to that tab; a favorite or pinned address opens as that item. Tabs you open on purpose (Ctrl/⌘+click) are left alone.</span></p>
+          <h3><span data-l="en">One tab per address</span></h3>
+          <p><span data-l="en">Open something already open and you jump to it.</span></p>
           <button class="try-btn small" type="button" data-task="dedupe"><span data-l="en">Try it</span> ↑</button>
         </div>
-        <div class="item" style="--c:#8a63d2">
+        <div class="item" style="--c:#a06be0">
           <span class="ic"><svg viewBox="0 0 16 16"><path d="M6 3.5L3 6.5l3 3"/><path d="M3 6.5h6.5a3.5 3.5 0 010 7H8"/></svg></span>
           <h3><span data-l="en">Undo everything</span></h3>
-          <p><span data-l="en">Closing, Clear, unpinning, removing a favorite: all undoable step by step with Ctrl/⌘+Z, even tabs closed from the tab strip. Recently closed tabs are a click away too.</span></p>
+          <p><span data-l="en">Closed the wrong thing? Ctrl/⌘+Z, step by step.</span></p>
           <button class="try-btn small" type="button" data-task="undo"><span data-l="en">Try it</span> ↑</button>
         </div>
-        <div class="item" style="--c:#2f9bd6">
+        <div class="item" style="--c:#f0913f">
+          <span class="ic"><svg viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/></svg></span>
+          <h3><span data-l="en">Sleep</span></h3>
+          <p><span data-l="en">Unload a tab in one click; keep music or chat awake.</span></p>
+          <button class="try-btn small" type="button" data-task="sleep"><span data-l="en">Try it</span> ↑</button>
+        </div>
+        <div class="item" style="--c:#c98a3a">
           <span class="ic"><svg viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4" rx="1.2"/><rect x="2.5" y="9.5" width="11" height="4" rx="1.2"/></svg></span>
           <h3><span data-l="en">Multi-select</span></h3>
-          <p><span data-l="en">Ctrl/⌘+click to pick tabs and Shift+click for a range, shared with the tab strip; drag one to move them all, or right-click to close, sleep or move them together.</span></p>
-        </div>
-        <div class="item" style="--c:#3aa7b8">
-          <span class="ic"><svg viewBox="0 0 16 16"><path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/></svg></span>
-          <h3><span data-l="en">Bring back last session</span></h3>
-          <p><span data-l="en">If Chrome didn't restore last time's tabs, the sidebar offers to, with their spaces, nesting and aliases intact. Recently closed tabs sit at the bottom left.</span></p>
-        </div>
-        <div class="item" style="--c:#a06be0">
-          <span class="ic"><svg viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 009 2.5H4A1.5 1.5 0 002.5 4v5A1.5 1.5 0 004 10.5h1.5"/></svg></span>
-          <h3><span data-l="en">Copies and hard reload</span></h3>
-          <p><span data-l="en">Duplicate a favorite or pinned tab in place; hard reload skips the cache from the context menu. Close the current tab and you're back where you just were.</span></p>
+          <p><span data-l="en">Pick a batch and drag, close or move them together.</span></p>
         </div>
       </div>
+      <p class="sub"><span data-l="en">Plus favorites, aliases, folders, no-history spaces, restoring last session, recently closed, duplicates, hard reload, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.en.md">Every feature in detail →</a></span></p>
     </div>
   </section>
 
