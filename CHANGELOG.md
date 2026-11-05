@@ -6,8 +6,13 @@
 
 ## 2026-11-05
 
+### 新增
+
+- **搜索框有内容时右边出现 × 清空。** 点了只清掉搜索词,光标还在框里,可以接着输新的。 [`5616205`](https://github.com/winzipsdo/sidearc/commit/5616205)
+
 ### 变更
 
+- **点开搜索结果后退出搜索。** 点历史记录、标签页、收藏或固定标签(包括选中后按回车),搜索词清空、搜索框收起,回到平常的列表;点行上的关闭、休眠、删除等按钮不退出,方便连着处理几条。 [`5616205`](https://github.com/winzipsdo/sidearc/commit/5616205)
 - **空间菜单里去掉「新建空间」,几条过长的英文菜单项改短。** 新建空间用最下面一排的加号。英文菜单里 New folder with this tab… 改成 Move to new folder…,Put all tabs in space/folder to sleep 改成 Sleep all tabs in space/folder。 [`6f7824b`](https://github.com/winzipsdo/sidearc/commit/6f7824b)
 
 ## 2026-11-03
