@@ -15,6 +15,10 @@
 - **点开搜索结果后退出搜索。** 点历史记录、标签页、收藏或固定标签(包括选中后按回车),搜索词清空、搜索框收起,回到平常的列表;点行上的关闭、休眠、删除等按钮不退出,方便连着处理几条。 [`5616205`](https://github.com/winzipsdo/sidearc/commit/5616205)
 - **空间菜单里去掉「新建空间」,几条过长的英文菜单项改短。** 新建空间用最下面一排的加号。英文菜单里 New folder with this tab… 改成 Move to new folder…,Put all tabs in space/folder to sleep 改成 Sleep all tabs in space/folder。 [`6f7824b`](https://github.com/winzipsdo/sidearc/commit/6f7824b)
 
+### 文档
+
+- **README 开头换成动图。** 静态截图下面换成三张动图:双向同步、空间就是顶部的分组、扫掉落叶;动图从在线试用里录制,放在主页上,`main` 不放大文件。顶部加了在线试用的链接。 [`21c01c3`](https://github.com/winzipsdo/sidearc/commit/21c01c3)
+
 ## 2026-11-03
 
 ### 修复
