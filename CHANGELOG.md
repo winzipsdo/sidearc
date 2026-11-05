@@ -4,6 +4,12 @@
 
 按提交日期分组,新的在前。
 
+## 2026-11-05
+
+### 变更
+
+- **空间菜单里去掉「新建空间」,几条过长的英文菜单项改短。** 新建空间用最下面一排的加号。英文菜单里 New folder with this tab… 改成 Move to new folder…,Put all tabs in space/folder to sleep 改成 Sleep all tabs in space/folder。 [`6f7824b`](https://github.com/winzipsdo/sidearc/commit/6f7824b)
+
 ## 2026-11-03
 
 ### 修复
