@@ -84,6 +84,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
   let b;
   let tx;
   let dragging = null;
+  let lastStrip = '';
   let lastPage = '';
 
   root.classList.add('sb');
@@ -127,7 +128,26 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
       );
     }
     html.push(`<button class="sb-btn sb-new" data-act="new" title="${TEXT[lang].newTab}">${svg('plus')}</button>`);
-    strip.innerHTML = html.join('');
+    const next = html.join('');
+    // 没变就不重画:插件每做一步都会触发一次,整个换掉会白白丢掉悬停状态
+    if (next === lastStrip) return;
+    lastStrip = next;
+    // 换之前记下每个标签页、分组名的位置,换完从原位置滑到新位置,新出现的淡入展开(FLIP),
+    // 不然切换空间时分组展开、折叠是一下一下跳的,看着很卡
+    const key = (el) => (el.dataset.id ? 't' + el.dataset.id : el.dataset.group ? 'g' + el.dataset.group : el.classList.contains('sb-new') ? 'new' : null);
+    const before = new Map([...strip.children].map((el) => [key(el), el.getBoundingClientRect()]));
+    strip.innerHTML = next;
+    if (!before.size || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const ease = 'cubic-bezier(.2,.8,.2,1)';
+    for (const el of strip.children) {
+      const old = before.get(key(el));
+      const now = el.getBoundingClientRect();
+      if (!old) {
+        el.animate([{ opacity: 0, transform: 'scaleX(.4)', transformOrigin: 'left center' }, { opacity: 1, transform: 'none', transformOrigin: 'left center' }], { duration: 220, easing: ease });
+      } else if (Math.abs(old.left - now.left) > 0.5 || Math.abs(old.width - now.width) > 0.5) {
+        el.animate([{ transform: `translateX(${old.left - now.left}px)`, width: `${old.width}px` }, { transform: 'none', width: `${now.width}px` }], { duration: 220, easing: ease });
+      }
+    }
   }
 
   strip.addEventListener('click', (e) => {
@@ -180,6 +200,8 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
       const to = before ? rest.findIndex((x) => x.id === +before.dataset.id) : rest.indexOf(b.tab(+others.at(-1)?.dataset.id || id)) + 1;
       b.userMove(id, to);
       onAction('stripDrag');
+      // 拖着的那个带着位移和样式:一定要整体重画一次,哪怕顺序没变(在原地松手)
+      lastStrip = '';
       renderStrip();
     };
     addEventListener('pointermove', onMove);
@@ -294,6 +316,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     root.classList.add('booting');
     for (const f of root.querySelectorAll('iframe')) f.remove();
     lastPage = '';
+    lastStrip = '';
     b = new Browser(lang, {
       change: () => {
         cancelAnimationFrame(tx);
