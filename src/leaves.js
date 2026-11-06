@@ -74,11 +74,19 @@ function blow(list) {
   }
 }
 
+// 挂到行上、量尺寸、画分成三步(见 refreshLeaves):挂上画布会让排版作废,挂一个量一个的话每量一次都要重新排一遍整页
 function attach(pile, row) {
-  if (!pile.ps.length && !pile.glow) return pile.cv.remove();
+  if (!pile.ps.length && !pile.glow) return pile.cv.remove(), false;
   if (pile.cv.parentNode !== row) row.append(pile.cv);
+  return true;
+}
+function measure(pile, row) {
   pile.rect = row.getBoundingClientRect();
-  const W = row.clientWidth;
+  pile.rowW = row.clientWidth;
+}
+// 画布尺寸跟着行宽:改尺寸也会让排版作废,所以等全部量完再改
+function fit(pile) {
+  const W = pile.rowW;
   if (W && W !== pile.W) {
     const dpr = devicePixelRatio || 1;
     pile.W = W;
@@ -86,7 +94,6 @@ function attach(pile, row) {
     pile.cv.height = ROW_H * dpr;
     pile.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  step(pile, performance.now(), false);
 }
 
 // 关掉了的标签页:canvas 留在原来的位置(固定定位),叶子飘走
@@ -104,6 +111,7 @@ function flyOff(pile) {
 export function refreshLeaves() {
   const now = Date.now();
   const rows = new Map([...document.querySelectorAll('#tabs .row[data-kind="tab"]')].map((el) => [+el.dataset.id, el]));
+  const shown = [];
   for (const tab of tabs) {
     const row = rows.get(tab.id);
     let pile = piles.get(tab.id);
@@ -118,9 +126,12 @@ export function refreshLeaves() {
       pile.n = want;
     }
     while (pile.n < want) pile.ps.push(makeLeaf(tab.id, pile.n++, fall));
-    if (row) attach(pile, row);
-    else pile.cv.remove();
+    if (row && attach(pile, row)) shown.push([pile, row]);
+    else if (!row) pile.cv.remove();
   }
+  for (const [pile, row] of shown) measure(pile, row);
+  const t = performance.now();
+  for (const [pile] of shown) fit(pile), step(pile, t, false);
   const ids = new Set(tabs.map((x) => x.id));
   for (const [id, pile] of piles) {
     if (ids.has(id)) continue;

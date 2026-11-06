@@ -52,11 +52,17 @@ const ICONS = {
   sliders: svg('<path d="M2 3.5h5.9M11.1 3.5H14M2 8h2.4M7.6 8H14M2 12.5h6.4M11.6 12.5H14"/><circle cx="9.5" cy="3.5" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="10" cy="12.5" r="1.6"/>'),
   recent: svg('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
 };
+// 每个图标只解析一次,之后复制:重画时每行都有好几个图标,逐个解析 SVG 文本不便宜
+const iconCache = new Map();
 export function icon(name) {
-  const el = document.createElement('span');
-  el.className = 'i';
-  el.innerHTML = ICONS[name];
-  return el;
+  let el = iconCache.get(name);
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 'i';
+    el.innerHTML = ICONS[name];
+    iconCache.set(name, el);
+  }
+  return el.cloneNode(true);
 }
 
 export const $ = (s) => document.querySelector(s);
