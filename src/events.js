@@ -10,6 +10,7 @@ import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
+import { revealTab } from './locate.js';
 import { deleteHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
@@ -261,6 +262,8 @@ function bindBrowser() {
     const d = msg?.[MSG.deduped];
     if (!d || d.windowId !== windowId) return;
     pushUndo(d.active ? t('switchedToExisting') : t('alreadyOpen'), () => chrome.runtime.sendMessage({ [MSG.openDup]: d }));
+    // 侧边栏也滚到已有的那个
+    if (d.tabId != null) revealTab(d.tabId);
   });
   // 后台把新标签页绑定到了同地址的收藏/固定项:先记上绑定(存储的变化可能还没到),固定项在别的空间就跟过去
   chrome.runtime.onMessage.addListener((msg) => {

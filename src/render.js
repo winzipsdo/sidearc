@@ -5,7 +5,7 @@ import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_
 import { formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
-import { refreshLocate } from './locate.js';
+import { refreshLocate, revealPending } from './locate.js';
 import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
@@ -348,6 +348,7 @@ export function render() {
   refreshLeaves();
   refreshHistory();
   revealNewTab();
+  revealPending();
   updateScrollFades();
   applyCursor();
   saveSnapshot();

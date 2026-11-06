@@ -800,8 +800,8 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
 #locate img { width: 16px; height: 16px; border-radius: 3px; }
 #locate .arrow { display: grid; }
 /* 滚回来后那一行亮一下 */
-.row.located { animation: located 1s ease-out; }
-@media (prefers-reduced-motion: reduce) { #locate { transition: none; } .row.located { animation-duration: 0.01s; } }
+:is(.row, .tile).located { animation: located 1s ease-out; }
+@media (prefers-reduced-motion: reduce) { #locate { transition: none; } :is(.row, .tile).located { animation-duration: 0.01s; } }
 @keyframes located {
   from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 18px color-mix(in srgb, var(--accent) 35%, transparent); }
   to { box-shadow: 0 0 0 2px transparent, 0 0 18px transparent; }
