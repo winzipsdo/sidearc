@@ -35,13 +35,9 @@ const MESSAGES = {
     sleep: '休眠',
     unnest: '移出为顶级标签页',
     backToPinned: '回到固定地址',
-    awayTip: '当前:{current}\n固定地址:{pinned}',
     favAwayTip: '{name}\n当前:{current}\n收藏地址:{fav}',
     inOtherWindow: '已在另一个窗口中打开',
     keepAwakeTip: '保持唤醒:不会被自动休眠',
-    notLoadedTip: '还没加载,点开时加载',
-    sleptTip: '从 {at} 开始休眠,已经 {duration} · 点开时重新加载',
-    folderNoHistoryTip: '此文件夹里的页面不记录浏览历史',
     noHistoryIconTip: '不记录浏览历史',
 
     // 时间
@@ -190,13 +186,9 @@ const MESSAGES = {
     sleep: 'Sleep',
     unnest: 'Move out to top level',
     backToPinned: 'Back to pinned page',
-    awayTip: 'Now: {current}\nPinned: {pinned}',
     favAwayTip: '{name}\nNow: {current}\nFavorite: {fav}',
     inOtherWindow: 'Already open in another window',
     keepAwakeTip: "Keep awake: won't be put to sleep automatically",
-    notLoadedTip: 'Not loaded yet — loads when opened',
-    sleptTip: 'Asleep since {at}, {duration} so far · reloads when opened',
-    folderNoHistoryTip: "Pages in this folder don't keep browsing history",
     noHistoryIconTip: "Doesn't keep browsing history",
 
     justNow: 'just now',

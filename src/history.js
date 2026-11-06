@@ -49,7 +49,7 @@ function paint(hits) {
     ...hits.map((x) =>
       h(
         'div',
-        { class: 'row hist', title: x.url, data: { kind: 'hist', id: x.url } },
+        { class: 'row hist', data: { kind: 'hist', id: x.url } },
         h('img', { class: 'icon', src: faviconFor(x.url), alt: '', draggable: false }),
         h('span', { class: 'title' }, x.title || x.url),
         x.lastVisitTime && h('span', { class: 'ago' }, t('ago', { duration: formatDuration(durationParts(Date.now() - x.lastVisitTime)) })),

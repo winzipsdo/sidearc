@@ -2,7 +2,7 @@
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
-import { currentLang, formatDuration, t } from './i18n.js';
+import { formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
 import { refreshLocate } from './locate.js';
@@ -23,13 +23,6 @@ const sleptLabel = (tab) => {
   const since = sleptAt(tab);
   return since != null && h('span', { class: 'slept', data: { since } }, formatDuration(sleptFor(since)));
 };
-function sleptTip(tab) {
-  if (!isUnloaded(tab)) return '';
-  const since = sleptAt(tab);
-  if (since == null) return '\n' + t('notLoadedTip');
-  const at = new Date(since).toLocaleString(currentLang() === 'zh' ? 'zh-CN' : 'en', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  return '\n' + t('sleptTip', { duration: formatDuration(sleptFor(since)), at });
-}
 
 // 足迹:最近离开的几个标签页左边(收藏是底部)画一道主题色的线,每个各自倒计时 10 分钟,
 // 线从两头往中间缩短、同时变淡,到 0 消失。缩短是一段 10 分钟的 CSS 动画(fp-life),
@@ -229,7 +222,7 @@ export function render() {
     // 开着的收藏或固定标签点进了别的页面
     const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
     // 绑定的标签页开在别的窗口里(本窗口的列表里找不到它):点了会跳到那个窗口,先标出来
-    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere' }, icon('windows'));
+    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere', title: kind === 'fav' ? null : t('inOtherWindow') }, icon('windows'));
     // 文件夹里的固定标签多一个「移出文件夹」,和子标签的「移出为顶级标签页」一样放在最左边:移出、休眠、关闭
     const unfold = inFolder && h('button', { class: 'btn x', title: t('moveOutOfFolder'), data: { act: 'unfold' } }, icon('outdent'));
     if (kind === 'fav') {
@@ -245,7 +238,7 @@ export function render() {
     if (away) {
       return h(
         'div',
-        { class: cls + ' away', draggable: true, title: t('awayTip', { current: tab.url, pinned: item.url }), style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+        { class: cls + ' away', draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
@@ -258,7 +251,7 @@ export function render() {
     }
     return h(
       'div',
-      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, title: elsewhere ? `${item.url}\n${t('inOtherWindow')}` : item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
@@ -284,7 +277,7 @@ export function render() {
     const openKids = f.items.filter((i) => bind.has(i.id)).length;
     return h(
       'div',
-      { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, title: f.noHistory ? t('folderNoHistoryTip') : f.name, data: { kind: 'folder', id: f.id } },
+      { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, data: { kind: 'folder', id: f.id } },
       icon(f.open ? 'folderOpen' : 'folder'),
       h('span', { class: 'title' }, f.name),
       f.noHistory && h('span', { class: 'private', title: t('noHistoryIconTip') }, icon('eyeOff')),
@@ -319,7 +312,7 @@ export function render() {
       const cls = ['row', tab.active && 'active', multi && tab.highlighted && 'selected', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
       return h(
         'div',
-        { class: cls, draggable: true, title: tab.url + sleptTip(tab), style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
+        { class: cls, draggable: true, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
         h('img', { class: 'icon', src: tabIcon(tab), alt: '', draggable: false }),
         tabAlias.has(tab.id) && h('span', { class: 'alias' }, tabAlias.get(tab.id)),
         h('span', { class: 'title' }, tab.title || tab.url || t('newTab')),
