@@ -1,6 +1,8 @@
 :root {
   color-scheme: light dark;
   --accent: #6b7cff;
+  /* 侧边栏刚打开、还没染上主题色时的底色,接近 Chrome 侧边栏自己的颜色 */
+  --base: #fbfbfc;
   /* 整个界面的颜色都由空间主题色 --accent 调出来 */
   --bg1: color-mix(in oklch, var(--accent) 26%, #fff);
   --bg2: color-mix(in oklch, var(--accent) 13%, #f7f7f9);
@@ -18,6 +20,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
+    --base: #1d1e22;
     --bg1: color-mix(in oklch, var(--accent) 24%, #17181c);
     --bg2: color-mix(in oklch, var(--accent) 9%, #131417);
     --fg: color-mix(in oklch, var(--accent) 12%, #f2f3f7);
@@ -31,22 +34,33 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+html { background: var(--base); }
+/* 主题色渐变铺在单独一层上:打开时从中性底色淡入,而不是 Chrome 的底色一下子跳成带颜色的 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, var(--bg1), var(--bg2));
+  pointer-events: none;
+  transition: opacity 0.45s ease-out;
+}
+body:not(.shown)::before { opacity: 0; }
 body {
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, var(--bg1), var(--bg2)) fixed;
   color: var(--fg);
   font: 500 13px/1.35 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Microsoft YaHei UI", "PingFang SC", sans-serif;
   -webkit-font-smoothing: antialiased;
   user-select: none;
 }
-/* 打开侧边栏时内容淡入,而不是一下子冒出来:顶部、列表、底部依次错开一点出来;背景不动,免得整块闪一下。
+/* 打开侧边栏时内容淡入,而不是一下子冒出来:背景先染上主题色,顶部、列表、底部依次错开一点出来。
    等第一帧真的画出来了才开始(见 boot.js),不然侧边栏还在滑出来、动画就已经播完了 */
 body > header, #scroll, #spaces { transition: opacity 0.45s ease-out, translate 0.45s ease-out; }
 body:not(.shown) > header, body:not(.shown) #scroll, body:not(.shown) #spaces { opacity: 0; translate: 0 6px; }
 #scroll { transition-delay: 0.08s; }
 #spaces { transition-delay: 0.16s; }
-@media (prefers-reduced-motion: reduce) { body > header, #scroll, #spaces { transition: none; } }
+@media (prefers-reduced-motion: reduce) { body::before, body > header, #scroll, #spaces { transition: none; } }
 button { font: inherit; color: inherit; border: 0; padding: 0; background: none; cursor: pointer; }
 button:focus-visible, .row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .i { display: grid; place-items: center; }
