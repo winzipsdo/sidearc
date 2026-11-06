@@ -5,6 +5,7 @@ import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_
 import { currentLang, formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
+import { refreshLocate } from './locate.js';
 import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
@@ -358,11 +359,13 @@ export function render() {
   saveSnapshot();
 }
 
-// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断
+// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断;
+// 顺便看看当前标签页是不是滚出了视野(要不要显示回到它的小胶囊)
 export function updateScrollFades() {
   const el = $('#scroll');
   document.body.classList.toggle('scrolled', el.scrollTop > 0);
   document.body.classList.toggle('more-below', el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  refreshLocate();
 }
 
 // 把这次画出来的样子存一份,下次打开侧边栏时 boot.js 先把它显示出来,免得先空一下
