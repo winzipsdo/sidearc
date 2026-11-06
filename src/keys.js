@@ -1,14 +1,17 @@
-// 键盘操作:方向键在收藏、固定标签、新标签页、标签页列表之间移动选中框,回车打开,Delete 关闭,Esc 退出。
+// 键盘操作:方向键在收藏、固定标签、新标签页、标签页列表之间移动选中框,回车打开,Delete 关闭(多选了就关掉选中的),Esc 退出。
 // 选中框的样子参考 Switch:蓝青色的粗边框来回呼吸,移到新的项上轻轻一弹;往走不过去的方向按,选中的项朝那边晃一下。
 // 鼠标一动就收起选中框;重画后按 kind + id 找回原来的项,找不到(比如刚关掉)就落在同一位置附近的项上。
 
 import { $ } from './dom.js';
+import { t } from './i18n.js';
+import { visibleTabs } from './store.js';
+import { closeWithUndo } from './tabs.js';
 import { hideMenu, openSearch } from './ui.js';
 
 let cursor = null; // { kind, id, index }
 
 // 只算看得见的(折叠起来的固定标签不算)
-const items = () => [...document.querySelectorAll('#favs .tile, #pins [data-kind], #new-tab, #tabs .row, #history .row')].filter((el) => el.offsetParent);
+const items = () => [...document.querySelectorAll('#favs .tile, #pins [data-kind], #tabs .row, #history .row')].filter((el) => el.offsetParent);
 const keyOf = (el) => ({ kind: el.dataset.kind ?? el.id, id: el.dataset.id ?? el.id });
 const current = () => {
   if (!cursor) return null;
@@ -133,6 +136,15 @@ export function bindKeys() {
       return move(dir, e.repeat);
     }
     const el = current();
+    // 多选了几个标签页(Shift/⌘ 点击):Delete 把选中的一起关掉,和右键菜单里的「关闭」一样可以撤销。
+    // 键盘选中框在别的项上时还是只关那一项
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      const selected = visibleTabs().map((x) => x.tab).filter((x) => x.highlighted);
+      if (selected.length > 1 && (!el || selected.some((x) => el.dataset.kind === 'tab' && +el.dataset.id === x.id))) {
+        e.preventDefault();
+        return closeWithUndo(selected, t('closedTabs', { n: selected.length }));
+      }
+    }
     if (!el) return;
     if (e.key === 'Enter') {
       e.preventDefault();
