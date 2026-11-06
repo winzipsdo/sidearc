@@ -388,6 +388,15 @@ export function layoutFavs() {
   el.style.setProperty('--cols', favColumns(el.querySelectorAll('.tile').length, el.clientWidth));
 }
 
+// 存储接连变了好几次:等这一串变完再画一次
+let soonTimer = 0;
+export function renderSoon() {
+  soonTimer ||= setTimeout(() => {
+    soonTimer = 0;
+    render();
+  }, 16);
+}
+
 // 标签页有变化:稍等一下合并连续的事件,再重新读取并重画
 let timer = null;
 export function schedule() {

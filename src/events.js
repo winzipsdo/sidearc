@@ -8,7 +8,7 @@ import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
 import { revealTab } from './locate.js';
 import { deleteHistory } from './history.js';
@@ -248,12 +248,21 @@ function bindPage() {
 
 // 浏览器这边的变化:标签页、后台发来的消息、存储
 function bindBrowser() {
-  for (const ev of ['onCreated', 'onRemoved', 'onUpdated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced', 'onHighlighted']) {
-    chrome.tabs[ev].addListener(schedule);
-  }
-  chrome.tabs.onReplaced.addListener(replaceTabId);
+  // 只管本窗口的:别的窗口里标签页加载、改标题这些事件很多,每个都让这里整页重画没有必要。
+  // 别的窗口里的变化会影响到这里的(比如收藏的标签页在别的窗口关掉了),后台会改存储,下面的 storage.onChanged 会重画
+  const mine = (id) => id === windowId && schedule();
+  chrome.tabs.onCreated.addListener((tab) => mine(tab.windowId));
+  chrome.tabs.onRemoved.addListener((_, info) => mine(info.windowId));
+  chrome.tabs.onUpdated.addListener((_, __, tab) => mine(tab.windowId));
+  chrome.tabs.onMoved.addListener((_, info) => mine(info.windowId));
+  chrome.tabs.onAttached.addListener((_, info) => mine(info.newWindowId));
+  chrome.tabs.onDetached.addListener((_, info) => mine(info.oldWindowId));
+  chrome.tabs.onHighlighted.addListener((info) => mine(info.windowId));
+  // 换编号的事件不带窗口
+  chrome.tabs.onReplaced.addListener((added, removed) => (replaceTabId(added, removed), schedule()));
   chrome.tabs.onActivated.addListener((info) => {
-    if (info.windowId === windowId) followSpace(info.tabId);
+    if (info.windowId !== windowId) return;
+    followSpace(info.tabId);
     schedule();
   });
 
@@ -294,7 +303,8 @@ function bindBrowser() {
       schedule();
     } else if (area === 'session') {
       for (const [k, c] of Object.entries(changes)) applySession(k, c.newValue);
-      render();
+      // 后台常常接连写好几次(新开一个标签页就有好几条),合成一次重画
+      renderSoon();
     }
   });
 }
