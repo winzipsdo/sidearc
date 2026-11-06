@@ -13,3 +13,11 @@ try {
     for (const el of document.querySelectorAll('[data-i18n-placeholder]')) el.placeholder = text[el.dataset.i18nPlaceholder] ?? el.placeholder;
   }
 } catch {}
+
+// 淡入(样式见 sidepanel.css 的 body.shown):先按透明画一帧,下一帧再显示,过渡才会真的播出来
+{
+  const show = () => document.body.classList.add('shown');
+  requestAnimationFrame(() => requestAnimationFrame(show));
+  // 页面在后台(侧边栏还没露出来)时 requestAnimationFrame 不跑,露出来后它自然会接着跑;万一一直不跑,一秒后直接显示
+  setTimeout(show, 1000);
+}
