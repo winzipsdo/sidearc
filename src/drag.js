@@ -239,7 +239,7 @@ export function bindDrag() {
     else {
       // 放到末尾:列表在最后一行下面画顶层的插入线,收藏夹网格在最后一个磁贴右边画竖线;区域是空的才高亮整个区域
       const grid = target.classList.contains('grid');
-      const last = [...target.children].filter((el) => el.matches(grid ? '.tile' : '.row, .folder-empty') && !isDragged(el)).at(-1);
+      const last = [...target.children].filter((el) => el.matches(grid ? '.tile' : '.row[data-kind], .folder-empty') && !isDragged(el)).at(-1);
       if (last) last.classList.add(...(grid ? ['drop-after'] : ['drop-after', 'drop-top']));
       else target.classList.add('drop-end');
     }

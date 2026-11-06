@@ -8,7 +8,7 @@ import { refreshLeaves } from './leaves.js';
 import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -173,6 +173,31 @@ export function refreshSleptLabels() {
   for (const el of document.querySelectorAll('.slept')) el.textContent = formatDuration(sleptFor(+el.dataset.since));
 }
 
+// 列表末尾的加号:新标签页直接开在列表最后一个标签页后面,也就是刚才点加号的地方
+// (不指定位置的话 Chrome 会把它放到别处,侧边栏里就出现在别的位置)
+// 点完加号先隐去一会儿(位置留着),免得新标签页刚出现、加号又紧跟着冒在鼠标下面;过一会儿再淡出来。
+// 开好后列表往下长了一行,可能把加号的位置挤出了视野:滚一下让它回到看得见的地方,新标签页就在它正上方
+const PLUS_REST_MS = 1000;
+let plusBackAt = 0;
+let plusTimer;
+let newTabId = null;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+async function newTabBelow() {
+  plusBackAt = Date.now() + PLUS_REST_MS;
+  $('#new-tab')?.classList.add('resting');
+  clearTimeout(plusTimer);
+  plusTimer = setTimeout(() => $('#new-tab')?.classList.remove('resting'), PLUS_REST_MS);
+  const last = treeTabs().at(-1)?.tab;
+  const tab = await chrome.tabs.create(last ? { windowId, index: last.index + 1 } : { windowId }).catch(() => null);
+  newTabId = tab?.id ?? null;
+  revealNewTab();
+}
+function revealNewTab() {
+  if (newTabId == null || !$(`#tabs [data-kind="tab"][data-id="${newTabId}"]`)) return;
+  newTabId = null;
+  $('#new-tab')?.scrollIntoView({ block: 'nearest', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+}
+
 export function render() {
   // 拖拽过程中、鼠标按着的时候重画会打断拖拽或吞掉点击,等松手后再画
   if (dragging || renderHeld || pressing) {
@@ -305,7 +330,9 @@ export function render() {
         !isUnloaded(tab) && freeButton(),
         h('button', { class: 'btn x', title: t('close'), data: { act: 'close' } }, icon('close'))
       );
-    })
+    }),
+    // 「新标签页」跟在最后一个标签页下面,居中一个圆形小加号(带文字的话和真的新标签页那一行长得一样);搜索时不显示
+    ...(query ? [] : [h('button', { id: 'new-tab', class: 'row new' + (Date.now() < plusBackAt ? ' resting' : ''), title: t('newTab'), 'aria-label': t('newTab'), onclick: newTabBelow }, h('span', { class: 'i' }, icon('plus')))])
   );
 
   $('#spaces').replaceChildren(
@@ -325,6 +352,7 @@ export function render() {
   refreshJumpAnim();
   refreshLeaves();
   refreshHistory();
+  revealNewTab();
   updateScrollFades();
   applyCursor();
   saveSnapshot();

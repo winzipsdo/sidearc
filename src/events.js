@@ -170,7 +170,6 @@ function bindControls() {
     save();
     render();
   });
-  $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
 }
 

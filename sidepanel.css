@@ -521,9 +521,13 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 .row.loading .icon { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.35; transform: scale(0.85); } }
 
-.row.new { color: var(--fg-3); margin-bottom: 2px; }
-.row.new:hover { color: var(--fg-2); }
-.row.new .i { width: 16px; height: 16px; }
+/* 列表末尾的「新标签页」:居中一个浅色小圆底的加号,鼠标移到圆上才变成主题色。
+   整行不接鼠标,只有圆接(点圆照样算点按钮),免得鼠标进了这一行还没碰到圆它就变了 */
+#tabs .row.new { justify-content: center; height: 34px; margin-top: 6px; scroll-margin-bottom: 24px; padding: 0; background: none; color: var(--fg-3); pointer-events: none; }
+.row.new .i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--fill); pointer-events: auto; transition: background 0.15s, color 0.15s, transform 0.15s, opacity 0.3s; }
+.row.new .i:hover { background: var(--accent); color: #fff; transform: scale(1.06); }
+.row.new .i:active { transform: scale(0.96); }
+.row.new.resting .i { opacity: 0; pointer-events: none; } /* 点完先隐去一会儿,见 render.js 的 newTabBelow */
 
 .row .btn {
   flex: none;
