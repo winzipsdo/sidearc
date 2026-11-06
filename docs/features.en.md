@@ -8,6 +8,7 @@ The full behavior of every feature. Keyboard shortcuts are in the README's [Shor
 
 - **Vertical tabs**: click to switch, middle-click or ✕ to close, drag to reorder. Tabs playing sound show a speaker you can click to mute — favorites and pinned tabs too.
 - **Multi-select**: `Ctrl/⌘+click` selects several tabs and `Shift+click` a range, shared with the tab strip's selection. Drag any of them to move them all, right-click one to close, sleep or move them to another space together, or press Delete to close them all. Click empty space or press Esc to clear it.
+- **Back to the current tab**: when you've scrolled the current tab out of view, a small pill with its icon and an arrow appears on that side of the list (top or bottom); click it to scroll back, centering the tab with a brief glow. It hides as soon as any part of the tab is visible, and doesn't appear while searching.
 - **Synced with Chrome's tab strip**: the order of Chrome's native tab strip always matches the sidebar — open favorites on the far left, then one tab group per space; inside each group, pinned tabs first, then the list, with child tabs right after their parent.
   - Drag in the sidebar and the tab strip follows; drag in the tab strip and the sidebar follows.
   - Dragging a tab into another space's group in the tab strip moves it to that space; dragging a child tab away from its parent un-nests it.

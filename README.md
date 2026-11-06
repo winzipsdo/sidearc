@@ -124,6 +124,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `src/keys.js` | 键盘操作和选中框 |
 | `src/leaves.js` | 落叶 |
 | `src/history.js` | 搜索时的历史记录 |
+| `src/locate.js` | 当前标签页滚出视野时的「回到当前标签页」小胶囊 |
 | `src/groups.js` | 后台:让顶部标签栏的顺序和分组跟侧边栏一致 |
 | `src/folders.js` | 固定标签里的文件夹 |
 | `src/dom.js` | 生成页面元素的小工具 |
