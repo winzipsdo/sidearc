@@ -5,7 +5,8 @@ import { t } from './i18n.js';
 import { isFolder } from './logic.js';
 import { render } from './render.js';
 import { closeItemTab, detachTab } from './items.js';
-import { activeSpace, bind, findItem, save, setBind, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js';
+import { h } from './dom.js';
+import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js';
 import { createTab, returnBeforeClose } from './tabs.js';
 import { ask, pushUndo, toast } from './ui.js';
 
@@ -44,12 +45,85 @@ export async function renameFolder(id) {
   render();
 }
 
+// 展开、收起的动效:里面的几行像抽屉一样,从文件夹那一行下面整块滑出来、滑回去,同时淡入、淡出,
+// 文件夹那一行的箭头同时转下来、转回去。动画时临时把这几行装进一个裁剪用的容器,播完整体重画,容器就没了;
+// 这期间暂停重画(保存状态会触发一次),不然动画会被打断。行之间有 2px 间隔,容器高度为 0 时用 -2px 上边距抵掉
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+// 动画都用 fill: 'both':连续点击时会把正在播的动画倒着播回去(见 toggleFolder),倒回起点也得停在起点的样子
+function drawer(id, opening) {
+  const els = [...document.querySelectorAll(`#pins [data-in="${id}"]`)];
+  if (!els.length) return [];
+  const box = h('div', { class: 'drawer' });
+  els[0].before(box);
+  box.append(...els);
+  const full = box.offsetHeight;
+  // 展开:起步柔和、中间匀速、最后轻轻停稳,同时从半透明变实,边缘不像被硬切出来的;收起更快,滑回去时变淡。
+  // 展开不能用起步太猛的曲线:文件夹里只有一两行时,头几十毫秒就走完大半,看着像一下子弹出来、没有动效
+  const opts = { ...timing(opening), fill: 'both' };
+  const shut = { height: '0px', marginTop: '-2px' };
+  const open = { height: `${full}px`, marginTop: '0px' };
+  const out = { transform: `translateY(-${full}px)`, opacity: 0.2 };
+  const home = { transform: 'none', opacity: 1 };
+  return [box.animate(opening ? [shut, open] : [open, shut], opts), ...els.map((el) => el.animate(opening ? [out, home] : [home, out], opts))];
+}
+const timing = (opening) => (opening ? { duration: 320, easing: 'cubic-bezier(0.3, 0, 0.2, 1)' } : { duration: 240, easing: 'cubic-bezier(0.4, 0, 1, 1)' });
+const chevOf = (id) => document.querySelector(`#pins .row.folder[data-id="${id}"] .i`);
+// 箭头:展开时从朝右转到朝下,收起时反过来,时长、曲线和抽屉一样。
+// 直接播一段转动的动画,不靠 CSS 过渡:展开前的那次重画已经把箭头画成朝下、浏览器也量过一次布局,
+// 再退回朝右、切回朝下的话,过渡只会往回转一点又转回来,几乎看不出动
+function flipIcon(id, opening) {
+  const ico = chevOf(id);
+  if (!ico) return [];
+  ico.classList.toggle('open', opening);
+  const turn = [{ transform: 'rotate(0deg)' }, { transform: 'rotate(90deg)' }];
+  const chev = ico.querySelector('.chev');
+  return chev ? [chev.animate(opening ? turn : turn.reverse(), { ...timing(opening), fill: 'both' })] : [];
+}
+
+// 正在播的展开 / 收起:{ id, anims, done }。播完前又点了同一个文件夹,就让这些动画从当前位置原路倒回去,
+// 而不是另起一段(新的一段会从完全展开或完全收起的地方开始,画面会跳一下)
+let running = null;
+
 export async function toggleFolder(id) {
   const folder = findFolder(id)?.folder;
   if (!folder) return;
-  folder.open = !folder.open;
-  await save();
+  // 点击已经发生了:提前结束「按着鼠标时不重画」(见 events.js),不然展开时里面的几行要等松手后才画出来,抽屉就没的可拉
+  setPressing(false);
+  if (running?.id === id) {
+    folder.open = !folder.open;
+    chevOf(id)?.classList.toggle('open', folder.open);
+    for (const a of running.anims) a.reverse();
+    save();
+    return;
+  }
+  // 别的文件夹还在播:直接播完,再开始这一个
+  if (running) {
+    for (const a of running.anims) a.finish();
+    await running.done;
+  }
+  const opening = !folder.open;
+  folder.open = opening;
+  if (reduceMotion.matches) {
+    await save();
+    return render();
+  }
+  // 展开先把里面的行画出来,抽屉才有东西可拉;之后到播完都暂停重画(保存状态会触发一次),不然动画会被打断
+  if (opening) render();
+  setRenderHeld(true);
+  const saved = save();
+  const anims = [...flipIcon(id, opening), ...drawer(id, opening)];
+  let finish;
+  running = { id, anims, done: new Promise((r) => (finish = r)) };
+  try {
+    await Promise.all(anims.map((a) => a.finished.catch(() => {})));
+    await saved;
+  } finally {
+    running = null;
+    setRenderHeld(false);
+  }
+  // 按最后的状态(中途可能被倒回去了)整体重画,临时的容器和动画就都没了
   render();
+  finish();
 }
 
 // 不记录历史:文件夹里的项打开的标签页,访问记录由 background.js 立刻删掉;开启时顺手清掉已打开页面的记录

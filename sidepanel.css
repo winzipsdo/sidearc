@@ -439,6 +439,12 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 }
 .row:hover { background: var(--fill); }
 .row:active { background: var(--fill-hover); }
+/* 重画后鼠标还停着的那一行:直接是悬停的样子,不从透明慢慢过渡过来(见 render.js 的 keepHover) */
+.keep-hover { transition: none !important; }
+.row.keep-hover:not(.active, .selected) { background: var(--fill); }
+.row.selected.keep-hover { background: color-mix(in srgb, var(--card) 75%, transparent); }
+.tile.keep-hover:not(.active) { background: var(--fill-hover); }
+.row.keep-hover .x { display: grid; }
 .row.active { background: var(--card); box-shadow: var(--shadow); }
 /* 多选(Cmd/Ctrl+点击)选中的标签页:半透明的卡片,加一圈主题色细边 */
 .row.selected { background: color-mix(in srgb, var(--card) 55%, transparent); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
@@ -522,6 +528,11 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 #pins .row.folder .title { color: var(--fg); }
 #pins .row.folder .private { display: grid; color: var(--fg-3); }
 #pins .row.folder .count { flex: none; padding: 0 4px; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+/* 抽屉动效时临时装文件夹里各行的容器(见 folders.js 的 drawer) */
+#pins .drawer { display: flex; flex-direction: column; gap: 2px; flex: none; overflow: hidden; }
+/* 文件夹那一行的箭头(见 dom.js 的 chevron):收起朝右,展开朝下;转动的动画见 folders.js 的 flipIcon */
+.chev { transform-box: view-box; transform-origin: 8px 8px; }
+.i.open .chev { transform: rotate(90deg); }
 #pins .folder-empty { padding: 3px 10px 7px 38px; color: var(--fg-3); font-size: 12px; font-weight: 400; }
 
 /* 固定标签点进了别的页面:前面是固定的名字,后面是当前页面,右边常驻「回到固定地址」 */

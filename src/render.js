@@ -192,6 +192,27 @@ function revealNewTab() {
   $('#new-tab')?.scrollIntoView({ block: 'nearest', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
 }
 
+// 重画会把鼠标正停着的那一行换成新元素:新元素的背景从透明开始、按过渡慢慢变成悬停色,看着像闪了一下。
+// 所以重画前记下鼠标停在哪一行,重画后给新的那一行直接套上悬停的样子(不过渡,见 sidepanel.css 的 .keep-hover),
+// 鼠标一动就交还给正常的 :hover
+const hoveredKey = () => {
+  const el = document.querySelector('#favs [data-kind]:hover, #pins [data-kind]:hover, #tabs [data-kind]:hover, #history [data-kind]:hover');
+  return el && { kind: el.dataset.kind, id: el.dataset.id, el };
+};
+function keepHover(was) {
+  if (!was) return;
+  const el = document.querySelector(`[data-kind="${was.kind}"][data-id="${CSS.escape(was.id)}"]`);
+  if (!el || el === was.el) return;
+  el.classList.add('keep-hover');
+  const drop = () => {
+    for (const x of document.querySelectorAll('.keep-hover')) x.classList.remove('keep-hover');
+    removeEventListener('pointermove', drop);
+    document.documentElement.removeEventListener('pointerleave', drop);
+  };
+  addEventListener('pointermove', drop);
+  document.documentElement.addEventListener('pointerleave', drop);
+}
+
 export function render() {
   // 拖拽过程中、鼠标按着的时候重画会打断拖拽或吞掉点击,等松手后再画
   if (dragging || renderHeld || pressing) {
@@ -199,6 +220,7 @@ export function render() {
     return;
   }
   setRenderPending(false);
+  const hovered = hoveredKey();
   const space = activeSpace();
   const tabById = new Map(tabs.map((t) => [t.id, t]));
   document.documentElement.style.setProperty('--accent', space.color);
@@ -238,7 +260,7 @@ export function render() {
     if (away) {
       return h(
         'div',
-        { class: cls + ' away', draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+        { class: cls + ' away', draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id, ...(inFolder && { in: inFolder }) } },
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
@@ -251,7 +273,7 @@ export function render() {
     }
     return h(
       'div',
-      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id, ...(inFolder && { in: inFolder }) } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
@@ -278,7 +300,7 @@ export function render() {
     return h(
       'div',
       { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, data: { kind: 'folder', id: f.id } },
-      icon(f.open ? 'folderOpen' : 'folder'),
+      f.open ? Object.assign(icon('chevron'), { className: 'i open' }) : icon('chevron'),
       h('span', { class: 'title' }, f.name),
       f.noHistory && h('span', { class: 'private', title: t('noHistoryIconTip') }, icon('eyeOff')),
       // 折叠时显示里面有几项,开着几项
@@ -291,7 +313,8 @@ export function render() {
     const kids = query && !matches(x.name) ? x.items.filter(pinMatch) : x.items;
     if (query && !kids.length) return [];
     if (!x.open && !query) return [folderEl(x, true)];
-    return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', true)), !kids.length && h('div', { class: 'folder-empty' }, t('folderEmpty'))].filter(Boolean);
+    // 里面的行用 data-in 记下属于哪个文件夹(展开、收起的抽屉动效要找到它们,见 folders.js 的 toggleFolder)
+    return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', x.id)), !kids.length && h('div', { class: 'folder-empty', data: { in: x.id } }, t('folderEmpty'))].filter(Boolean);
   });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, t('pinsHint'))]));
   // 固定标签折叠了(点空间名切换,每个空间各记各的):行都还画着,由样式藏起来,只留当前正在看的那个;
@@ -351,6 +374,7 @@ export function render() {
   revealPending();
   updateScrollFades();
   applyCursor();
+  keepHover(hovered);
   saveSnapshot();
 }
 
