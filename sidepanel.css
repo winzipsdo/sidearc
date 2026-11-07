@@ -429,6 +429,8 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   align-items: center;
   gap: 10px;
   width: 100%;
+.row.hist-more { color: var(--fg-3); font-size: 12.5px; }
+.row.hist-more .i { width: 16px; }
   height: 36px;
   flex: none;
   padding: 0 7px 0 10px;

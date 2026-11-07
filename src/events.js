@@ -11,7 +11,7 @@ import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
 import { revealTab } from './locate.js';
-import { deleteHistory } from './history.js';
+import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
@@ -62,6 +62,7 @@ function bindRows(root) {
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (el.dataset.kind === 'folder') return toggleFolder(el.dataset.id);
+    if (el.dataset.kind === 'hist-more') return expandHistory();
     // 搜索结果里的历史记录:在新标签页打开(归入当前空间)。
     // 点开搜索结果里的任何一项(不是行上的按钮)都退出搜索
     if (el.dataset.kind === 'hist') {

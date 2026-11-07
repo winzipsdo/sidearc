@@ -149,8 +149,10 @@ export function bindKeys() {
     if (e.key === 'Enter') {
       e.preventDefault();
       el.click();
-      // 打开标签页后键盘焦点会进网页,选中框留着也用不了;只有展开收起文件夹时还留在侧边栏
-      if (el.dataset.kind !== 'folder') hideCursor();
+      // 打开标签页后键盘焦点会进网页,选中框留着也用不了;只有展开收起文件夹时还留在侧边栏。
+      // 历史记录的「显示更多」:展开后那一行没了,选中框落到同一位置、新列出来的第一条上
+      if (el.dataset.kind === 'hist-more') focus(current(), false);
+      else if (el.dataset.kind !== 'folder') hideCursor();
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
       // 和行上的关闭按钮一样:标签页关掉;收藏/固定项只关它的标签页,没开着的不动
       e.preventDefault();
