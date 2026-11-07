@@ -860,17 +860,18 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
 }
 #toast button:hover { background: var(--fill-hover); }
 
-/* 右键菜单 */
+/* 右键菜单:安静的样式,悬停是浅灰底、字和图标不变色。--row 是每一项的高度,设置里的选择条也一样高 */
 #menu {
+  --row: 28px;
   position: fixed;
   z-index: 10;
-  min-width: 180px;
+  min-width: 172px;
   max-width: min(280px, calc(100vw - 8px));
   /* 侧边栏太矮放不下整个菜单时,菜单内部滚动 */
   max-height: calc(100vh - 8px);
   overflow-y: auto;
-  padding: 5px;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 14px;
   background: var(--pop);
   backdrop-filter: blur(24px) saturate(1.6);
   box-shadow: var(--pop-shadow);
@@ -885,21 +886,19 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
   align-items: center;
   gap: 9px;
   width: 100%;
-  height: 30px;
+  height: var(--row);
   padding: 0 10px 0 8px;
-  border-radius: 8px;
+  border-radius: 7px;
   text-align: left;
   font-weight: 400;
 }
 #menu button > .label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #menu button > .note { flex: none; color: var(--fg-3); font-size: 11.5px; font-variant-numeric: tabular-nums; }
-#menu button:hover > .note { color: inherit; opacity: 0.8; }
 #menu button img.i { border-radius: 3px; }
 #menu button .i { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
-#menu button:hover { background: var(--accent); color: #fff; }
-#menu button:hover .i { color: inherit; }
+#menu button:hover { background: var(--fill-hover); }
 #menu button.danger .i { color: inherit; }
-#menu .menu-head { padding: 6px 10px 3px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
+#menu .menu-head { padding: 5px 10px 2px 33px; color: var(--fg-3); font-size: 11.5px; font-weight: 600; }
 #menu button.danger { color: #e5484d; }
 /* 暂时不能用的项:置灰,悬停也不高亮 */
 #menu button.disabled, #menu button.disabled:hover { background: none; color: var(--fg-3); cursor: default; }
@@ -907,10 +906,8 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
 /* 跳到别处的入口(比如完整历史记录):文字加粗、图标用正文颜色,和上面的列表项区分开 */
 #menu button.link { font-weight: 600; }
 #menu button.link .i { color: var(--fg); }
-#menu button.link:hover .i { color: inherit; }
-#menu button.danger:hover { background: #e5484d; color: #fff; }
 /* 足迹个数的选择条(见 menus.js 的 trailPicker):和菜单项一样的一行,右边一排小竖条 */
-#menu .trail-pick { display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 10px 0 8px; }
+#menu .trail-pick { display: flex; align-items: center; gap: 9px; height: var(--row); padding: 0 10px 0 8px; }
 #menu .trail-pick > svg { flex: none; width: 16px; height: 16px; color: var(--fg-2); }
 #menu .trail-pick > .label { flex: 1; }
 #menu .trail-pick .bars { display: flex; align-items: center; height: 100%; }
@@ -933,7 +930,7 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
 #menu .trail-pick .bars i.off.on, #menu .trail-pick .bars i.off:hover { color: var(--fg); opacity: 1; }
 /* 足迹和落叶两个选择条放在同一个网格里(见 menus.js 的 settingsMenu):图标、名字、选项各占一列,
    两行的选项列一样宽,最左边的 ⊘ 和右边缘都对齐 */
-#menu .picks { display: grid; grid-template-columns: 16px auto auto; grid-auto-rows: 30px; align-items: center; column-gap: 9px; padding: 0 10px 0 8px; }
+#menu .picks { display: grid; grid-template-columns: 16px auto auto; grid-auto-rows: var(--row); align-items: center; column-gap: 9px; padding: 0 10px 0 8px; }
 #menu .picks > :is(.trail-pick, .leaf-pick) { display: contents; }
 #menu .picks .i { width: 16px; height: 16px; color: var(--fg-2); }
 #menu .picks .label { white-space: nowrap; padding-right: 6px; }
@@ -947,7 +944,7 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
 #menu .leaf-pick .opts i.off { width: 18px; padding: 0; margin-right: 3px; opacity: 0.55; }
 #menu .leaf-pick .opts i.off.on, #menu .leaf-pick .opts i.off:hover { opacity: 1; background: none; color: var(--fg); }
 #menu .leaf-pick .opts i.off svg { width: 12px; height: 12px; }
-#menu hr { border: 0; border-top: 1px solid var(--line); margin: 5px 8px; }
+#menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 8px; }
 
 /* 对话框 */
 dialog {
