@@ -17,6 +17,34 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
+// 「复制成 Markdown」:把标签页写成「- [标题](地址)」的列表,方便贴给 AI。
+// links: [{ title, url, depth? }],depth 是缩进几层(子标签页、文件夹里的项);只有 title 没有 url 的是文件夹那一行,写成纯文字。
+// 新标签页、空白页没内容,跳过;文件夹里一个都不剩就整个不写。heading 给了就在最前面加一行标题。返回 { text, count }(count 是写了几个链接)
+const BLANK_PAGE = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp|^about:blank/i;
+// 标题里的方括号和反斜杠转义,换行压成空格;地址里的空格、括号、尖括号转成 %xx,免得把链接截断
+const mdText = (s) => s.replace(/\s+/g, ' ').trim().replace(/[\\[\]]/g, (c) => '\\' + c);
+const mdUrl = (s) => s.replace(/[\s()<>]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
+export function toMarkdown(links, heading) {
+  const lines = [];
+  let count = 0;
+  let group = null;
+  for (const { title, url, depth = 0 } of links) {
+    const pad = '  '.repeat(depth);
+    if (!url) {
+      group = { line: `${pad}- ${mdText(title || '')}`, depth };
+      continue;
+    }
+    if (BLANK_PAGE.test(url)) continue;
+    // 文件夹那一行等到它里面有第一个链接时才写
+    if (group && depth > group.depth) lines.push(group.line);
+    group = null;
+    lines.push(`${pad}- [${mdText(title || '') || mdText(url)}](${mdUrl(url)})`);
+    count++;
+  }
+  if (!count) return { text: '', count };
+  return { text: (heading ? `## ${mdText(heading)}\n\n` : '') + lines.join('\n'), count };
+}
+
 // 空间的固定区里可以有文件夹:{ id, folder: true, name, open, noHistory?, items: [项] },只在顶层,不嵌套
 export const isFolder = (x) => !!x?.folder;
 // 固定区里所有的固定项(展开文件夹),按显示顺序

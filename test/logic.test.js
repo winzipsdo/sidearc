@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX, toMarkdown } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -232,4 +232,23 @@ test('leafCount:离开满 24 小时落第一片,之后每满 N 小时多一片,�
   assert.equal(leafCount(1000, 1000 + 1000 * H, 12), LEAF_MAX);
   assert.equal(leafCount(1000, 1000 + 1000 * H, 0), 0);
   assert.equal(leafCount(5000, 1000, 12), 0);
+});
+
+test('toMarkdown:一行一个链接,子项缩进,文件夹写成一行,跳过新标签页', () => {
+  const { text, count } = toMarkdown(
+    [
+      { title: '空文件夹', depth: 0 },
+      { title: 'NTP', url: 'chrome://newtab/', depth: 1 },
+      { title: '文档', depth: 0 },
+      { title: 'A [草稿]', url: 'https://a.com/x', depth: 1 },
+      { title: '', url: 'https://b.com/(1) 2', depth: 0 },
+      { title: '多\n行  标题', url: 'https://c.com', depth: 1 },
+      { title: '空白', url: 'about:blank' },
+    ],
+    '工作'
+  );
+  assert.equal(count, 3);
+  assert.equal(text, '## 工作\n\n- 文档\n  - [A \\[草稿\\]](https://a.com/x)\n- [https://b.com/(1) 2](https://b.com/%281%29%202)\n  - [多 行 标题](https://c.com)');
+  assert.deepEqual(toMarkdown([{ title: 'x', url: 'chrome://newtab/' }], 'h'), { text: '', count: 0 });
+  assert.equal(toMarkdown([{ title: 'x', url: 'https://x.com' }]).text, '- [x](https://x.com)');
 });

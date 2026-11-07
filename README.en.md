@@ -90,7 +90,7 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 | `storage` | Saving spaces, favorites, pinned tabs, aliases and tab state for restoring after a restart. |
 | `favicon` | Showing site icons for favorites and pinned tabs. |
 | `search` | Searching with your default engine from the search box. |
-| `clipboardWrite` | "Copy link address". The clipboard is never read. |
+| `clipboardWrite` | "Copy link address" and "Copy as Markdown". The clipboard is never read. |
 | `sessions` | Restoring closed tabs on undo. |
 | `history` | Listing matching pages from the last 30 days when you search, deleting one with ×, and removing the pages just visited from no-history spaces and folders. Read locally, never sent anywhere. |
 | `webNavigation` | Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs). |

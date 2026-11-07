@@ -1,7 +1,7 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, durationParts, isAway, isUnloaded, LEAF_CHOICES, pinnedItems, TRAIL_SIZE } from './logic.js';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, toMarkdown, TRAIL_SIZE } from './logic.js';
 import { canScatter, scatterLeaves } from './leaves.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
@@ -47,6 +47,26 @@ function hardReloadItem(list) {
   };
 }
 
+// 复制成 Markdown:「- [标题](地址)」一行一个,方便贴给 AI。用网页自己的标题,不用别名(别名是给自己看的,AI 看网页标题更明白)。
+// 一个能复制的都没有(只有新标签页)时置灰
+function markdownItem(links, heading) {
+  const { text, count } = toMarkdown(links, heading);
+  return { icon: 'markdown', label: t('copyMarkdown'), disabled: !count, title: count ? null : t('nothingToCopy'), run: () => copyText(text, t('copiedMarkdown', { n: count })) };
+}
+
+// 一个空间的全部标签页,按侧边栏里的顺序:先固定区(文件夹写成一行,里面的项缩进;没开着的项用存下的地址),再下面的列表(子标签页缩进)。
+// 收藏所有空间共用,不算在哪个空间里
+function spaceLinks(space) {
+  const byTab = itemByTab();
+  const page = (item, depth) => {
+    const tab = tabs.find((x) => x.id === bind.get(item.id));
+    return { title: tab?.title || item.title, url: tab?.url || item.url, depth };
+  };
+  const pinned = space.pinned.flatMap((x) => (isFolder(x) ? [{ title: x.name, depth: 0 }, ...x.items.map((i) => page(i, 1))] : [page(x, 0)]));
+  const listed = tabs.filter((x) => !byTab.has(x.id) && tabSpace.get(x.id) === space.id);
+  return [...pinned, ...buildTree(listed, tabParent).map(({ tab, depth }) => ({ title: tab.title, url: tab.url || tab.pendingUrl, depth }))];
+}
+
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
 function selectionMenu(e, list) {
   const n = list.length;
@@ -55,6 +75,7 @@ function selectionMenu(e, list) {
     hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
     scatterItem(list),
+    markdownItem(list.map((x) => ({ title: x.title, url: x.url || x.pendingUrl }))),
     '-',
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
@@ -176,6 +197,7 @@ export function spaceMenu(e, id) {
     id === activeSpace().id && { icon: 'folderPlus', label: t('newFolderMenu'), run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleNoHistory(id) },
     { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },
+    space && markdownItem(spaceLinks(space), space.name),
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { icon: 'trash', label: t('deleteSpace'), danger: true, run: () => deleteSpace(id) },
   ]);
