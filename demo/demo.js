@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=ae870d14', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=b2c6e57b', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

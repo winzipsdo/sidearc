@@ -572,7 +572,7 @@ body:has(#menu[data-from='space']:not([hidden])) #space-menu { background: var(-
 /* 列表末尾的「新标签页」:居中一个浅色小圆底的加号,平时藏着(免得和底部新建空间的加号撞在一起),
    鼠标靠近这一行(或键盘选中)才浮出来,移到圆上才变成主题色。只有点圆才算数(见 render.js) */
 #tabs .row.new { justify-content: center; height: 44px; margin-top: 1px; scroll-margin-bottom: 24px; padding: 0; background: none; color: var(--fg-3); cursor: default; }
-.row.new .i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--fill); cursor: pointer; opacity: 0; transition: background 0.15s, color 0.15s, transform 0.15s, opacity 0.2s; }
+.row.new .i { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--fg) 12%, transparent); cursor: pointer; opacity: 0; transition: background 0.15s, color 0.15s, transform 0.15s, opacity 0.2s; }
 .row.new:hover .i, .row.new.kb-focus .i, .row.new:focus-visible .i { opacity: 1; }
 .row.new .i:hover { background: var(--accent); color: #fff; transform: scale(1.06); }
 .row.new .i:active { transform: scale(0.96); }
