@@ -418,6 +418,8 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   transition: background 0.15s, color 0.15s;
 }
 .ghost:hover { background: var(--fill-hover); color: var(--fg); }
+/* 空间菜单开着时,三个点保持按下的样子,看得出菜单是从它出来的 */
+body:has(#menu[data-from='space']:not([hidden])) #space-menu { background: var(--fill-hover); color: var(--fg); }
 
 /* 行 */
 .list { display: flex; flex-direction: column; gap: 2px; min-height: 8px; border-radius: 11px; }
@@ -459,6 +461,9 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 .row.selected:hover { background: color-mix(in srgb, var(--card) 75%, transparent); }
 /* 当前标签页在多选里:保留白底和阴影,再加上同样的细边 */
 .row.active.selected { background: var(--card); box-shadow: var(--shadow), inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 50%, transparent); }
+/* 右键菜单开着时,菜单是给谁的(见 ui.js 的 setMenuTarget):染一层主题色,和菜单里高亮的项同色;当前标签页的白卡片上染浅一点 */
+.row.menu-target:not(.active), .tile.menu-target:not(.active), #spaces .space-dot.menu-target { background: color-mix(in srgb, var(--accent) 18%, transparent); }
+.row.active.menu-target, .tile.active.menu-target { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
 /* 多选拖动时的影子:「N 个标签页」,只在拖拽开始的一瞬间放在页面外截图 */
 .drag-ghost { position: fixed; top: -100px; left: 0; padding: 4px 10px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .row .icon { width: 16px; height: 16px; flex: none; border-radius: 4px; }
@@ -770,6 +775,8 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
   transition: opacity 0.12s, transform 0.12s;
 }
 .space-dot:hover::after { opacity: 1; transform: translate(-50%, 0); transition-delay: 0.2s; }
+/* 菜单开着时不出提示:点了设置、最近关闭,或右键空间圆点后鼠标没动,提示会和菜单叠在一起 */
+body:has(#menu:not([hidden])) .space-dot::after { opacity: 0; transition-delay: 0s; }
 /* 最近关闭:底部这一行的最左边;提示文字靠左对齐,免得超出侧边栏 */
 #spaces { position: relative; }
 #spaces .space-dot.recent { position: absolute; left: 10px; top: 6px; }
@@ -870,6 +877,9 @@ body:has(#toast:not([hidden])) #locate[data-dir='down'] { bottom: calc(var(--bot
   animation: pop 0.12s ease-out;
 }
 @keyframes pop { from { opacity: 0; transform: scale(0.96); } }
+/* 贴着按钮弹出的菜单:从靠按钮的那个角放大出来 */
+#menu[data-from='space'] { transform-origin: top right; }
+#menu[data-from='settings'] { transform-origin: bottom right; }
 #menu button {
   display: flex;
   align-items: center;

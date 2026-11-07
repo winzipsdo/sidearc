@@ -9,6 +9,7 @@ import { refreshLocate, revealPending } from './locate.js';
 import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
+import { applyMenuTarget, toggleMenuFrom } from './ui.js';
 import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
@@ -362,8 +363,8 @@ export function render() {
       )
     ),
     h('button', { class: 'space-dot', 'aria-label': t('newSpace'), data: { name: t('newSpace') }, onclick: addSpace }, icon('plus')),
-    h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: recentMenu }, icon('recent')),
-    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
+    h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: (e) => toggleMenuFrom('#spaces .space-dot.recent', () => recentMenu(e)) }, icon('recent')),
+    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: (e) => toggleMenuFrom('#spaces .space-dot.settings', () => settingsMenu(e)) }, icon('sliders'))
   );
   refreshTrail();
   refreshSleepAnim();
@@ -375,6 +376,7 @@ export function render() {
   updateScrollFades();
   applyCursor();
   keepHover(hovered);
+  applyMenuTarget();
   saveSnapshot();
 }
 

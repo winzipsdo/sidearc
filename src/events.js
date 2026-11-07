@@ -15,7 +15,7 @@ import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
-import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
+import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
@@ -130,19 +130,25 @@ function bindMenus(scroll) {
     e.preventDefault();
     const el = e.target.closest('[data-kind]');
     const dot = e.target.closest('[data-space]');
-    if (dot) return spaceMenu(e, dot.dataset.space);
+    // 菜单开着时标出它是给谁的(见 ui.js 的 setMenuTarget)
+    if (dot) return setMenuTarget([dot]), spaceMenu(e, dot.dataset.space);
     if (!el) return hideMenu();
-    if (el.dataset.kind === 'folder') return folderMenu(e, el.dataset.id);
+    if (el.dataset.kind === 'folder') return setMenuTarget([el]), folderMenu(e, el.dataset.id);
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
-      if (tab) tabMenu(e, tab);
+      if (!tab) return;
+      // 右键的是多选里的一项:菜单作用于选中的全部(见 menus.js 的 tabMenu),选中的几行都标出来
+      const many = tab.highlighted && document.querySelectorAll('#tabs .row.selected').length > 1;
+      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el]);
+      tabMenu(e, tab);
     } else {
       const hit = findItem(el.dataset.id);
-      if (hit) itemMenu(e, hit);
+      if (hit) setMenuTarget([el]), itemMenu(e, hit);
     }
   });
+  // 点在菜单外面就关;打开它的那个按钮除外,由按钮自己切换开关(见 ui.js 的 toggleMenuFrom)
   document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('#menu')) hideMenu();
+    if (!e.target.closest('#menu') && !isMenuOwner(e.target)) hideMenu();
   });
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
@@ -163,7 +169,18 @@ function bindControls() {
     const dot = e.target.closest('[data-space]');
     if (dot) switchSpace(dot.dataset.space);
   });
-  $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
+  // 右上角的三个点:菜单固定贴在按钮下方、右对齐,不跟着鼠标点的位置走(和右下角的设置按钮一样)
+  // 菜单开着时再点一次就关上
+  $('#space-menu').addEventListener('click', (e) => {
+    const anchor = e.currentTarget.getBoundingClientRect();
+    toggleMenuFrom('#space-menu', () => {
+      spaceMenu(e, state.activeSpaceId);
+      const menu = $('#menu');
+      menu.dataset.from = 'space';
+      menu.style.left = Math.max(4, anchor.right - menu.offsetWidth) + 'px';
+      menu.style.top = Math.min(anchor.bottom + 6, Math.max(4, innerHeight - menu.offsetHeight - 4)) + 'px';
+    });
+  });
   // 点空间名(或旁边的小箭头、折叠时的数量)折叠/展开这个空间的固定标签
   $('#pins-toggle-area').addEventListener('click', () => {
     const space = activeSpace();
