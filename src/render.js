@@ -351,7 +351,7 @@ export function render() {
     }),
     // 「新标签页」跟在最后一个标签页下面,居中一个圆形小加号(带文字的话和真的新标签页那一行长得一样);搜索时不显示。
     // 整行都是靠近时显示加号的范围,但只有点到圆才开新标签页(键盘回车 detail 为 0,也算)
-    ...(query ? [] : [h('button', { id: 'new-tab', class: 'row new' + (Date.now() < plusBackAt ? ' resting' : ''), title: t('newTab'), 'aria-label': t('newTab'), onclick: (e) => (e.detail === 0 || e.target.closest('.i')) && newTabBelow() }, h('span', { class: 'i' }, icon('plus')))])
+    ...(query ? [] : [h('button', { id: 'new-tab', class: 'row new' + (Date.now() < plusBackAt ? ' resting' : ''), title: t('newTab'), 'aria-label': t('newTab'), onclick: (e) => (e.detail === 0 || e.target.closest('.i')) && newTabBelow() }, icon('plus'))])
   );
 
   $('#spaces').replaceChildren(
