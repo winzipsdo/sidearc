@@ -14,6 +14,15 @@ try {
   }
 } catch {}
 
+// 列表的滚动条占多宽(Windows 上十来像素,Mac 上浮在内容上是 0),右边距要减掉它,见 sidepanel.css 的 #scroll。
+// 缩放页面时宽度会变,再量一次
+{
+  const scroll = document.getElementById('scroll');
+  const measure = () => document.documentElement.style.setProperty('--gutter', `${scroll.offsetWidth - scroll.clientWidth}px`);
+  measure();
+  addEventListener('resize', measure);
+}
+
 // 淡入(样式见 sidepanel.css 的 body.shown):先按透明画一帧,下一帧再显示,过渡才会真的播出来
 {
   const show = () => document.body.classList.add('shown');

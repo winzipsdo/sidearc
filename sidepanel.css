@@ -139,11 +139,17 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   flex-direction: column;
   /* 底部多留一截:滚到最下面时,最后几行不会被底部的提示条挡住 */
   padding: 4px 12px 56px;
+  /* 滚动条的位置一直留着:Windows 上滚动条不是浮在内容上的,要占一条宽度,不留的话列表一长到要滚,
+     内容就被挤窄一截、整页跳一下。右边距减掉这条宽度(--gutter,boot.js 量出来的;Mac 上是 0),
+     有没有滚动条,内容离两边都是 12px */
+  scrollbar-gutter: stable;
+  padding-right: max(0px, calc(12px - var(--gutter, 0px)));
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
-/* 刚打开时先不画滚动条(仍然能滚),淡入播完再显示,见 sidepanel.js */
-body:not(.settled) #scroll { scrollbar-width: none; }
+/* 刚打开时先把滚动条画成透明(位置照留、仍然能滚),淡入播完再显示,见 sidepanel.js。
+   不能用 scrollbar-width: none,那样留的位置也没了,到点显示时内容又会被挤一下 */
+body:not(.settled) #scroll { scrollbar-color: transparent transparent; }
 
 /* 收藏夹 */
 .grid {
@@ -423,14 +429,14 @@ header:hover #search-toggle, #search-toggle:focus-visible, body.searching #searc
 #history .divider b { color: var(--fg-3); font-size: 11px; font-weight: 600; }
 .row.hist .title { color: var(--fg-2); }
 .row.hist:hover .ago { display: none; }
+.row.hist-more { color: var(--fg-3); font-size: 12.5px; }
+.row.hist-more .i { width: 16px; }
 .row.hist .ago { flex: none; color: var(--fg-3); font-size: 11px; font-weight: 400; white-space: nowrap; }
 .row {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-.row.hist-more { color: var(--fg-3); font-size: 12.5px; }
-.row.hist-more .i { width: 16px; }
   height: 36px;
   flex: none;
   padding: 0 7px 0 10px;
