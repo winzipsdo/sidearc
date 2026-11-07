@@ -89,7 +89,9 @@ export async function toggleFolder(id) {
   if (!folder) return;
   // 点击已经发生了:提前结束「按着鼠标时不重画」(见 events.js),不然展开时里面的几行要等松手后才画出来,抽屉就没的可拉
   setPressing(false);
-  if (running?.id === id) {
+  // 只在动画还在播的时候倒回去;刚好播完、还没收尾重画的那一瞬间又点的,等收尾完再正常开合,
+  // 不然倒放已经播完的动画、紧接着收尾重画又把画面切到最终状态,箭头和抽屉就对不上
+  if (running?.id === id && running.anims.some((a) => a.playState === 'running')) {
     folder.open = !folder.open;
     chevOf(id)?.classList.toggle('open', folder.open);
     for (const a of running.anims) a.reverse();

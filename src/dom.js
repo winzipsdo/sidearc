@@ -32,7 +32,7 @@ const ICONS = {
   eye: svg('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/>'),
   eyeOff: svg('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/><path d="M3 13L13 3"/>'),
   folder: svg('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/>'),
-  // 文件夹那一行的箭头:收起时朝右,展开时转到朝下(样式见 sidepanel.css 的 .chev)
+  // 文件夹那一行的箭头:细线的 ›,收起时朝右,展开时转到朝下(样式见 sidepanel.css 的 .chev)
   chevron: svg('<path class="chev" d="M6 3.8l4.2 4.2L6 12.2"/>'),
   folderOpen: svg('<path d="M2.5 12V4.5a1 1 0 011-1h3l1.5 1.5h4a1 1 0 011 1v1"/><path d="M2.5 12l1.6-4.3a1 1 0 01.9-.7h8.6l-1.7 5z"/>'),
   folderPlus: svg('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/><path d="M8 7.3v3.4M6.3 9h3.4"/>'),
