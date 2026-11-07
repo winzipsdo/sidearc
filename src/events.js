@@ -139,7 +139,7 @@ function bindMenus(scroll) {
       if (!tab) return;
       // 右键的是多选里的一项:菜单作用于选中的全部(见 menus.js 的 tabMenu),选中的几行都标出来
       const many = tab.highlighted && document.querySelectorAll('#tabs .row.selected').length > 1;
-      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el]);
+      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el], el);
       tabMenu(e, tab);
     } else {
       const hit = findItem(el.dataset.id);
