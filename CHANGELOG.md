@@ -8,6 +8,7 @@
 
 ### 修复
 
+- **连点文件夹时,箭头和里面的行偶尔对不上。** 动画刚播完、还没收尾时又点一下,现在会等收尾后再正常开合。 [`8129107`](https://github.com/winzipsdo/sidearc/commit/8129107)
 - **重画后,鼠标停着的那一行的悬停底色会闪一下。** 现在重画后直接是悬停的样子,鼠标一动再交还给正常的悬停效果。 [`3a885c0`](https://github.com/winzipsdo/sidearc/commit/3a885c0)
 - **Windows 上打开侧边栏时,滚动条会闪一下又消失。** 打开后淡入的那 0.7 秒里列表先不画滚动条(仍然能滚),之后再按实际情况显示。 [`8711ee5`](https://github.com/winzipsdo/sidearc/commit/8711ee5)
 
