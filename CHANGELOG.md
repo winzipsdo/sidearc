@@ -12,6 +12,7 @@
 
 ### 修复
 
+- **搜索时侧边栏不再一直报错。** 1.9.0 新加的「回到当前标签页」小胶囊,在搜索框里有字时每次重画、每次滚动都会抛出错误;现在搜索时它安静地收起。 [`22dcab7`](https://github.com/winzipsdo/sidearc/commit/22dcab7)
 - **再点一次三个点、设置或最近关闭按钮,菜单会关上。** 以前刚关上又被同一次点击打开,看起来关不掉。 [`676b985`](https://github.com/winzipsdo/sidearc/commit/676b985)
 - **点了底部的按钮后鼠标不动,提示不再和菜单叠在一起。** 菜单开着时底部这一排都不出提示。 [`676b985`](https://github.com/winzipsdo/sidearc/commit/676b985)
 - **键盘选中框贴着右边时不再被裁掉一截。** [`ac00621`](https://github.com/winzipsdo/sidearc/commit/ac00621)
