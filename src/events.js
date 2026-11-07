@@ -13,7 +13,7 @@ import { bindLeaves, refreshLeaves } from './leaves.js';
 import { revealTab } from './locate.js';
 import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
-import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
 import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
@@ -280,6 +280,8 @@ function bindBrowser() {
   chrome.tabs.onReplaced.addListener((added, removed) => (replaceTabId(added, removed), schedule()));
   chrome.tabs.onActivated.addListener((info) => {
     if (info.windowId !== windowId) return;
+    // 点进去了:撒上去的落叶也被吹走(后台也会删存储里的,这里先删,免得这次重画还留着)
+    tabScattered.delete(info.tabId);
     followSpace(info.tabId);
     schedule();
   });

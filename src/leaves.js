@@ -6,8 +6,8 @@
 // 列表会整体重画,canvas 和每片叶子的状态都记在这里,重画后挪到新的行上,不会重新落一遍。
 // 只有在动(飘落、被拨开、飞走)的时候才逐帧画,静止时不占资源
 
-import { leafCount } from './logic.js';
-import { leafHours, setTabSeen, tabReplacedHooks, tabSeen, tabs } from './store.js';
+import { LEAF_MAX, leafCount } from './logic.js';
+import { leafHours, setTabScattered, setTabSeen, tabReplacedHooks, tabScattered, tabSeen, tabs } from './store.js';
 
 const ROW_H = 36;
 const GONE_MS = 600; // 飞走的叶子多久淡完
@@ -143,7 +143,7 @@ export function refreshLeaves() {
     // 第一次看到这一行:已经该有的叶子直接铺好;之后新增的才从上面飘下来
     const fall = !!pile && !reduceMotion.matches;
     pile ??= newPile(tab.id);
-    const want = tab.active ? 0 : leafCount(tabSeen.get(tab.id) ?? tab.lastAccessed, now, leafHours);
+    const want = leavesOn(tab, now);
     // 少了:点进去了,或者设置改成了更久才落一片。多出来的被风吹走
     if (want < pile.n) {
       blow(pile.ps.filter((p) => p.i >= want && !p.gone));
@@ -245,6 +245,7 @@ function step(pile, now, move) {
     pile.n = 0;
     pile.glow = now;
     setTabSeen(pile.id, Date.now());
+    setTabScattered(pile.id, 0);
     busy = true;
   }
   return busy;
@@ -293,6 +294,25 @@ function drawLeaf(ctx, p, alpha) {
   ctx.lineTo(s * 0.8, 0);
   ctx.stroke();
   ctx.restore();
+}
+
+// 这个标签页现在落了几片:按时间该落的(当前标签页不落)和右键撒到的,取多的那个,不相加。
+// 比如撒到了 4 片,按时间才该落第 1 片时还是 4 片,到该落第 5 片时才多出第 5 片
+export function leavesOn(tab, now = Date.now()) {
+  if (!leafHours) return 0;
+  const byTime = tab.active ? 0 : leafCount(tabSeen.get(tab.id) ?? tab.lastAccessed, now, leafHours);
+  return Math.min(LEAF_MAX, Math.max(byTime, tabScattered.get(tab.id) ?? 0));
+}
+// 能不能再撒:开着落叶、还没落满
+export const canScatter = (tab) => leafHours > 0 && leavesOn(tab) < LEAF_MAX;
+
+// 右键「撒落叶」:在现在有几片的基础上随机再落 1 到 6 片,落满为止,新的从上面飘下来。记下撒到了几片。
+// 当前标签页也能撒:一直留着,离开后按时间落的追上来之前不会再多,再点回来时才被吹走
+export async function scatterLeaves(list) {
+  for (const tab of list.filter(canScatter)) {
+    await setTabScattered(tab.id, Math.min(LEAF_MAX, leavesOn(tab) + 1 + Math.floor(Math.random() * 6)));
+  }
+  refreshLeaves();
 }
 
 // 鼠标在标签页列表上移动:记下它在哪一行、往哪边动了多少

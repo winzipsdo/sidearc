@@ -112,6 +112,8 @@ const MESSAGES = {
     leaves: '落叶',
     leavesTip: '很久没进去过的标签页上会慢慢落上叶子:离开超过一天后,每隔这么久落一片,最多 12 片。鼠标在上面左右来回扫几下就能扫干净;点最左边的 ⊘ 就不落',
     leavesOff: '不落叶',
+    scatterLeaves: '撒落叶',
+    leavesFullTip: '已经落满 12 片了',
 
     // 对话框
     save: '保存',
@@ -260,6 +262,8 @@ const MESSAGES = {
     leaves: 'Fallen leaves',
     leavesTip: 'Tabs you haven’t visited in a while slowly gather leaves: once you’ve been away a day, one more every this often, up to 12. Sweep the mouse back and forth over them to clear them; click ⊘ on the left to turn it off',
     leavesOff: 'Off',
+    scatterLeaves: 'Scatter leaves',
+    leavesFullTip: 'Already covered: 12 leaves',
 
     save: 'Save',
     cancel: 'Cancel',

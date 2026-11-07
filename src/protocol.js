@@ -10,6 +10,7 @@ export const PREFIX = {
   group: 'g', // g:<groupId> -> 这个标签页分组对应的空间 id
   slept: 'z', // z:<tabId> -> 这个标签页开始休眠的时间(毫秒);醒来后删掉
   seen: 'v', // v:<tabId> -> 上次离开这个标签页(或在侧边栏里把它的落叶扫干净)的时间(毫秒),落叶从这时算起
+  scattered: 'l', // l:<tabId> -> 右键「撒落叶」撒到了几片;显示时和按时间该落的片数取多的那个;点进这个标签页(当前标签页上撒的,是离开后再点回来)或扫干净时删掉
   trail: 'f', // f:<windowId> -> 足迹:{ active: 当前标签页, trail: [{ id, at }] 最近离开的几个,新的在前,at 是离开的时间(毫秒) }
 };
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));

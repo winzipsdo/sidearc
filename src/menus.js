@@ -2,6 +2,7 @@
 
 import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
 import { canDiscard, durationParts, isAway, isUnloaded, LEAF_CHOICES, pinnedItems, TRAIL_SIZE } from './logic.js';
+import { canScatter, scatterLeaves } from './leaves.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
@@ -29,6 +30,13 @@ function memoryItems(tab) {
   ];
 }
 
+// 撒落叶(只有下面列表里的标签页落叶,收藏和固定标签没有):关了落叶时不显示;都落满了置灰
+function scatterItem(list) {
+  if (!leafHours) return null;
+  const full = !list.some(canScatter);
+  return { icon: 'leaf', label: t('scatterLeaves'), disabled: full, title: full ? t('leavesFullTip') : null, run: () => scatterLeaves(list) };
+}
+
 // 硬性重新加载:不走缓存,整页重新从服务器取,和 Ctrl/⌘+Shift+R 一样(菜单里不标快捷键,免得菜单变宽)。没开着的项不显示
 function hardReloadItem(list) {
   if (!list.length) return null;
@@ -46,6 +54,7 @@ function selectionMenu(e, list) {
     { header: t('nTabs', { n }) },
     hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
+    scatterItem(list),
     '-',
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
@@ -84,6 +93,7 @@ export function tabMenu(e, tab) {
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
+    scatterItem([tab]),
     // 移动:子标签层级,以及移到别的空间
     '-',
     listedParent(tab.id) != null && { icon: 'outdent', label: t('unnest'), run: () => setTabParent(tab.id, null).then(render) },

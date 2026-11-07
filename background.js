@@ -37,7 +37,7 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     const all = await chrome.storage.session.get(null);
     const set = {};
     const remove = [];
-    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen]) {
+    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen, KEY.scattered]) {
       if (!(key(removedId) in all)) continue;
       set[key(addedId)] = all[key(removedId)];
       remove.push(key(removedId));
@@ -69,7 +69,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
-  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId), KEY.seen(tabId)];
+  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId), KEY.seen(tabId), KEY.scattered(tabId)];
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
@@ -174,6 +174,7 @@ async function restoreStep() {
     if (asleep && (e.z ?? r.time)) set[KEY.slept(tab.id)] = e.z ?? r.time;
     // 上次离开的时间(落叶从这时算起):重启后 Chrome 的 lastAccessed 不一定靠得住,接着用原来记的
     if (e.v) set[KEY.seen(tab.id)] = e.v;
+    if (e.l) set[KEY.scattered(tab.id)] = e.l;
   }
   // 父子关系要等两头都对上
   r.tabs.forEach((e, pos) => {
@@ -210,6 +211,7 @@ async function saveSnapshot() {
       b: binds.get(t.id),
       z: all[KEY.slept(t.id)],
       v: all[KEY.seen(t.id)],
+      l: all[KEY.scattered(t.id)],
     })),
   };
   await chrome.storage.local.set({ snapshot });
@@ -344,6 +346,8 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) =>
     // 同时记下离开原来那个标签页的时间,侧边栏的落叶从这时算起
     const left = prevAlive && rec?.active != null && rec.active !== tabId ? { [KEY.seen(rec.active)]: now } : {};
     await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, now, prevAlive), ...left });
+    // 点进这个标签页:之前撒上去的落叶和按时间落的一起被吹走
+    await chrome.storage.session.remove(KEY.scattered(tabId));
   })
 );
 // 关掉的标签页从足迹里去掉;关掉的窗口整条删掉

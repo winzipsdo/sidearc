@@ -19,7 +19,9 @@ export const tabParent = new Map();
 export const tabSlept = new Map();
 // 上次离开(或扫干净落叶)的时间:tabId -> 毫秒。没有记录的(装扩展之前就开着的)用 Chrome 的 lastAccessed
 export const tabSeen = new Map();
-const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen };
+// 右键撒上去的落叶片数:tabId -> 片数
+export const tabScattered = new Map();
+const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen, [PREFIX.scattered]: tabScattered };
 
 export const tabs = [];
 export let windowId;
@@ -105,6 +107,14 @@ export function setTabSeen(tabId, at) {
   tabSeen.set(tabId, at);
   return chrome.storage.session.set({ [KEY.seen(tabId)]: at });
 }
+export function setTabScattered(tabId, n) {
+  if (!n) {
+    tabScattered.delete(tabId);
+    return chrome.storage.session.remove(KEY.scattered(tabId));
+  }
+  tabScattered.set(tabId, n);
+  return chrome.storage.session.set({ [KEY.scattered(tabId)]: n });
+}
 export function setBind(itemId, tabId) {
   bind.set(itemId, tabId);
   return chrome.storage.session.set({ [KEY.bind(itemId)]: tabId });
@@ -186,7 +196,7 @@ export function subtreeIds(tabId) {
 export const tabReplacedHooks = [];
 
 export function replaceTabId(added, removed) {
-  for (const map of [tabSpace, tabAlias, tabParent, tabSlept, tabSeen]) {
+  for (const map of [tabSpace, tabAlias, tabParent, tabSlept, tabSeen, tabScattered]) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }
