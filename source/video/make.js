@@ -1,5 +1,5 @@
 // 生成主页上的介绍视频 assets/intro.mp4(1920×1080,30fps)和封面 assets/intro-poster.jpg;
-// node source/video/make.js short 生成竖屏短片(抖音这类平台,1080×1920)assets/videos/douyin.mp4 和封面 douyin-cover.jpg,
+// node source/video/make.js short 生成竖屏短片(抖音这类平台,1080×1920)assets/videos/douyin.mp4(不出封面,封面在平台上选),
 // 画面在 short.html / short.js,配乐是 music-short.js,另外输出一份没有配乐的 douyin-silent.mp4,方便在平台上换音乐。
 // 画面和动画在 scene.html / scene.js 里(Web Animations,所有动画都暂停,按时间定格);
 // 这里用 Chrome 打开它,一帧帧调用 seek(t) 截图交给 ffmpeg 编码,再配上 music.js 生成的背景音乐。
@@ -22,7 +22,7 @@ const FPS = 30;
 const SHORT = process.argv[2] === 'short';
 // 画面的排版尺寸和截图时放大的倍数:介绍视频按 1280×720 排版、放大 1.5 倍;短片按 540×960 排版、放大 2 倍
 const { scene, width, height, SCALE, video, poster: posterFile } = SHORT
-  ? { scene: 'short.html', width: 540, height: 960, SCALE: 2, video: 'assets/videos/douyin.mp4', poster: 'assets/videos/douyin-cover.jpg' }
+  ? { scene: 'short.html', width: 540, height: 960, SCALE: 2, video: 'assets/videos/douyin.mp4', poster: null }
   : { scene: 'scene.html', width: 1280, height: 720, SCALE: 1.5, video: 'assets/intro.mp4', poster: 'assets/intro-poster.jpg' };
 const CHROME =
   process.env.CHROME ??
@@ -133,11 +133,13 @@ if (SHORT) {
   console.log('已生成', silent);
 }
 
-// 封面:取 POSTER 那一刻的画面
-await evaluate(`seek(${poster})`);
-const { data } = await page('Page.captureScreenshot', { format: 'jpeg', quality: 88 });
-writeFileSync(join(ROOT, posterFile), Buffer.from(data, 'base64'));
-console.log('已生成', posterFile);
+// 封面:取 POSTER 那一刻的画面(短片不出封面)
+if (posterFile) {
+  await evaluate(`seek(${poster})`);
+  const { data } = await page('Page.captureScreenshot', { format: 'jpeg', quality: 88 });
+  writeFileSync(join(ROOT, posterFile), Buffer.from(data, 'base64'));
+  console.log('已生成', posterFile);
+}
 
 ws.close();
 chrome.kill();

@@ -16,7 +16,6 @@ const SWEEP = [9, 11]; // 鼠标来回扫 Hacker News
 const CLOSE = 12; // 关掉落满叶子的 Slack
 const OUT = 14; // 窗口退场,鼓停
 const DURATION = 17.5;
-const POSTER = 7.8; // 封面:叶子刚落满,大字「好久没看的标签页会落满叶子」
 const CLICKS = [];
 const CUES = { drop: PRESS, ticks: [], leaves: [], sweeps: [], pops: [CLOSE], clicks: CLICKS, end: OUT }; // 给 music-short.js 的音效时间点
 
@@ -286,7 +285,7 @@ async function setup() {
   seek(0);
 }
 
-Object.assign(window, { seek, DURATION, POSTER, CLICKS, CUES });
+Object.assign(window, { seek, DURATION, CLICKS, CUES });
 setup().then(
   () => {
     window.sceneReady = true;

@@ -10,7 +10,7 @@
 | `demo/` | 在线试用:模拟的 Chrome(`sim.js`)、假的浏览器窗口(`demo.js`、`demo.css`)、假网站和初始状态(`web.js`)、给插件页面注入接口的 `inject.js` | 手写;`brand-icons.js` 从 `main` 复制 |
 | `ext/` | 插件本身的代码,在线试用直接跑它 | `source/build.js` 从 `main` 复制,别手改 |
 | `store/`、`icons/` | 应用商店截图、插件图标 | `source/build.js` 从 `main` 复制 |
-| `assets/` | 标志、介绍视频 `intro.mp4` 和封面 `intro-poster.jpg`;`videos/` 里是给短视频平台的竖屏短片(`douyin.mp4`、没有配乐的 `douyin-silent.mp4`、封面 `douyin-cover.jpg`)和从介绍视频剪出来的落叶片段 `fallen-leaves.mp4`,主页上不引用 | 视频由 `source/video/make.js` 生成 |
+| `assets/` | 标志、介绍视频 `intro.mp4` 和封面 `intro-poster.jpg`;`videos/` 里是给短视频平台的竖屏短片(`douyin.mp4` 和没有配乐的 `douyin-silent.mp4`)和从介绍视频剪出来的落叶片段 `fallen-leaves.mp4`,主页上不引用 | 视频由 `source/video/make.js` 生成 |
 | `source/` | 生成用的脚本,主页上不引用 | 手写 |
 
 ## 在线试用是怎么跑起来的
@@ -88,7 +88,7 @@ node source/video/make.js
 node source/video/make.js short
 ```
 
-生成 `assets/videos/douyin.mp4`、没有配乐的 `douyin-silent.mp4`(在平台上挂热门音乐用)和封面 `douyin-cover.jpg`,一两分钟。平台会在顶部、右侧和底部盖上自己的按钮和文字,要紧的内容放在中间偏左。预览:`/source/video/short.html?play`。
+生成 `assets/videos/douyin.mp4` 和没有配乐的 `douyin-silent.mp4`(在平台上挂热门音乐用),一两分钟;封面在平台上发布时选。平台会在顶部、右侧和底部盖上自己的按钮和文字,要紧的内容放在中间偏左。预览:`/source/video/short.html?play`。
 
 落叶片段 `assets/videos/fallen-leaves.mp4` 是从介绍视频里剪出来的(落叶那一幕,约 8 秒,头尾淡入淡出),介绍视频重新生成后可以照样再剪:
 
