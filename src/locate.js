@@ -17,7 +17,8 @@ const activeRow = () => $('#pins .row.active') || $('#tabs .row.active');
 // 滚动、重画、窗口大小变了时调用
 export function refreshLocate() {
   btn ??= makeButton();
-  const row = !query.trim() && activeRow();
+  // 搜索时不出现:row 留空(不能写成 !query.trim() && activeRow(),那样是 false,下面 row?.… 会报错)
+  const row = query.trim() ? null : activeRow();
   const box = $('#scroll').getBoundingClientRect();
   const r = row?.getBoundingClientRect();
   // 留几像素余量:只露出一条边也算看得见
