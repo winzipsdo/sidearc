@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- 竖屏短片的画面(540×960,输出时放大到 1080×1920),给抖音这类短视频平台。时间线在 short.js 里;生成见 make.js(node source/video/make.js short,输出到 assets/videos/)。
+     平台会在顶部、右侧和底部盖上自己的按钮和文字:要紧的内容放在中间偏左,顶部留 90px、底部留 120px。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>Sidearc short</title>
+<link rel="stylesheet" href="../../demo/demo.css">
+<style>
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 540px; height: 960px; overflow: hidden; background: #f4f2fb; }
+body {
+  font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
+  color: #1d1d24;
+  -webkit-font-smoothing: antialiased;
+}
+#stage { position: relative; width: 540px; height: 960px; overflow: hidden; background: linear-gradient(160deg, #eef0ff, #f4f2fb 50%, #f7eef3); }
+.blob { position: absolute; width: 620px; height: 620px; border-radius: 50%; }
+.b1 { left: -280px; top: -260px; background: radial-gradient(closest-side, rgba(107, 124, 255, 0.28), transparent); }
+.b2 { right: -300px; bottom: -280px; background: radial-gradient(closest-side, rgba(229, 104, 122, 0.22), transparent); }
+.b3 { left: 120px; top: 380px; background: radial-gradient(closest-side, rgba(240, 145, 63, 0.12), transparent); }
+.layer { position: absolute; inset: 0; }
+
+/* 大字幕:一屏一句 */
+.cap { position: absolute; z-index: 7; left: 24px; right: 24px; top: 118px; height: 150px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+.cap p { font-size: 44px; line-height: 1.22; font-weight: 900; letter-spacing: 1px; }
+.cap p + p { margin-top: 6px; }
+.cap .sub { font-size: 30px; font-weight: 800; color: #5d5f70; }
+.hl { background: linear-gradient(120deg, #6b7cff, #a874c8 55%, #e5687a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hl-leaf { color: #c3762f; }
+
+/* 浏览器窗口(样式见 demo/demo.css) */
+#win { position: absolute; left: 22px; top: 292px; width: 496px; }
+/* 画面只有 540px 宽,会命中在线试用的手机样式(demo.css 的 max-width: 760px):这里改回桌面的样子 */
+#win .sb-window { height: 560px; border-radius: 14px; }
+#win .sb-strip { padding-left: 76px; }
+#win .sb-lights { display: flex; }
+#win .sb-main { flex-direction: row; }
+#win .sb-side { height: auto; border-right: 1px solid var(--w-line); border-bottom: 0; }
+#win .sb-strip { position: relative; }
+#win .sb-tabs { position: absolute; left: 76px; right: 8px; top: 0; bottom: 0; }
+#win .sb-tab { min-width: 0; }
+#win .sb-tab.active { min-width: 0; }
+#win .v-group { display: flex; flex: 1 1 0; min-width: 0; align-items: flex-end; gap: 1px; height: 100%; overflow: hidden; }
+#win .sb-omni span { white-space: nowrap; overflow: hidden; color: var(--w-fg); font-size: 13px; }
+#win .sb-side { width: 0; overflow: hidden; }
+#win .sb-side iframe { display: block; width: 320px; height: 474px; border: 0; }
+#win .sb-page { position: relative; overflow: hidden; min-height: 0; }
+#win .sb-doc { padding: 24px 22px 30px; }
+#win .sb-doc h3 { font-size: 19px; }
+#win .sb-ext { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; }
+
+/* 按键提示 */
+#keys { position: absolute; z-index: 6; left: 0; right: 0; top: 520px; display: flex; justify-content: center; align-items: center; gap: 12px; font: 800 28px Inter, system-ui, sans-serif; color: #5d5f70; }
+#keys kbd { min-width: 92px; height: 74px; padding: 0 22px; display: grid; place-items: center; border-radius: 16px; background: #fff; color: #1d1d24; font: 800 32px Inter, system-ui, sans-serif; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 6px 0 rgba(0, 0, 0, 0.14), 0 18px 40px rgba(40, 30, 100, 0.22); }
+
+/* 「三天后」 */
+#lapse { position: absolute; z-index: 6; left: 50%; top: 468px; translate: -50% 0; display: flex; align-items: center; gap: 12px; padding: 14px 28px; border-radius: 999px; background: rgba(29, 29, 36, 0.9); color: #fff; font-size: 30px; font-weight: 800; white-space: nowrap; box-shadow: 0 18px 44px rgba(29, 29, 36, 0.32); }
+#lapse svg { width: 32px; height: 32px; }
+
+/* 结尾 */
+#outro { display: flex; flex-direction: column; align-items: center; justify-content: center; padding-bottom: 60px; text-align: center; }
+#outro .logo { width: 132px; height: 132px; filter: drop-shadow(0 22px 44px rgba(122, 108, 230, 0.35)); }
+#outro h1 { margin-top: 26px; font: 800 76px/1 Inter, system-ui, sans-serif; letter-spacing: -1.5px; }
+#outro .zh { margin-top: 22px; font-size: 30px; font-weight: 800; }
+#outro .gh { display: flex; align-items: center; gap: 14px; margin-top: 44px; padding: 18px 32px; border-radius: 999px; background: #1d1d24; color: #fff; font-size: 30px; font-weight: 800; box-shadow: 0 18px 40px rgba(29, 29, 36, 0.28); }
+#outro .gh svg { width: 36px; height: 36px; }
+#outro .gh b { font-family: Inter, system-ui, sans-serif; font-weight: 800; }
+#outro .small { margin-top: 22px; font-size: 20px; color: #6b6d7c; font-weight: 600; }
+
+/* 鼠标指针 */
+#cursor { position: absolute; z-index: 20; left: 0; top: 0; width: 0; height: 0; }
+#cursor .ring { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(closest-side, rgba(107, 124, 255, 0.45), rgba(107, 124, 255, 0.12) 70%, transparent); }
+#cursor svg { position: absolute; left: -2px; top: -1px; width: 22px; height: 26px; transform-origin: 2px 1px; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i></div>
+
+  <div class="cap" id="cap-1"><p>开了 <span class="hl">40 个</span>标签页</p><p class="sub">一个都看不清</p></div>
+  <div class="cap" id="cap-2"><p>一键,全部<span class="hl">竖起来</span></p><p class="sub">标题一眼看清</p></div>
+  <div class="cap" id="cap-3"><p>好久没看的标签页</p><p>会<span class="hl-leaf">落满叶子</span></p></div>
+  <div class="cap" id="cap-4"><p>想留着?</p><p><span class="hl">扫一扫</span>就干净</p></div>
+  <div class="cap" id="cap-5"><p>不要了?</p><p><span class="hl">直接关掉</span></p></div>
+  <div class="cap" id="cap-6"><p>该关的标签页</p><p><span class="hl-leaf">自己会冒出来</span></p></div>
+
+  <div id="win" class="sb"></div>
+  <div id="keys"><kbd>Alt</kbd>+<kbd>S</kbd></div>
+  <div id="lapse"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="5.8"/><path d="M8 4.8V8l2.2 1.4"/></svg>三天后</div>
+
+  <section id="outro" class="layer">
+    <img class="logo" src="../../assets/logo.svg" alt="">
+    <h1>Sidearc</h1>
+    <p class="zh">Chrome 竖排标签页 · 免费开源</p>
+    <p class="gh" id="gh">GitHub 搜 <b>Sidearc</b></p>
+    <p class="small">不联网 · 数据只在本机</p>
+  </section>
+
+  <div id="cursor">
+    <i class="ring"></i>
+    <svg viewBox="0 0 22 26"><path d="M2 1.5v19.2l4.9-4.6 3.3 7.4 3.1-1.4-3.3-7.2h6.8z" fill="#1d1d24" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+  </div>
+</div>
+<script type="module" src="short.js"></script>
+</body>
+</html>

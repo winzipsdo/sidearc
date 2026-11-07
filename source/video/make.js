@@ -1,4 +1,6 @@
-// 生成主页上的介绍视频 assets/intro.mp4(1920×1080,30fps)和封面 assets/intro-poster.jpg。
+// 生成主页上的介绍视频 assets/intro.mp4(1920×1080,30fps)和封面 assets/intro-poster.jpg;
+// node source/video/make.js short 生成竖屏短片(抖音这类平台,1080×1920)assets/videos/douyin.mp4 和封面 douyin-cover.jpg,
+// 画面在 short.html / short.js,配乐是 music-short.js,另外输出一份没有配乐的 douyin-silent.mp4,方便在平台上换音乐。
 // 画面和动画在 scene.html / scene.js 里(Web Animations,所有动画都暂停,按时间定格);
 // 这里用 Chrome 打开它,一帧帧调用 seek(t) 截图交给 ffmpeg 编码,再配上 music.js 生成的背景音乐。
 // 在 gh-pages 的工作目录里运行:node source/video/make.js。需要本机装有 Chrome(路径可用环境变量 CHROME 指定)和 ffmpeg;
@@ -6,18 +8,22 @@
 // 想在浏览器里实时预览动画:在这个分支的根目录起一个静态服务器,打开 /source/video/scene.html?play
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderMusic } from './music.js';
+import { renderShortMusic } from './music-short.js';
 
 // 用 fileURLToPath 而不是 .pathname:Windows 上 .pathname 是 /C:/... 这样的路径,拼不出正确的文件路径
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
-const OUT = join(ROOT, 'assets');
 const FPS = 30;
-const SCALE = 1.5; // 画面按 1280×720 排版,截图时放大 1.5 倍,输出 1920×1080
+const SHORT = process.argv[2] === 'short';
+// 画面的排版尺寸和截图时放大的倍数:介绍视频按 1280×720 排版、放大 1.5 倍;短片按 540×960 排版、放大 2 倍
+const { scene, width, height, SCALE, video, poster: posterFile } = SHORT
+  ? { scene: 'short.html', width: 540, height: 960, SCALE: 2, video: 'assets/videos/douyin.mp4', poster: 'assets/videos/douyin-cover.jpg' }
+  : { scene: 'scene.html', width: 1280, height: 720, SCALE: 1.5, video: 'assets/intro.mp4', poster: 'assets/intro-poster.jpg' };
 const CHROME =
   process.env.CHROME ??
   [
@@ -77,23 +83,24 @@ const evaluate = async (expression) => {
   if (exceptionDetails) throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
   return result.value;
 };
-await page('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: SCALE, mobile: false });
+await page('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: SCALE, mobile: false });
 await page('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
-await page('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/source/video/scene.html` });
+await page('Page.navigate', { url: `http://127.0.0.1:${server.address().port}/source/video/${scene}` });
 // 等画面搭好(字体、图标、侧边栏 iframe 都加载完),拿到总时长和点击音效的时间点
 const deadline = Date.now() + 30000;
 while (!(await evaluate('window.sceneReady === true').catch(() => false))) {
   if (Date.now() > deadline) throw new Error('画面加载超时:' + (await evaluate('String(window.sceneError)').catch(() => '')));
   await new Promise((r) => setTimeout(r, 100));
 }
-const { duration, clicks, poster } = await evaluate('({ duration: DURATION, clicks: CLICKS, poster: POSTER })');
+const { duration, clicks, poster, cues } = await evaluate('({ duration: DURATION, clicks: CLICKS, poster: POSTER, cues: window.CUES })');
 
 // 背景音乐(含点击音效)先写成临时 wav,和画面一起交给 ffmpeg
 const work = mkdtempSync(join(tmpdir(), 'sidearc-audio-'));
 const wav = join(work, 'music.wav');
-writeFileSync(wav, renderMusic(duration, clicks));
+writeFileSync(wav, SHORT ? renderShortMusic(duration, cues) : renderMusic(duration, clicks));
 
-const mp4 = join(OUT, 'intro.mp4');
+const mp4 = join(ROOT, video);
+mkdirSync(join(mp4, '..'), { recursive: true });
 // 截图是 sRGB,按 BT.709 转成 yuv420p 并写明色彩信息,浏览器里颜色才不会偏
 const ffmpeg = spawn(
   'ffmpeg',
@@ -116,13 +123,21 @@ for (let f = 0; f < frames; f++) {
 }
 ffmpeg.stdin.end();
 await done;
-console.log('\n已生成', mp4.slice(ROOT.length));
+console.log('\n已生成', video);
+// 短片另外输出一份没有配乐的,方便在平台上直接挂热门音乐
+if (SHORT) {
+  const silent = video.replace(/\.mp4$/, '-silent.mp4');
+  await new Promise((resolve, reject) =>
+    spawn('ffmpeg', ['-y', '-loglevel', 'error', '-i', mp4, '-an', '-c:v', 'copy', '-movflags', '+faststart', join(ROOT, silent)], { stdio: 'inherit' }).on('exit', (c) => (c ? reject(new Error('ffmpeg 出错')) : resolve()))
+  );
+  console.log('已生成', silent);
+}
 
 // 封面:取 POSTER 那一刻的画面
 await evaluate(`seek(${poster})`);
 const { data } = await page('Page.captureScreenshot', { format: 'jpeg', quality: 88 });
-writeFileSync(join(OUT, 'intro-poster.jpg'), Buffer.from(data, 'base64'));
-console.log('已生成', 'assets/intro-poster.jpg');
+writeFileSync(join(ROOT, posterFile), Buffer.from(data, 'base64'));
+console.log('已生成', posterFile);
 
 ws.close();
 chrome.kill();

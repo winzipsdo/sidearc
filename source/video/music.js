@@ -1,7 +1,7 @@
 // 介绍视频的背景音乐:用正弦波合成的一段轻音乐(铺底和弦、低音、琶音、轻鼓),加上鼠标点击的音效。
 // 不用任何音频素材,也不依赖第三方包;同样的参数每次生成的结果都一样。返回 16 位立体声 wav 文件的内容。
 
-const SR = 44100;
+export const SR = 44100;
 const BEAT = 60 / 96; // 每分钟 96 拍
 const BAR = BEAT * 4;
 // 和弦进行 Fmaj7 → Em7 → Dm7 → Cmaj7,每个和弦一小节:[铺底和弦的音, 低音]
@@ -17,10 +17,10 @@ const BASS_FROM = 4;
 const GROOVE_FROM = 8.2;
 const GROOVE_TO = 64.8;
 
-const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
+export const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
 
 // 固定种子的随机数,保证每次生成一样
-function random(seed) {
+export function random(seed) {
   return () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -30,7 +30,7 @@ function random(seed) {
 }
 
 // 简单的 Schroeder 混响:4 个梳状滤波器并联,再串 2 个全通滤波器
-function reverb(input, spread) {
+export function reverb(input, spread) {
   const out = new Float32Array(input.length);
   for (const len of [1557, 1617, 1491, 1422]) {
     const buf = new Float32Array(len + spread);
@@ -181,6 +181,12 @@ export function renderMusic(duration, clicks = []) {
   }
   const gain = 0.8 / peak;
 
+  return wavOf(mix, gain);
+}
+
+// 16 位立体声 wav 文件的内容
+export function wavOf(mix, gain) {
+  const n = mix[0].length;
   const wav = Buffer.alloc(44 + n * 4);
   wav.write('RIFF', 0);
   wav.writeUInt32LE(36 + n * 4, 4);

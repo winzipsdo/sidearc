@@ -1,12 +1,10 @@
-// 介绍视频的画面和时间线。
-// 所有动画都用 Web Animations 建好后暂停,seek(t) 把它们一起定格到第 t 秒,make.js 逐帧调用它截图。
-// 插件自己的 CSS 动效(足迹、休眠、键盘选中框、喇叭)靠在时间线上加减 class 触发:seek(t) 先按时间把 class 摆好,
-// 再把由此产生的 CSS 动画也定格到对应的进度,所以同样是一帧一帧确定的。
+// 介绍视频的画面和时间线(时间线工具和落叶在 engine.js,和竖屏短片 short.js 共用)。
 // 地址后加 ?play 可以在浏览器里实时播放预览(CSS 动效那部分不会跟着播)。
 // 侧边栏是一个 iframe,直接套用插件的 ext/sidepanel.css;浏览器窗口和网页的样式、内容和在线试用共用(demo/)。
 
-import { BRAND_ICONS } from '../../demo/brand-icons.js';
-import { iconFor, page } from '../../demo/web.js';
+import { iconFor } from '../../demo/web.js';
+import { GITHUB_MARK, ICON, P, SPACES, U, row, short, stab, stroke, title } from './content.js';
+import { EASE, build, cls, leafPile, pile, playAll, seek, set, setFrameDoc, tw } from './engine.js';
 
 const LEAVES_AT = 48.4; // 落叶这一幕开始
 const END = LEAVES_AT + 8; // 窗口淡出,后面是功能卡片、隐私和结尾
@@ -14,84 +12,6 @@ const DURATION = END + 14.1;
 const POSTER = LEAVES_AT + 3.25; // 封面取这一刻:标签页上刚落满叶子,镜头还没推近
 const SLEEP_AT = 40.6; // 点月亮让 Hacker News 休眠的时刻
 const CLICKS = []; // 点击和按键的时间点,music.js 在这些地方加音效
-
-// ---------- 时间线工具 ----------
-
-const EASE = {
-  out: 'cubic-bezier(.22,1,.36,1)',
-  inOut: 'cubic-bezier(.65,0,.35,1)',
-  in: 'cubic-bezier(.55,0,1,.45)',
-  spring: 'cubic-bezier(.34,1.56,.64,1)',
-  linear: 'linear',
-};
-const specs = [];
-let anims = [];
-let mine = new Set();
-// 从第 t 秒起,用 dur 秒把 el 的各个属性按给的关键帧变过去
-function tw(el, t, dur, props, ease = EASE.out) {
-  for (const [prop, values] of Object.entries(props)) specs.push({ el, t, dur, prop, values, ease });
-}
-// 第 t 秒起把属性直接设成某个值
-function set(el, t, props) {
-  for (const [prop, v] of Object.entries(props)) specs.push({ el, t, dur: 0.001, prop, values: [v, v], ease: 'linear', instant: true });
-}
-// 第 t 秒起给 el 加上(on 为假时去掉)class
-const classes = []; // { el, name, t, on }
-const initial = new Map(); // el -> 一开始就有的 class
-function cls(el, t, name, on = true) {
-  if (!initial.has(el)) initial.set(el, new Set(el.classList));
-  classes.push({ el, name, t, on });
-}
-// 按时间先后建动画:同一元素同一属性的第一段在开始前也生效(决定初始状态),之后的每段只在开始后生效、盖住前一段
-function build() {
-  for (const a of anims) a.cancel();
-  anims = [];
-  const seen = new Map();
-  for (const s of [...specs].sort((a, b) => a.t - b.t)) {
-    if (!seen.has(s.el)) seen.set(s.el, new Set());
-    const done = seen.get(s.el);
-    const first = !done.has(s.prop) && !s.instant;
-    done.add(s.prop);
-    const a = s.el.animate({ [s.prop]: s.values }, { delay: s.t * 1000, duration: Math.max(1, s.dur * 1000), easing: s.ease, fill: first ? 'both' : 'forwards' });
-    a.pause();
-    anims.push(a);
-  }
-  mine = new Set(anims);
-  classes.sort((a, b) => a.t - b.t);
-}
-// 某个元素(或它的祖先)最近一次改 class 的时间:由它引起的 CSS 动画、过渡从这一刻算起
-function changedAt(el, t) {
-  let best = 0;
-  for (const c of classes) {
-    if (c.t > t) break;
-    if (c.t > best && c.el.contains(el)) best = c.t;
-  }
-  return best;
-}
-function seek(t) {
-  for (const a of anims) a.currentTime = t * 1000;
-  if (doc) drawLeaves(t);
-  for (const [el, names] of initial) {
-    const want = new Set(names);
-    for (const c of classes) {
-      if (c.t > t) break;
-      if (c.el === el) c.on ? want.add(c.name) : want.delete(c.name);
-    }
-    const touched = new Set(classes.filter((c) => c.el === el).map((c) => c.name));
-    for (const name of touched) el.classList.toggle(name, want.has(name));
-  }
-  for (const d of [document, doc].filter(Boolean)) {
-    for (const a of d.getAnimations()) {
-      if (mine.has(a)) continue;
-      const el = a.effect?.target;
-      if (!el) continue;
-      a.pause();
-      try {
-        a.currentTime = Math.max(0, (t - changedAt(el, t)) * 1000);
-      } catch {}
-    }
-  }
-}
 
 const $ = (s, root = document) => root.querySelector(s);
 const frame = () => $('#panel');
@@ -106,87 +26,6 @@ function at(t, el, ax = 0.5, ay = 0.5) {
   const o = el.ownerDocument === document ? { left: 0, top: 0 } : frame().getBoundingClientRect();
   return [o.left + r.left + r.width * ax, o.top + r.top + r.height * ay];
 }
-
-// ---------- 图标 ----------
-
-const stroke = (d) => `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-const SPEAKER = '<path d="M2.5 6.2v3.6h2.3L8 12.5v-9L4.8 6.2z"/>';
-const ICON = {
-  search: '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>',
-  more: '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><circle cx="3" cy="8" r="1.3"/><circle cx="8" cy="8" r="1.3"/><circle cx="13" cy="8" r="1.3"/></svg>',
-  plus: stroke('<path d="M8 3.5v9M3.5 8h9"/>'),
-  minus: stroke('<path d="M4 8h8"/>'),
-  close: stroke('<path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/>'),
-  sound: stroke(SPEAKER + '<path d="M10.5 5.8a3 3 0 010 4.4"/><path d="M12.3 4a5.5 5.5 0 010 8"/>'),
-  sleep: stroke('<path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/>'),
-  outdent: stroke('<path d="M7.5 4h6M7.5 8h6M7.5 12h6"/><path d="M4.5 6L2.5 8l2 2"/>'),
-  back: stroke('<path d="M6 3.5L3 6.5l3 3"/><path d="M3 6.5h6.5a3.5 3.5 0 010 7H8"/>'),
-  chevron: stroke('<path class="chev" d="M6 3.8l4.2 4.2L6 12.2"/>'),
-  folder: stroke('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/>'),
-  recent: stroke('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
-  sliders: stroke('<path d="M2 3.5h5.9M11.1 3.5H14M2 8h2.4M7.6 8H14M2 12.5h6.4M11.6 12.5H14"/><circle cx="9.5" cy="3.5" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="10" cy="12.5" r="1.6"/>'),
-  newtab: stroke('<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M12 9.5v3a1 1 0 01-1 1H3.5a1 1 0 01-1-1V5a1 1 0 011-1h3"/>'),
-  copy: stroke('<rect x="5.5" y="5.5" width="7.5" height="7.5" rx="1.5"/><path d="M10.5 5.5V4A1.5 1.5 0 009 2.5H4A1.5 1.5 0 002.5 4v5A1.5 1.5 0 004 10.5h1.5"/>'),
-  eyeOff: stroke('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/><path d="M3 13L13 3"/>'),
-  theme: stroke('<circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11a5.5 5.5 0 000-11z" fill="currentColor"/>'),
-  select: stroke('<rect x="2.5" y="2.5" width="11" height="4" rx="1.2"/><rect x="2.5" y="9.5" width="11" height="4" rx="1.2"/>'),
-  shield: stroke('<path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/><path d="M6 8l1.5 1.5L10.5 6.5"/>'),
-  code: stroke('<path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5"/>'),
-  heart: stroke('<path d="M8 13.5S2.5 10.3 2.5 6.4A2.9 2.9 0 018 4.8a2.9 2.9 0 015.5 1.6c0 3.9-5.5 7.1-5.5 7.1z"/>'),
-  play: '<svg viewBox="0 0 16 16" width="22" height="22"><path d="M5 3.5v9l7-4.5z" fill="currentColor"/></svg>',
-  pause: stroke('<path d="M5.5 3.5v9M10.5 3.5v9"/>'),
-  nav: (d) => `<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`,
-};
-const GITHUB_MARK = `<svg viewBox="0 0 24 24"><path fill="currentColor" d="${BRAND_ICONS.github.path}"/></svg>`;
-
-// ---------- 内容:标签页、空间、网页(网页的标题和图标来自 demo/web.js) ----------
-
-const U = {
-  gmail: 'https://mail.google.com/mail/u/0/#inbox',
-  github: 'https://github.com/winzipsdo/sidearc',
-  youtube: 'https://www.youtube.com/',
-  figmaFav: 'https://www.figma.com/files/recent',
-  spotify: 'https://open.spotify.com/',
-  notion: 'https://www.notion.so/sidearc/project-plan',
-  weekly: 'https://www.notion.so/sidearc/weekly-notes',
-  trip: 'https://docs.google.com/document/d/tokyo-trip',
-  docs: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel',
-  mdn: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix',
-  tg: 'https://developer.chrome.com/docs/extensions/reference/api/tabGroups',
-  mv3: 'https://developer.chrome.com/docs/extensions/develop/migrate',
-  lofi: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
-  hn: 'https://news.ycombinator.com/',
-  linear: 'https://linear.app/sidearc/my-issues',
-  cal: 'https://calendar.google.com/',
-  figma: 'https://www.figma.com/design/home-v3',
-  pr: 'https://github.com/winzipsdo/sidearc/pulls',
-  build: 'https://github.com/winzipsdo/sidearc/actions/runs/128',
-  slack: 'https://app.slack.com/client/design',
-  anki: 'https://ankiweb.net/decks',
-  wiki: 'https://zh.wikipedia.org/wiki/贝叶斯定理',
-  b3: 'https://www.youtube.com/watch?v=HZGCoVF3YvM',
-  typst: 'https://typst.app/docs/reference/math/',
-};
-const P = (key) => page(U[key], 'zh');
-const TITLE = { tg: 'chrome.tabGroups | API | Chrome for Developers', mv3: '迁移到 Manifest V3 | Chrome for Developers' };
-const title = (key) => TITLE[key] ?? P(key).title;
-const short = (key) => title(key).split(/ [–|-] /)[0];
-const SPACES = [
-  { name: '个人', color: '#6b7cff', group: 'blue' },
-  { name: '工作', color: '#4fae6e', group: 'green' },
-  { name: '学习', color: '#f0913f', group: 'orange' },
-];
-
-// 侧边栏里的行,结构和插件的 render.js 一样
-const row = (id, key, { kind = 'tab', alias, depth, cls: c = '', sound, open = true, slept } = {}) =>
-  `<div class="row ${c}" id="${id}" data-kind="${kind}"${depth ? ' style="--depth:1"' : ''}><img class="icon" src="${iconFor(U[key])}" alt="">` +
-  (alias ? `<span class="alias">${alias}</span>` : '') +
-  `<span class="title">${title(key)}</span>` +
-  (slept ? `<span class="slept">${slept}</span>` : '') +
-  (sound ? `<button class="btn playing">${ICON.sound}</button>` : '') +
-  (kind === 'tab' && depth ? `<button class="btn x">${ICON.outdent}</button>` : '') +
-  (open ? `<button class="btn x v-moon">${ICON.sleep}</button>` : '') +
-  `<button class="btn x">${kind === 'tab' ? ICON.close : ICON.minus}</button></div>`;
 
 function panelHtml() {
   const favs = ['gmail', 'github', 'youtube', 'figmaFav', 'spotify'].map((k, i) => `<div class="tile${i === 0 ? ' open' : ''}" id="f-${k}"><img class="icon" src="${iconFor(U[k])}" alt=""></div>`).join('');
@@ -254,9 +93,6 @@ body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei U
 </body></html>`;
 }
 
-// 顶部标签栏的标签页,结构和在线试用(demo/demo.js)一样
-const stab = (id, key, { color, active } = {}) =>
-  `<div class="sb-tab${color ? ' grouped' : ''}${active ? ' active' : ''}"${id ? ` id="s-${id}"` : ''}${color ? ` data-color="${color}"` : ''}><img src="${iconFor(U[key] ?? key)}" alt=""><span class="sb-title">${U[key] ? short(key) : key}</span><button class="sb-x">${stroke('<path d="M5 5l6 6M11 5l-6 6"/>')}</button></div>`;
 const CROWD = ['gmail', 'github', 'docs', 'lofi', 'notion', 'hn', 'figma', 'mdn', 'linear', 'wiki', 'slack', 'spotify', 'trip', 'typst', 'anki', 'cal', 'pr', 'b3', 'build', 'tg', 'mv3', 'youtube', 'figmaFav', 'weekly'];
 function stripHtml() {
   const crowd = CROWD.map((k, i) => stab(i < 6 ? '' : 'c' + i, k, { active: k === 'docs' })).join('');
@@ -716,181 +552,6 @@ function pointer() {
   tw(cursor, L + 7.2, 0.3, { opacity: [1, 0] });
 }
 
-// ---------- 落叶:和插件 src/leaves.js 一样的叶子和物理,只是按视频时间一步步算,同一时刻总是同一个样子 ----------
-
-const LEAF_H = 36;
-const LEAF_COLORS = ['#c98a3a', '#b5652f', '#a8743c', '#d2a24a', '#9a5a34', '#8f8a3e'];
-const LEAF_DT = 1 / 60; // 插件按每秒 60 帧算的物理,这里也一样
-const piles = new Map(); // row -> { row, cv, ctx, W, drops: [{ t, n }], blowAt, sweep, 模拟状态 }
-
-function seeded(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
-function pile(row) {
-  if (!piles.has(row)) {
-    const cv = doc.createElement('canvas');
-    cv.className = 'leaves';
-    row.append(cv);
-    piles.set(row, { row, cv, ctx: cv.getContext('2d'), W: 0, drops: [], blowAt: null, sweep: null, simT: Infinity });
-  }
-  return piles.get(row);
-}
-// 第 t 秒起往这一行上落 n 片叶子
-function leafPile(row, t, n) {
-  pile(row).drops.push({ t, n });
-}
-function resetPile(p) {
-  Object.assign(p, { ps: [], n: 0, simT: Math.min(...p.drops.map((d) => d.t)), done: new Set(), blown: false, glow: 0, sweeping: false, mouse: null, rnd: seeded(p.row.id.length * 7919 + 17), homes: [] });
-}
-const rowSeed = (p) => [...p.row.id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7);
-// 第 i 片叶子落在哪:和 src/leaves.js 的 homeOf 一样用「最佳候选」,挑离前面几片最远的位置,免得叠成一堆
-function homeOf(p, i) {
-  while (p.homes.length <= i) {
-    const r = seeded(rowSeed(p) * 6271 + p.homes.length * 15485863);
-    let best = null;
-    let bestD = -1;
-    for (let c = 0; c < 16; c++) {
-      const fx = 0.45 + r() * 0.52;
-      const hy = LEAF_H * (0.3 + r() * 0.42);
-      let d = Infinity;
-      for (const h of p.homes) d = Math.min(d, Math.hypot((h.fx - fx) * 300, h.hy - hy));
-      if (d > bestD) (bestD = d), (best = { fx, hy });
-    }
-    p.homes.push(best);
-  }
-  return p.homes[i];
-}
-function makeLeaf(p, i, t0) {
-  const r = seeded(rowSeed(p) * 7919 + i * 104729);
-  const { fx, hy } = homeOf(p, i);
-  const rot = r() * Math.PI * 2;
-  return { i, fx, hy, x: null, y: -10, vx: 0, vy: 0, vr: 0, rot, hrot: rot, s: 5 + r() * 3.5, c: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)], hp: 2 + Math.floor(r() * 2), falling: true, t0: t0 + r() * 0.6, gone: 0, cd: 0 };
-}
-// 推进一步(1/60 秒)
-function stepPile(p, t) {
-  const ms = t * 1000;
-  for (const [k, d] of p.drops.entries()) {
-    if (p.done.has(k) || t < d.t) continue;
-    p.done.add(k);
-    for (let i = 0; i < d.n; i++) p.ps.push(makeLeaf(p, p.n++, d.t));
-  }
-  if (p.blowAt != null && !p.blown && t >= p.blowAt) {
-    p.blown = true;
-    for (const l of p.ps) if (!l.gone) Object.assign(l, { gone: ms, falling: false, vx: 2 + p.rnd() * 3, vy: -0.5 - p.rnd(), vr: (p.rnd() - 0.5) * 0.5 });
-  }
-  const sw = p.sweep;
-  if (sw && t >= sw.t0 && t <= sw.t1) {
-    const x = sw.x(t);
-    const y = sw.y(t);
-    p.mouse = { x, y, dx: p.mouse ? x - p.mouse.x : 0, dy: p.mouse ? y - p.mouse.y : 0 };
-  } else p.mouse = null;
-  const W = p.W;
-  for (const l of p.ps) {
-    const hx = l.fx * W;
-    l.x ??= hx;
-    if (l.falling) {
-      if (t < l.t0) continue;
-      const e = ms - l.t0 * 1000;
-      l.y += 0.45;
-      l.x = hx + Math.sin(e / 260) * 6;
-      l.rot = l.hrot + Math.sin(e / 300) * 0.9;
-      if (l.y >= l.hy) l.falling = false;
-    } else if (l.gone) {
-      l.x += l.vx;
-      l.y += l.vy + Math.sin(ms / 90 + l.fx * 50) * 0.5;
-      l.vy += 0.04;
-      l.rot += l.vr;
-    } else {
-      if (p.mouse) pushLeaf(p, l, p.mouse, ms);
-      l.vx = (l.vx + (hx - l.x) * 0.012) * 0.86;
-      l.vy = (l.vy + (l.hy - l.y) * 0.012) * 0.86;
-      l.vr = (l.vr + (l.hrot - l.rot) * 0.004) * 0.9;
-      l.x += l.vx;
-      l.y += l.vy;
-      l.rot += l.vr;
-    }
-  }
-  p.ps = p.ps.filter((l) => !l.gone || ms - l.gone < 600);
-  // 扫干净了:最后一片飞走时整行亮一下
-  if (p.sweeping && !p.ps.some((l) => !l.gone)) {
-    p.sweeping = false;
-    p.glow = ms;
-  }
-}
-function pushLeaf(p, l, m, ms) {
-  const dx = l.x - m.x;
-  const dy = l.y - m.y;
-  const dist = Math.hypot(dx, dy);
-  if (dist >= 26) return;
-  const f = (1 - dist / 26) * 1.4;
-  l.vx += (dx / (dist || 1)) * f + m.dx * 0.08;
-  l.vy += (dy / (dist || 1)) * f + m.dy * 0.08;
-  l.vr += (m.dx * 0.01 + (dx > 0 ? 0.03 : -0.03)) * f;
-  if (Math.abs(m.dx) <= 3 || ms - l.cd < 250) return;
-  l.cd = ms;
-  l.hp--;
-  l.fx += (Math.sign(m.dx) * (10 + p.rnd() * 14)) / p.W;
-  if (l.hp > 0 && l.fx > 0 && l.fx < 1) return;
-  Object.assign(l, { gone: ms, vx: Math.sign(m.dx) * (2.5 + p.rnd() * 2.5), vy: -0.6 - p.rnd() * 1.2, vr: (p.rnd() - 0.5) * 0.5 });
-  p.sweeping = true;
-}
-function drawLeaves(t) {
-  for (const p of piles.values()) {
-    const W = p.row.clientWidth;
-    if (W && W !== p.W) {
-      // 画面放大 1.5 倍截图,镜头还会再推近 1.7 倍:画布按 3 倍分辨率画,放大后也清楚
-      p.W = W;
-      p.cv.width = W * 3;
-      p.cv.height = LEAF_H * 3;
-      p.ctx.setTransform(3, 0, 0, 3, 0, 0);
-      p.simT = Infinity;
-    }
-    if (!p.drops.length) continue;
-    if (t < p.simT) resetPile(p);
-    while (p.simT + LEAF_DT <= t) stepPile(p, (p.simT += LEAF_DT));
-    const { ctx } = p;
-    ctx.clearRect(0, 0, p.W, LEAF_H);
-    const ms = t * 1000;
-    if (p.glow) {
-      const k = 1 - (ms - p.glow) / 900;
-      if (k > 0) {
-        ctx.fillStyle = `rgba(246, 200, 107, ${0.3 * k})`;
-        ctx.fillRect(0, 0, p.W, LEAF_H);
-      }
-    }
-    for (const l of p.ps) {
-      if (l.falling && t < l.t0) continue;
-      const a = l.gone ? Math.max(0, 1 - (ms - l.gone) / 600) : 1;
-      if (l.y > -12) drawLeaf(ctx, l, a);
-    }
-  }
-}
-function drawLeaf(ctx, l, alpha) {
-  const s = l.s;
-  ctx.save();
-  ctx.translate(l.x, l.y);
-  ctx.rotate(l.rot);
-  ctx.globalAlpha = alpha;
-  ctx.beginPath();
-  ctx.moveTo(-s, 0);
-  ctx.quadraticCurveTo(-s * 0.1, -s * 1.15, s, 0);
-  ctx.quadraticCurveTo(-s * 0.1, s * 1.15, -s, 0);
-  ctx.fillStyle = l.c;
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(80, 45, 20, 0.45)';
-  ctx.lineWidth = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(-s * 1.35, 0);
-  ctx.lineTo(s * 0.8, 0);
-  ctx.stroke();
-  ctx.restore();
-}
-
 // ---------- 搭画面 ----------
 
 async function setup() {
@@ -918,6 +579,7 @@ async function setup() {
   frame().srcdoc = panelHtml();
   await new Promise((r) => (frame().onload = r));
   doc = frame().contentDocument;
+  setFrameDoc(doc);
   const images = [...document.images, ...doc.images];
   await Promise.all([document.fonts.ready, doc.fonts.ready, ...images.map((img) => img.decode().catch(() => {}))]);
 
@@ -932,7 +594,7 @@ Object.assign(window, { seek, DURATION, POSTER, CLICKS });
 setup().then(
   () => {
     window.sceneReady = true;
-    if (location.search.includes('play')) for (const a of anims) a.play();
+    if (location.search.includes('play')) playAll();
   },
   (e) => {
     window.sceneError = e;

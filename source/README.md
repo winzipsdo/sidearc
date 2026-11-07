@@ -10,7 +10,7 @@
 | `demo/` | 在线试用:模拟的 Chrome(`sim.js`)、假的浏览器窗口(`demo.js`、`demo.css`)、假网站和初始状态(`web.js`)、给插件页面注入接口的 `inject.js` | 手写;`brand-icons.js` 从 `main` 复制 |
 | `ext/` | 插件本身的代码,在线试用直接跑它 | `source/build.js` 从 `main` 复制,别手改 |
 | `store/`、`icons/` | 应用商店截图、插件图标 | `source/build.js` 从 `main` 复制 |
-| `assets/` | 标志、介绍视频 `intro.mp4` 和封面 `intro-poster.jpg` | 视频由 `source/video/make.js` 生成 |
+| `assets/` | 标志、介绍视频 `intro.mp4` 和封面 `intro-poster.jpg`;`videos/` 里是给短视频平台的竖屏短片(`douyin.mp4`、没有配乐的 `douyin-silent.mp4`、封面 `douyin-cover.jpg`)和从介绍视频剪出来的落叶片段 `fallen-leaves.mp4`,主页上不引用 | 视频由 `source/video/make.js` 生成 |
 | `source/` | 生成用的脚本,主页上不引用 | 手写 |
 
 ## 在线试用是怎么跑起来的
@@ -74,9 +74,27 @@ node source/video/make.js
 
 | 文件 | 作用 |
 | --- | --- |
-| `video/scene.html`、`video/scene.js` | 视频的画面和时间线(1280×720 排版,输出时放大到 1920×1080) |
-| `video/music.js` | 用正弦波合成的背景音乐和点击音效 |
+| `video/scene.html`、`video/scene.js` | 介绍视频的画面和时间线(1280×720 排版,输出时放大到 1920×1080) |
+| `video/short.html`、`video/short.js` | 竖屏短片的画面和时间线(540×960 排版,输出时放大到 1080×1920) |
+| `video/engine.js`、`video/content.js` | 两个视频共用的时间线工具、落叶,以及图标、标签页、侧边栏的行 |
+| `video/music.js`、`video/music-short.js` | 用正弦波合成的背景音乐和音效(短片的配乐每分钟 120 拍,和画面对齐) |
 | `video/make.js` | 用无头 Chrome 一帧帧截图,交给 ffmpeg 编码 |
+
+### 竖屏短片
+
+给抖音这类平台的短片,十几秒,一屏一句大字:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sidearc。
+
+```bash
+node source/video/make.js short
+```
+
+生成 `assets/videos/douyin.mp4`、没有配乐的 `douyin-silent.mp4`(在平台上挂热门音乐用)和封面 `douyin-cover.jpg`,一两分钟。平台会在顶部、右侧和底部盖上自己的按钮和文字,要紧的内容放在中间偏左。预览:`/source/video/short.html?play`。
+
+落叶片段 `assets/videos/fallen-leaves.mp4` 是从介绍视频里剪出来的(落叶那一幕,约 8 秒,头尾淡入淡出),介绍视频重新生成后可以照样再剪:
+
+```bash
+ffmpeg -ss 48.55 -i assets/intro.mp4 -t 8.35 -vf "fade=t=in:st=0:d=0.35,fade=t=out:st=7.75:d=0.6,format=yuv420p" -af "afade=t=in:st=0:d=0.35,afade=t=out:st=7.6:d=0.75" -c:v libx264 -crf 18 -c:a aac -b:a 160k -movflags +faststart assets/videos/fallen-leaves.mp4
+```
 
 想边改边看:起一个静态服务器,打开 `/source/video/scene.html?play` 实时播放;
 控制台里调用 `seek(秒数)` 可以跳到任意一刻看定格的画面(插件 CSS 里的动效只有用 `seek` 时才会准确)。
