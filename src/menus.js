@@ -6,7 +6,7 @@ import { canScatter, scatterLeaves } from './leaves.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, leafHours, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, leafHours, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
@@ -94,9 +94,8 @@ export function tabMenu(e, tab) {
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
     scatterItem([tab]),
-    // 移动:子标签层级,以及移到别的空间
+    // 移动:放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
     '-',
-    listedParent(tab.id) != null && { icon: 'outdent', label: t('unnest'), run: () => setTabParent(tab.id, null).then(render) },
     children.length > 0 && {
       icon: 'ungroup',
       label: t('releaseChildren'),
