@@ -51,9 +51,11 @@ function switchTarget(tab, skip) {
 
 // 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。
 // Chrome 不能回收当前标签页:withActive 为真(用户点的就是它、多选里包括它、休眠整个文件夹)时先切走再休眠它;
-// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去
+// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去。
+// 开着保持唤醒的,手动休眠时顺便取消,免得一行睡着了还挂着锁
 export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
+  let unkept = 0;
   const active = withActive && list.find((x) => x.active && !isUnloaded(x));
   // 动效从点下去这一刻就开始(记下这一行现在的底色和阴影,从这里过渡到休眠的样子),
   // 不然切走、换编号、重画这几步会让整行先跳成别的样子再跳回来
@@ -69,15 +71,22 @@ export async function discardTabs(list, { withActive = false } = {}) {
   setRenderHeld(true);
   try {
     for (const tab of list.filter(canDiscard)) {
+      // 先在原来的编号上取消,Chrome 回收换编号时会带过去
+      const keep = tab.autoDiscardable === false;
+      if (keep) await chrome.tabs.update(tab.id, { autoDiscardable: true }).catch(() => {});
       const done = await chrome.tabs.discard(tab.id).catch(() => null);
-      if (!done) continue;
+      if (!done) {
+        if (keep) await chrome.tabs.update(tab.id, { autoDiscardable: false }).catch(() => {});
+        continue;
+      }
       n++;
+      if (keep) unkept++;
       if (done.id !== tab.id) replaceTabId(done.id, tab.id);
     }
   } finally {
     setRenderHeld(false);
   }
-  toast(n ? t('slept', { n }) : t('nothingToSleep'));
+  toast(n ? t(unkept ? 'sleptUnkept' : 'slept', { n }) : t('nothingToSleep'));
   schedule();
 }
 
