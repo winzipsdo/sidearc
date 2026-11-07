@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX, toMarkdown } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX, toMarkdown, splitPartners } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -251,4 +251,31 @@ test('toMarkdown:一行一个链接,子项缩进,文件夹写成一行,跳过新
   assert.equal(text, '## 工作\n\n- 文档\n  - [A \\[草稿\\]](https://a.com/x)\n- [https://b.com/(1) 2](https://b.com/%281%29%202)\n  - [多 行 标题](https://c.com)');
   assert.deepEqual(toMarkdown([{ title: 'x', url: 'chrome://newtab/' }], 'h'), { text: '', count: 0 });
   assert.equal(toMarkdown([{ title: 'x', url: 'https://x.com' }]).text, '- [x](https://x.com)');
+});
+
+test('splitPartners:同一个 splitViewId 的两个标签页互相对应;不在分屏、只剩一个的不算', () => {
+  const tabs = [{ id: 1, splitViewId: 9 }, { id: 2, splitViewId: -1 }, { id: 3, splitViewId: 9 }, { id: 4, splitViewId: 5 }, { id: 5 }];
+  assert.deepEqual([...splitPartners(tabs)], [[1, 3], [3, 1]]);
+  assert.equal(splitPartners([]).size, 0);
+});
+
+test('buildTree:分屏的两个挨着,按标签栏的左右,在先遇到的那个的位置和层级上;子标签跟在这一对后面', () => {
+  // 标签栏顺序 1 2 3 4 5;2 和 5 分屏;3 是 5 的子标签,4 是 1 的子标签
+  const tabs = [1, 2, 3, 4, 5].map((id) => ({ id, index: id, splitViewId: id === 2 || id === 5 ? 7 : -1 }));
+  const ids = (tree) => tree.map(({ tab, depth }) => [tab.id, depth]);
+  const parents = new Map([[3, 5], [4, 1]]);
+  assert.deepEqual(ids(buildTree(tabs, parents, splitPartners(tabs))), [[1, 0], [4, 1], [2, 0], [5, 0], [3, 1]]);
+  // 分屏的一个是子标签:另一个跟着排在它旁边,层级也一样
+  const kid = buildTree(tabs, new Map([[5, 1]]), splitPartners(tabs));
+  assert.deepEqual(ids(kid), [[1, 0], [2, 1], [5, 1], [3, 0], [4, 0]]);
+});
+
+test('buildLayout:分屏的一个是收藏时,另一个也排在收藏那一块,挨着它', () => {
+  const state = { activeSpaceId: 'a', favorites: [{ id: 'f' }], spaces: [{ id: 'a', pinned: [] }] };
+  const session = { 'b:f': 3, 't:1': 'a', 't:2': 'a' };
+  const tabs = [1, 2, 3].map((id, index) => ({ id, index, splitViewId: id === 2 || id === 3 ? 4 : -1 }));
+  assert.deepEqual(buildLayout(state, session, tabs), [
+    { spaceId: null, ids: [2, 3] },
+    { spaceId: 'a', ids: [1] },
+  ]);
 });

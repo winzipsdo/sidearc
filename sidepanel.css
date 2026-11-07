@@ -476,6 +476,9 @@ body:has(#menu[data-from='space']:not([hidden])) #space-menu { background: var(-
 }
 /* 子标签:按层级缩进 */
 #tabs .row { margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
+/* 分屏(Chrome 的 Split View):一对标签页合成一块浅底,正在看的那一行照常是白卡片(见 render.js)。缩进由外面这层管 */
+#tabs .split { display: flex; flex-direction: column; flex: none; border-radius: 11px; background: var(--fill); margin-left: calc(var(--depth, 0) * 18px); width: calc(100% - var(--depth, 0) * 18px); }
+#tabs .split .row { margin-left: 0; width: 100%; }
 
 /* 别名:标题左侧的小标签 */
 .row .alias {

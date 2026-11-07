@@ -4,7 +4,7 @@
 
 import { $ } from './dom.js';
 import { t } from './i18n.js';
-import { visibleTabs } from './store.js';
+import { selectedIds, visibleTabs } from './store.js';
 import { closeWithUndo } from './tabs.js';
 import { hideMenu, openSearch } from './ui.js';
 
@@ -139,7 +139,8 @@ export function bindKeys() {
     // 多选了几个标签页(Shift/⌘ 点击):Delete 把选中的一起关掉,和右键菜单里的「关闭」一样可以撤销。
     // 键盘选中框在别的项上时还是只关那一项
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selected = visibleTabs().map((x) => x.tab).filter((x) => x.highlighted);
+      const picked = selectedIds();
+      const selected = visibleTabs().map((x) => x.tab).filter((x) => picked.has(x.id));
       if (selected.length > 1 && (!el || selected.some((x) => el.dataset.kind === 'tab' && +el.dataset.id === x.id))) {
         e.preventDefault();
         return closeWithUndo(selected, t('closedTabs', { n: selected.length }));

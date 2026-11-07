@@ -1,6 +1,6 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, tabSpaces } from './src/logic.js';
+import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX } from './src/protocol.js';
 import { startGroupSync } from './src/groups.js';
 
@@ -275,6 +275,8 @@ async function dedupe(nav, auto) {
   if (first) await chrome.storage.session.set({ [NEW(nav.tabId)]: Date.now() });
   const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
   if (!tab) return;
+  // 分屏里新开的(比如「在分屏中打开链接」)是用户有意并排看的:不关掉,也不收进收藏/固定项
+  if (tab.splitViewId > SPLIT_NONE) return chrome.storage.session.remove(NEW(nav.tabId));
   // 空间是隔离的:只和同一个空间里的标签页、固定项比,外加所有空间共用的收藏夹。
   // 还没分到空间的(侧边栏没开着)按当前空间算
   const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);

@@ -1,12 +1,12 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
 import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, toMarkdown, TRAIL_SIZE } from './logic.js';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js';
 import { canScatter, scatterLeaves } from './leaves.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, leafHours, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
@@ -64,7 +64,7 @@ function spaceLinks(space) {
   };
   const pinned = space.pinned.flatMap((x) => (isFolder(x) ? [{ title: x.name, depth: 0 }, ...x.items.map((i) => page(i, 1))] : [page(x, 0)]));
   const listed = tabs.filter((x) => !byTab.has(x.id) && tabSpace.get(x.id) === space.id);
-  return [...pinned, ...buildTree(listed, tabParent).map(({ tab, depth }) => ({ title: tab.title, url: tab.url || tab.pendingUrl, depth }))];
+  return [...pinned, ...buildTree(listed, tabParent, splitPartners(tabs)).map(({ tab, depth }) => ({ title: tab.title, url: tab.url || tab.pendingUrl, depth }))];
 }
 
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
@@ -94,10 +94,11 @@ function selectionMenu(e, list) {
 }
 
 export function tabMenu(e, tab) {
+  const picked = selectedIds();
   const selected = visibleTabs()
     .map((x) => x.tab)
-    .filter((x) => x.highlighted);
-  if (selected.length > 1 && tab.highlighted) return selectionMenu(e, selected);
+    .filter((x) => picked.has(x.id));
+  if (selected.length > 1 && picked.has(tab.id)) return selectionMenu(e, selected);
   // 只算列表里看得见的:搜索过滤掉的标签页不会被关掉
   const visible = visibleTabs().map((x) => x.tab);
   const below = visible.slice(visible.findIndex((t) => t.id === tab.id) + 1);

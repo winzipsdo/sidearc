@@ -95,10 +95,24 @@ export function favColumns(count, width, { min = 54, gap = 7 } = {}) {
   return rows ? Math.ceil(count / rows) : 1;
 }
 
+// Chrome 的分屏(Split View):两个标签页并排显示在一个窗口里,它们的 splitViewId 相同;不在分屏里的是 -1,旧版 Chrome 没有这个字段。
+// 返回 tabId -> 和它分屏的 tabId(两个方向都有);只算两个都在 tabs 里的
+export const SPLIT_NONE = -1;
+export function splitPartners(tabs) {
+  const by = new Map();
+  for (const t of tabs) if (t.splitViewId > SPLIT_NONE) by.set(t.splitViewId, [...(by.get(t.splitViewId) ?? []), t.id]);
+  const out = new Map();
+  for (const [a, b, more] of by.values()) if (b != null && more == null) out.set(a, b).set(b, a);
+  return out;
+}
+
 // 把标签页按树形排好:[{ tab, depth }],最多两级(depth 0 / 1)。父标签页不在列表里的子标签按顶级显示。
-// listed 是要显示的标签页(带 id),parentOf 是 tabId -> 父 tabId 的 Map
-export function buildTree(listed, parentOf) {
+// listed 是要显示的标签页(带 id),parentOf 是 tabId -> 父 tabId 的 Map。
+// partners(见 splitPartners)给了的话,分屏的两个标签页总是挨着,按标签栏里的左右排,在先遇到的那个的位置和层级上;
+// 两个各自的子标签跟在这一对后面。Chrome 一挪分屏里的标签页就会拆开分屏,所以侧边栏不能把它俩分开排
+export function buildTree(listed, parentOf, partners = new Map()) {
   const ids = new Set(listed.map((t) => t.id));
+  const byId = new Map(listed.map((t) => [t.id, t]));
   const kids = new Map();
   const roots = [];
   for (const t of listed) {
@@ -111,9 +125,13 @@ export function buildTree(listed, parentOf) {
   const seen = new Set();
   const walk = (t, depth) => {
     if (seen.has(t.id)) return;
-    seen.add(t.id);
-    out.push({ tab: t, depth });
-    for (const k of kids.get(t.id) ?? []) walk(k, 1);
+    const p = byId.get(partners.get(t.id));
+    const unit = p && !seen.has(p.id) ? [t, p].sort((a, b) => a.index - b.index) : [t];
+    for (const x of unit) {
+      seen.add(x.id);
+      out.push({ tab: x, depth });
+    }
+    for (const x of unit) for (const k of kids.get(x.id) ?? []) walk(k, 1);
   };
   roots.forEach((t) => walk(t, 0));
   // 父子关系万一成环,剩下的按顶级兜底
@@ -159,17 +177,26 @@ export function groupColor(hex) {
 
 // 顶部标签栏应有的样子:[{ spaceId, ids }],从左到右。spaceId 为 null 的一块是收藏(不进分组)。
 // 顺序和侧边栏一致:收藏;然后每个空间按空间顺序,先固定标签,再列表(子标签紧跟父标签)。
-// tabs 是本窗口未被浏览器原生固定的标签页(按 index 排好);不属于任何现有空间的归入当前空间
+// tabs 是本窗口未被浏览器原生固定的标签页(按 index 排好);不属于任何现有空间的归入当前空间。
+// 分屏的两个标签页总是挨着、保持标签栏里的左右,排在先排到的那个的位置上(另一个是收藏或固定项时也一样)
 export function buildLayout(state, session, tabs) {
   const spaceIds = new Set((state?.spaces ?? []).map((s) => s.id));
   const spaceOf = tabSpaces(state, session);
   const ids = new Set(tabs.map((t) => t.id));
+  const indexOf = new Map(tabs.map((t) => [t.id, t.index]));
+  const partners = splitPartners(tabs);
   const boundTab = (item) => {
     const id = session[`${PREFIX.bind}:${item.id}`];
     return ids.has(id) ? id : null;
   };
   const used = new Set();
-  const take = (id) => (id == null || used.has(id) ? [] : (used.add(id), [id]));
+  const take = (id) => {
+    if (id == null || used.has(id)) return [];
+    const p = partners.get(id);
+    const unit = p != null && !used.has(p) ? [id, p].sort((a, b) => indexOf.get(a) - indexOf.get(b)) : [id];
+    unit.forEach((x) => used.add(x));
+    return unit;
+  };
   const parents = new Map();
   for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.parent)) parents.set(+k.slice(2), v);
 
@@ -183,7 +210,7 @@ export function buildLayout(state, session, tabs) {
     const listed = tabs.filter((t) => !used.has(t.id) && !pinned.has(t.id) && home(t) === space.id);
     chunks.push({
       spaceId: space.id,
-      ids: [...pinnedItems(space).flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents).flatMap(({ tab }) => take(tab.id))],
+      ids: [...pinnedItems(space).flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents, partners).flatMap(({ tab }) => take(tab.id))],
     });
   }
   return chunks.filter((c) => c.ids.length);

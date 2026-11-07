@@ -1,11 +1,12 @@
 // 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。
 
 import { itemFromTab, removeItem } from './items.js';
-import { dropBefore, dropInto, isFolder } from './logic.js';
+import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js';
+import { moveUnit, moveUnits } from './splits.js';
 import { render, schedule } from './render.js';
 import { h } from './dom.js';
 import { t } from './i18n.js';
-import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
 import { switchSpace } from './spaces.js';
 import { moveTabToSpace } from './tabs.js';
 import { hideMenu } from './ui.js';
@@ -81,23 +82,27 @@ function refElement(zone, e) {
   return els[dropBefore(rectsOf(els), e.clientX, e.clientY, zone.classList.contains('grid'))] ?? null;
 }
 
-// 在浏览器的标签栏里把 ids 挪成紧挨着的一串:第一个放到 where 指定的位置,其余依次跟在后面
+// 在浏览器的标签栏里把 ids 挪成紧挨着的一串:第一个放到 where 指定的位置,其余依次跟在后面。
+// 分屏的两个标签页作为一组挪,而且不直接挪它们(会被 Chrome 拆开,见 splits.js 的 moveUnit)
 async function moveGroup(ids, where) {
   const index = async (id) => (await chrome.tabs.get(id)).index;
-  const move = (id, to, from) => (to === from ? null : chrome.tabs.move(id, { index: to }).catch(() => {}));
-  const from = await index(ids[0]);
+  const start = async (unit) => Math.min(...(await Promise.all(unit.map(index))));
+  const at = new Map(tabs.map((t) => [t.id, t.index]));
+  const [first, ...rest] = moveUnits(ids, splitPartners(tabs), (id) => at.get(id) ?? 0);
+  // 往后挪时,挪走的这几个原来占的位置空出来,目标位置要往前让
+  const from = await start(first);
   if (where.before != null) {
     const r = await index(where.before);
-    await move(ids[0], from < r ? r - 1 : r, from);
+    await moveUnit(first, from < r ? r - first.length : r);
   } else if (where.after != null) {
     const a = await index(where.after);
-    await move(ids[0], from < a ? a : a + 1, from);
+    await moveUnit(first, from < a ? a - first.length + 1 : a + 1);
   }
-  let prev = ids[0];
-  for (const id of ids.slice(1)) {
-    const [p, f] = [await index(prev), await index(id)];
-    await move(id, f < p ? p : p + 1, f);
-    prev = id;
+  let prev = first.at(-1);
+  for (const unit of rest) {
+    const [p, f] = [await index(prev), await start(unit)];
+    await moveUnit(unit, f < p ? p - unit.length + 1 : p + 1);
+    prev = unit.at(-1);
   }
   schedule();
 }
@@ -107,6 +112,10 @@ const withSubtrees = (tabIds) => [...new Set(tabIds.flatMap(subtreeIds))];
 
 // 把标签页(连同子标签)拖到 refId 之前:和 refId 同级;refId 为空则放到末尾并成为顶级
 async function dropTab(tabIds, refId) {
+  // 放在分屏右边那个之前 = 插进这一对中间(Chrome 会拆开分屏):改成放在这一对前面
+  const partner = splitPartners(tabs).get(refId);
+  const indexOf = (id) => tabs.find((x) => x.id === id)?.index ?? 0;
+  if (partner != null && indexOf(partner) < indexOf(refId)) refId = partner;
   const moving = withSubtrees(tabIds);
   if (refId != null && moving.includes(refId)) return;
   const rest = listedTabs().filter((t) => !moving.includes(t.id));
@@ -196,7 +205,8 @@ export function bindDrag() {
     if (!el) return;
     hideMenu();
     // 拖的是多选里的一个:选中的标签页一起拖(和顶部标签栏一样,选中 = 浏览器里高亮的标签页)
-    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => x.tab.highlighted).map((x) => String(x.tab.id)) : [];
+    const picked = selectedIds();
+    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => picked.has(x.tab.id)).map((x) => String(x.tab.id)) : [];
     const multi = selected.length > 1 && selected.includes(el.dataset.id);
     setDragging({ kind: el.dataset.kind, id: el.dataset.id, ids: multi ? selected : undefined });
     e.dataTransfer.effectAllowed = 'move';
@@ -239,7 +249,7 @@ export function bindDrag() {
     else {
       // 放到末尾:列表在最后一行下面画顶层的插入线,收藏夹网格在最后一个磁贴右边画竖线;区域是空的才高亮整个区域
       const grid = target.classList.contains('grid');
-      const last = [...target.children].filter((el) => el.matches(grid ? '.tile' : '.row[data-kind], .folder-empty') && !isDragged(el)).at(-1);
+      const last = [...target.querySelectorAll(grid ? '.tile' : '.row[data-kind], .folder-empty')].filter((el) => !isDragged(el)).at(-1);
       if (last) last.classList.add(...(grid ? ['drop-after'] : ['drop-after', 'drop-top']));
       else target.classList.add('drop-end');
     }

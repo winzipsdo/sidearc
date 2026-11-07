@@ -7,6 +7,7 @@ import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from '
 import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
+import { splitPartners } from './logic.js';
 import { MSG } from './protocol.js';
 import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
@@ -32,9 +33,11 @@ function selectRange(tab) {
   chrome.tabs.highlight({ windowId, tabs: [anchor, ...range].map((x) => x.index) }).catch(() => {});
 }
 
-// 取消多选:只留当前标签页
+// 取消多选:只留当前标签页(和它分屏的那个 Chrome 不让取消高亮,本来也不算选中,跳过)
 function clearSelection() {
-  for (const tab of tabs) if (tab.highlighted && !tab.active) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
+  const active = tabs.find((t) => t.active);
+  const partner = active && splitPartners(tabs).get(active.id);
+  for (const tab of tabs) if (tab.highlighted && !tab.active && tab.id !== partner) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
 }
 
 // 列表里的行和磁贴:点击、中键

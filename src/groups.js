@@ -4,8 +4,9 @@
 // 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
 // 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
-import { buildLayout, groupColor, pinnedItems } from './logic.js';
+import { buildLayout, groupColor, pinnedItems, splitPartners } from './logic.js';
 import { hasPrefix, KEY, PREFIX } from './protocol.js';
+import { moveUnit, moveUnits } from './splits.js';
 
 // 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
 const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;
@@ -65,6 +66,16 @@ async function syncWindow(windowId, state, all) {
   }
   Object.assign(all, set);
   for (const k of remove) delete all[k];
+  // 分屏的两个标签页要在同一个空间(Chrome 只让同一个分组里的标签页分屏,分组又对应空间):
+  // 刚换了空间的那个说了算,另一个跟过去;都没换过(比如刚分屏)就跟左边那个
+  const partners = splitPartners(tabs);
+  const indexOf = (id) => tabs.find((t) => t.id === id)?.index ?? 0;
+  for (const [a, b] of partners) {
+    if (a > b || bound.has(a) || bound.has(b) || all[KEY.space(a)] === all[KEY.space(b)]) continue;
+    const moved = (id) => lastSpace.has(id) && lastSpace.get(id) !== all[KEY.space(id)];
+    const [lead, follow] = moved(a) ? [a, b] : moved(b) ? [b, a] : indexOf(a) < indexOf(b) ? [a, b] : [b, a];
+    set[KEY.space(follow)] = all[KEY.space(follow)] = all[KEY.space(lead)];
+  }
 
   const layout = buildLayout(state, all, tabs);
   const order = layout.flatMap((c) => c.ids);
@@ -85,24 +96,36 @@ async function syncWindow(windowId, state, all) {
 
   if (!settled) {
     own(2000);
-    // 先把分组不对的拿出来,再从左到右一块块放好、分好组。别人的分组会被挤到最后面,但不会被拆开
+    // 先把分组不对的拿出来,再分好组,最后从左到右一块块放好。别人的分组会被挤到最后面,但不会被拆开。
+    // 分屏的两个标签页不能直接挪(会被拆开,见 splits.js),而放进分组、整组挪动都不会拆开分屏:
+    // 所以先把每个空间的标签页都放进它的分组(Chrome 会把它们收拢到一起,分屏的也整对挪过去),再整组挪到位置,
+    // 最后在组里排顺序(分屏的一对靠挪它旁边的标签页)。一对分屏总是同一个分组,一起拿出来、一起放进去
     const wrong = layout.flatMap((c) => c.ids.filter((id) => byId.get(id).groupId !== -1 && byId.get(id).groupId !== wantGroup(c)));
     if (wrong.length) await chrome.tabs.ungroup(wrong).catch(() => {});
-    let index = nativePinned;
+    const groupOf = new Map();
     for (const c of layout) {
-      await chrome.tabs.move(c.ids, { index }).catch(() => {});
+      own(2000);
       if (wantGroup(c) === -1) {
         await chrome.tabs.ungroup(c.ids).catch(() => {});
-      } else {
-        const existing = groupOfSpace.get(c.spaceId);
-        const alive = existing != null && (await chrome.tabGroups.get(existing).catch(() => null));
-        const id = await chrome.tabs
-          .group(alive ? { tabIds: c.ids, groupId: existing } : { tabIds: c.ids, createProperties: { windowId } })
-          .catch(() => null);
-        if (id != null) {
-          groupOfSpace.set(c.spaceId, id);
-          if (all[KEY.group(id)] !== c.spaceId) set[KEY.group(id)] = c.spaceId;
-        }
+        continue;
+      }
+      const existing = groupOfSpace.get(c.spaceId);
+      const alive = existing != null && (await chrome.tabGroups.get(existing).catch(() => null));
+      const id = await chrome.tabs.group(alive ? { tabIds: c.ids, groupId: existing } : { tabIds: c.ids, createProperties: { windowId } }).catch(() => null);
+      if (id == null) continue;
+      groupOf.set(c, id);
+      groupOfSpace.set(c.spaceId, id);
+      if (all[KEY.group(id)] !== c.spaceId) set[KEY.group(id)] = c.spaceId;
+    }
+    let index = nativePinned;
+    for (const c of layout) {
+      own(2000);
+      if (groupOf.has(c)) await chrome.tabGroups.move(groupOf.get(c), { index }).catch(() => {});
+      let at = index;
+      for (const unit of moveUnits(c.ids, partners, indexOf)) {
+        own(2000);
+        await moveUnit(unit, at);
+        at += unit.length;
       }
       index += c.ids.length;
     }
@@ -175,8 +198,8 @@ export function startGroupSync(serial) {
   };
   resync = schedule;
   for (const ev of ['onCreated', 'onRemoved', 'onAttached', 'onDetached', 'onActivated']) chrome.tabs[ev].addListener(schedule);
-  // 网址变了也要排:只有新标签页时没建分组,打开了真正的网页就该建了
-  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info || 'url' in info) && schedule());
+  // 网址变了也要排:只有新标签页时没建分组,打开了真正的网页就该建了;分屏了或取消分屏了也要(一对要挨着排)
+  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info || 'url' in info || 'splitViewId' in info) && schedule());
   chrome.tabs.onMoved.addListener((tabId, info) => {
     if (!isOwn()) serial(() => userMoved(tabId, info));
     schedule();

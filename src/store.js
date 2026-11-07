@@ -2,7 +2,7 @@
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
 import { t } from './i18n.js';
-import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, TRAIL_SHOW } from './logic.js';
+import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js';
 import { KEY, PREFIX } from './protocol.js';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
@@ -164,8 +164,8 @@ export function listedTabs() {
   return tabs.filter((t) => !byTab.has(t.id) && tabSpace.get(t.id) === sid);
 }
 
-// 当前空间的标签页按树形排好:[{ tab, depth }]
-export const treeTabs = () => buildTree(listedTabs(), tabParent);
+// 当前空间的标签页按树形排好:[{ tab, depth }]。分屏的两个挨着(见 logic.js 的 buildTree)
+export const treeTabs = () => buildTree(listedTabs(), tabParent, splitPartners(tabs));
 
 // 实际显示的行:搜索时平铺,只留匹配项
 export function visibleTabs() {
@@ -180,13 +180,28 @@ export function listedParent(tabId) {
   return p != null && listedTabs().some((t) => t.id === p) ? p : null;
 }
 
+// 多选了的标签页 id:浏览器里高亮的那些。当前标签页在分屏里时,Chrome 会把和它分屏的那个也高亮(而且取消不掉),
+// 只高亮了这一对时不算多选;另外又选了别的,这一对都算选中
+export function selectedIds() {
+  const lit = tabs.filter((t) => t.highlighted).map((t) => t.id);
+  const active = tabs.find((t) => t.active);
+  const partner = active && splitPartners(tabs).get(active.id);
+  return new Set(lit.length === 2 && lit.includes(active.id) && lit.includes(partner) ? [active.id] : lit);
+}
+
 // tabId 及其所有后代,按树形顺序
+// 分屏的两个标签页算一体:挪一个就带上另一个(和另一个的子标签),拖动、移到别的空间都不会把它们分开
 export function subtreeIds(tabId) {
   const tree = treeTabs();
-  const i = tree.findIndex((x) => x.tab.id === tabId);
+  const partners = splitPartners(tabs);
+  let i = tree.findIndex((x) => x.tab.id === tabId);
   if (i < 0) return [tabId];
-  const out = [tabId];
-  for (let j = i + 1; j < tree.length && tree[j].depth > tree[i].depth; j++) out.push(tree[j].tab.id);
+  // 从这一对的左边那个开始(树里一对总是挨着,见 buildTree)
+  if (i > 0 && partners.get(tree[i].tab.id) === tree[i - 1].tab.id) i--;
+  const out = [tree[i].tab.id];
+  let j = i + 1;
+  if (j < tree.length && partners.get(tree[i].tab.id) === tree[j].tab.id) out.push(tree[j++].tab.id);
+  for (; j < tree.length && tree[j].depth > tree[i].depth; j++) out.push(tree[j].tab.id);
   return out;
 }
 
