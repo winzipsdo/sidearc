@@ -34,6 +34,9 @@ async function init() {
   await refreshTabs(tabs);
   render();
   initRestore();
+  // 打开后头一小会儿列表的高度还不稳(侧边栏还在滑出来、先显示的是上次的快照),这段时间不画列表的滚动条,
+  // 免得在 Windows 上闪出一根又消失;淡入播完再按实际情况显示(见 sidepanel.css 的 body.settled)
+  setTimeout(() => document.body.classList.add('settled'), 700);
 }
 
 init();

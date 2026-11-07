@@ -33,7 +33,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; }
+/* 页面本身不滚动,只有中间的列表 #scroll 自己滚(打开时的淡入会把底部那一行往下挪几像素,保险起见不让页面跟着能滚) */
+html, body { height: 100%; margin: 0; overflow: hidden; }
 html { background: var(--base); }
 /* 主题色渐变铺在单独一层上:打开时从中性底色淡入,而不是 Chrome 的底色一下子跳成带颜色的 */
 body::before {
@@ -141,6 +142,8 @@ body:not(.searching) .search { height: 0; opacity: 0; overflow: hidden; pointer-
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
+/* 刚打开时先不画滚动条(仍然能滚),淡入播完再显示,见 sidepanel.js */
+body:not(.settled) #scroll { scrollbar-width: none; }
 
 /* 收藏夹 */
 .grid {
