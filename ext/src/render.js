@@ -2,13 +2,15 @@
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
 import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
-import { currentLang, formatDuration, t } from './i18n.js';
+import { formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
+import { refreshLocate, revealPending } from './locate.js';
 import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, visibleTabs } from './store.js';
+import { applyMenuTarget, toggleMenuFrom } from './ui.js';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -22,13 +24,6 @@ const sleptLabel = (tab) => {
   const since = sleptAt(tab);
   return since != null && h('span', { class: 'slept', data: { since } }, formatDuration(sleptFor(since)));
 };
-function sleptTip(tab) {
-  if (!isUnloaded(tab)) return '';
-  const since = sleptAt(tab);
-  if (since == null) return '\n' + t('notLoadedTip');
-  const at = new Date(since).toLocaleString(currentLang() === 'zh' ? 'zh-CN' : 'en', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  return '\n' + t('sleptTip', { duration: formatDuration(sleptFor(since)), at });
-}
 
 // 足迹:最近离开的几个标签页左边(收藏是底部)画一道主题色的线,每个各自倒计时 10 分钟,
 // 线从两头往中间缩短、同时变淡,到 0 消失。缩短是一段 10 分钟的 CSS 动画(fp-life),
@@ -173,6 +168,52 @@ export function refreshSleptLabels() {
   for (const el of document.querySelectorAll('.slept')) el.textContent = formatDuration(sleptFor(+el.dataset.since));
 }
 
+// 列表末尾的加号:新标签页直接开在列表最后一个标签页后面,也就是刚才点加号的地方
+// (不指定位置的话 Chrome 会把它放到别处,侧边栏里就出现在别的位置)
+// 点完加号先隐去一会儿(位置留着),免得新标签页刚出现、加号又紧跟着冒在鼠标下面;过一会儿再淡出来。
+// 开好后列表往下长了一行,可能把加号的位置挤出了视野:滚一下让它回到看得见的地方,新标签页就在它正上方
+const PLUS_REST_MS = 1000;
+let plusBackAt = 0;
+let plusTimer;
+let newTabId = null;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+async function newTabBelow() {
+  plusBackAt = Date.now() + PLUS_REST_MS;
+  $('#new-tab')?.classList.add('resting');
+  clearTimeout(plusTimer);
+  plusTimer = setTimeout(() => $('#new-tab')?.classList.remove('resting'), PLUS_REST_MS);
+  const last = treeTabs().at(-1)?.tab;
+  const tab = await chrome.tabs.create(last ? { windowId, index: last.index + 1 } : { windowId }).catch(() => null);
+  newTabId = tab?.id ?? null;
+  revealNewTab();
+}
+function revealNewTab() {
+  if (newTabId == null || !$(`#tabs [data-kind="tab"][data-id="${newTabId}"]`)) return;
+  newTabId = null;
+  $('#new-tab')?.scrollIntoView({ block: 'nearest', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+}
+
+// 重画会把鼠标正停着的那一行换成新元素:新元素的背景从透明开始、按过渡慢慢变成悬停色,看着像闪了一下。
+// 所以重画前记下鼠标停在哪一行,重画后给新的那一行直接套上悬停的样子(不过渡,见 sidepanel.css 的 .keep-hover),
+// 鼠标一动就交还给正常的 :hover
+const hoveredKey = () => {
+  const el = document.querySelector('#favs [data-kind]:hover, #pins [data-kind]:hover, #tabs [data-kind]:hover, #history [data-kind]:hover');
+  return el && { kind: el.dataset.kind, id: el.dataset.id, el };
+};
+function keepHover(was) {
+  if (!was) return;
+  const el = document.querySelector(`[data-kind="${was.kind}"][data-id="${CSS.escape(was.id)}"]`);
+  if (!el || el === was.el) return;
+  el.classList.add('keep-hover');
+  const drop = () => {
+    for (const x of document.querySelectorAll('.keep-hover')) x.classList.remove('keep-hover');
+    removeEventListener('pointermove', drop);
+    document.documentElement.removeEventListener('pointerleave', drop);
+  };
+  addEventListener('pointermove', drop);
+  document.documentElement.addEventListener('pointerleave', drop);
+}
+
 export function render() {
   // 拖拽过程中、鼠标按着的时候重画会打断拖拽或吞掉点击,等松手后再画
   if (dragging || renderHeld || pressing) {
@@ -180,6 +221,7 @@ export function render() {
     return;
   }
   setRenderPending(false);
+  const hovered = hoveredKey();
   const space = activeSpace();
   const tabById = new Map(tabs.map((t) => [t.id, t]));
   document.documentElement.style.setProperty('--accent', space.color);
@@ -203,7 +245,7 @@ export function render() {
     // 开着的收藏或固定标签点进了别的页面
     const away = tab && isAway(item.url, tab.url || tab.pendingUrl);
     // 绑定的标签页开在别的窗口里(本窗口的列表里找不到它):点了会跳到那个窗口,先标出来
-    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere' }, icon('windows'));
+    const elsewhere = open && !tab && h('span', { class: kind === 'fav' ? 'tile-elsewhere' : 'elsewhere', title: kind === 'fav' ? null : t('inOtherWindow') }, icon('windows'));
     // 文件夹里的固定标签多一个「移出文件夹」,和子标签的「移出为顶级标签页」一样放在最左边:移出、休眠、关闭
     const unfold = inFolder && h('button', { class: 'btn x', title: t('moveOutOfFolder'), data: { act: 'unfold' } }, icon('outdent'));
     if (kind === 'fav') {
@@ -219,7 +261,7 @@ export function render() {
     if (away) {
       return h(
         'div',
-        { class: cls + ' away', draggable: true, title: t('awayTip', { current: tab.url, pinned: item.url }), style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+        { class: cls + ' away', draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id, ...(inFolder && { in: inFolder }) } },
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
@@ -232,7 +274,7 @@ export function render() {
     }
     return h(
       'div',
-      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, title: elsewhere ? `${item.url}\n${t('inOtherWindow')}` : item.url, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id } },
+      { class: elsewhere ? cls + ' elsewhere-item' : cls, draggable: true, style: inFolder ? '--depth:1' : null, data: { kind, id: item.id, ...(inFolder && { in: inFolder }) } },
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
@@ -258,8 +300,8 @@ export function render() {
     const openKids = f.items.filter((i) => bind.has(i.id)).length;
     return h(
       'div',
-      { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, title: f.noHistory ? t('folderNoHistoryTip') : f.name, data: { kind: 'folder', id: f.id } },
-      icon(f.open ? 'folderOpen' : 'folder'),
+      { class: 'row folder' + (f.open ? ' expanded' : ''), draggable: true, data: { kind: 'folder', id: f.id } },
+      f.open ? Object.assign(icon('chevron'), { className: 'i open' }) : icon('chevron'),
       h('span', { class: 'title' }, f.name),
       f.noHistory && h('span', { class: 'private', title: t('noHistoryIconTip') }, icon('eyeOff')),
       // 折叠时显示里面有几项,开着几项
@@ -272,7 +314,8 @@ export function render() {
     const kids = query && !matches(x.name) ? x.items.filter(pinMatch) : x.items;
     if (query && !kids.length) return [];
     if (!x.open && !query) return [folderEl(x, true)];
-    return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', true)), !kids.length && h('div', { class: 'folder-empty' }, t('folderEmpty'))].filter(Boolean);
+    // 里面的行用 data-in 记下属于哪个文件夹(展开、收起的抽屉动效要找到它们,见 folders.js 的 toggleFolder)
+    return [folderEl(x, false), ...kids.map((i) => itemEl(i, 'pin', x.id)), !kids.length && h('div', { class: 'folder-empty', data: { in: x.id } }, t('folderEmpty'))].filter(Boolean);
   });
   $('#pins').replaceChildren(...(pins.length || query ? pins : [h('div', { class: 'hint' }, t('pinsHint'))]));
   // 固定标签折叠了(点空间名切换,每个空间各记各的):行都还画着,由样式藏起来,只留当前正在看的那个;
@@ -293,7 +336,7 @@ export function render() {
       const cls = ['row', tab.active && 'active', multi && tab.highlighted && 'selected', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
       return h(
         'div',
-        { class: cls, draggable: true, title: tab.url + sleptTip(tab), style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
+        { class: cls, draggable: true, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
         h('img', { class: 'icon', src: tabIcon(tab), alt: '', draggable: false }),
         tabAlias.has(tab.id) && h('span', { class: 'alias' }, tabAlias.get(tab.id)),
         h('span', { class: 'title' }, tab.title || tab.url || t('newTab')),
@@ -305,7 +348,10 @@ export function render() {
         !isUnloaded(tab) && freeButton(),
         h('button', { class: 'btn x', title: t('close'), data: { act: 'close' } }, icon('close'))
       );
-    })
+    }),
+    // 「新标签页」跟在最后一个标签页下面,居中一个圆形小加号(带文字的话和真的新标签页那一行长得一样);搜索时不显示。
+    // 整行都是靠近时显示加号的范围,但只有点到圆才开新标签页(键盘回车 detail 为 0,也算)
+    ...(query ? [] : [h('button', { id: 'new-tab', class: 'row new' + (Date.now() < plusBackAt ? ' resting' : ''), title: t('newTab'), 'aria-label': t('newTab'), onclick: (e) => (e.detail === 0 || e.target.closest('.i')) && newTabBelow() }, h('span', { class: 'i' }, icon('plus')))])
   );
 
   $('#spaces').replaceChildren(
@@ -317,24 +363,30 @@ export function render() {
       )
     ),
     h('button', { class: 'space-dot', 'aria-label': t('newSpace'), data: { name: t('newSpace') }, onclick: addSpace }, icon('plus')),
-    h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: recentMenu }, icon('recent')),
-    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: settingsMenu }, icon('sliders'))
+    h('button', { class: 'space-dot recent', 'aria-label': t('recentlyClosed'), data: { name: t('recentlyClosed') }, onclick: (e) => toggleMenuFrom('#spaces .space-dot.recent', () => recentMenu(e)) }, icon('recent')),
+    h('button', { class: 'space-dot settings', 'aria-label': t('settings'), data: { name: t('settings') }, onclick: (e) => toggleMenuFrom('#spaces .space-dot.settings', () => settingsMenu(e)) }, icon('sliders'))
   );
   refreshTrail();
   refreshSleepAnim();
   refreshJumpAnim();
   refreshLeaves();
   refreshHistory();
+  revealNewTab();
+  revealPending();
   updateScrollFades();
   applyCursor();
+  keepHover(hovered);
+  applyMenuTarget();
   saveSnapshot();
 }
 
-// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断
+// 列表两头要不要渐隐:滚下去了顶端淡掉,下面还有内容底端淡掉。滚动、重画、窗口大小变了都要重新判断;
+// 顺便看看当前标签页是不是滚出了视野(要不要显示回到它的小胶囊)
 export function updateScrollFades() {
   const el = $('#scroll');
   document.body.classList.toggle('scrolled', el.scrollTop > 0);
   document.body.classList.toggle('more-below', el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+  refreshLocate();
 }
 
 // 把这次画出来的样子存一份,下次打开侧边栏时 boot.js 先把它显示出来,免得先空一下
@@ -360,6 +412,15 @@ function saveSnapshot() {
 export function layoutFavs() {
   const el = $('#favs');
   el.style.setProperty('--cols', favColumns(el.querySelectorAll('.tile').length, el.clientWidth));
+}
+
+// 存储接连变了好几次:等这一串变完再画一次
+let soonTimer = 0;
+export function renderSoon() {
+  soonTimer ||= setTimeout(() => {
+    soonTimer = 0;
+    render();
+  }, 16);
 }
 
 // 标签页有变化:稍等一下合并连续的事件,再重新读取并重画

@@ -9,7 +9,7 @@
 <title data-l="zh">Sidearc - Arc 风格的 Chrome 垂直标签页侧边栏</title>
 <title data-l="en">Sidearc — Arc-style vertical tabs for Chrome</title>
 <meta data-l="zh" name="description" content="Sidearc 把 Chrome 的标签页竖着放进侧边栏:子标签、空间、固定标签、收藏夹和落叶提醒,和顶部标签栏双向同步。免费开源、不联网,打开主页就能在线试用。">
-<meta data-l="en" name="description" content="Sidearc puts your Chrome tabs in the side panel: vertical tabs with child tabs, spaces, pinned tabs and favorites, kept in two-way sync with Chrome's own tab strip. Free, open source, no network requests. Try it live in your browser.">
+<meta data-l="en" name="description" content="Sidearc puts your Chrome tabs in the side panel: vertical tabs with child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's own tab strip. Free, open source, no network requests. Try it live in your browser.">
 <link data-l="zh" rel="canonical" href="https://winzipsdo.github.io/sidearc/">
 <link data-l="en" rel="canonical" href="https://winzipsdo.github.io/sidearc/en/">
 <link rel="alternate" hreflang="zh-CN" href="https://winzipsdo.github.io/sidearc/">
@@ -104,7 +104,7 @@
     <div class="wrap wide">
       <div class="try-head">
         <h2><span data-l="zh">不用安装,直接上手</span><span data-l="en">Try it here, no install</span></h2>
-        <p><span data-l="zh">下面左边跑的就是 Sidearc 本身的代码,只有浏览器是模拟的:顶部标签栏、网页都能点。手机上可以看,拖拽要用电脑。</span><span data-l="en">The sidebar on the left runs Sidearc's actual code; only the browser around it is simulated. The tab strip and the pages are clickable too. Dragging needs a mouse.</span></p>
+        <p><span data-l="zh">下面左边跑的就是 Sidearc 本身的代码,只有浏览器是模拟的:顶部标签栏、网页都能点。手机上可以看,拖拽要用电脑。</span><span data-l="en">The sidebar on the left runs Sidearc's actual code; only the browser around it is simulated. The tab strip and the pages are clickable too. Works on a phone; dragging needs a mouse.</span></p>
       </div>
       <div class="try-grid">
         <div id="demo" class="demo-host"></div>
@@ -166,7 +166,7 @@
       </article>
       <article class="feature">
         <div class="text">
-          <p class="eyebrow"><span data-l="zh">落叶 · 1.8</span><span data-l="en">Fallen leaves · 1.8</span></p>
+          <p class="eyebrow"><span data-l="zh">落叶</span><span data-l="en">Fallen leaves</span></p>
           <h2><span data-l="zh">该关的会自己冒出来</span><span data-l="en">What to close shows itself</span></h2>
           <p><span data-l="zh">一天没进去的标签页开始落叶子。扫几下就干净,点开就吹走。</span><span data-l="en">Leave a tab for a day and leaves start to fall. Sweep them off, or open it and they blow away.</span></p>
           <button class="try-btn" type="button" data-task="leaves"><span data-l="zh">在上面试试:扫一扫 Hacker News</span><span data-l="en">Try it above: sweep Hacker News</span> ↑</button>
@@ -235,7 +235,7 @@
           <p><span data-l="zh">点选一批,一起拖、一起关、一起换空间。</span><span data-l="en">Pick a batch and drag, close or move them together.</span></p>
         </div>
       </div>
-      <p class="sub"><span data-l="zh">还有:收藏夹、别名、文件夹、不记录历史的空间、恢复上次的标签页、最近关闭、创建副本、硬性重新加载、浅色 / 深色、中文 / English。<a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.md">功能详解 →</a></span><span data-l="en">Plus favorites, aliases, folders, no-history spaces, restoring last session, recently closed, duplicates, hard reload, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.en.md">Every feature in detail →</a></span></p>
+      <p class="sub"><span data-l="zh">还有:收藏夹、别名、文件夹、不记录历史的空间、关掉当前标签页回到刚才那个、滚远了一键回到当前标签页、恢复上次的标签页、最近关闭、创建副本、硬性重新加载、浅色 / 深色、中文 / English。<a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.md">功能详解 →</a></span><span data-l="en">Plus favorites, aliases, folders, no-history spaces, closing a tab takes you back to where you were, one click back to the current tab, restoring last session, recently closed, duplicating a tab, hard reload, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.en.md">Every feature in detail →</a></span></p>
     </div>
   </section>
 
@@ -310,7 +310,7 @@
             <dt>search</dt><dd><span data-l="zh">在搜索栏输入关键词回车时,用浏览器的默认搜索引擎搜索。</span><span data-l="en">Searching with your default engine from the search box.</span></dd>
             <dt>clipboardWrite</dt><dd><span data-l="zh">「复制链接地址」时把网址写入剪贴板,不读取剪贴板。</span><span data-l="en">“Copy link address”. The clipboard is never read.</span></dd>
             <dt>sessions</dt><dd><span data-l="zh">撤销「关闭标签页」时,从最近关闭的记录里恢复它。</span><span data-l="en">Restoring closed tabs on undo.</span></dd>
-            <dt>history</dt><dd><span data-l="zh">只用于「不记录历史」的空间和文件夹:删除刚从里面访问的网址,不读取其他历史。</span><span data-l="en">Only for no-history spaces and folders: deleting the pages just visited from them.</span></dd>
+            <dt>history</dt><dd><span data-l="zh">搜索时列出最近 30 天里匹配的网页,点 × 删掉某一条;「不记录历史」的空间和文件夹里,删除刚从里面访问的网址。只在本地读,不上传。</span><span data-l="en">Listing matching pages from the last 30 days when you search, deleting one with ×, and removing the pages just visited from no-history spaces and folders. Read locally, never sent anywhere.</span></dd>
             <dt>webNavigation</dt><dd><span data-l="zh">判断新标签页是不是从某个页面里的链接打开的(子标签),以及它的地址是否已经打开(相同地址只开一份)。</span><span data-l="en">Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs).</span></dd>
             <dt>tabGroups</dt><dd><span data-l="zh">把每个空间显示成顶部标签栏里的一个标签页分组,切换空间时折叠其他空间的分组。</span><span data-l="en">Showing each space as a tab group in Chrome's tab strip and collapsing the other spaces.</span></dd>
           </dl>

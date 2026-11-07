@@ -3,7 +3,7 @@
 // 和在真的 Chrome 里一样:各自注册事件、读写同一份存储、互相发消息。
 // 事件的先后顺序尽量照着 Chrome 来,事件和返回值都是拷贝,插件改了也不会影响这里的数据。
 
-import { NEW_TAB, page } from './web.js?v=cc03e038';
+import { NEW_TAB, page } from './web.js?v=71ea2bda';
 
 const WIN = 1;
 const LOAD_MS = 300; // 网页「加载」多久
@@ -201,7 +201,15 @@ export class Browser {
       this.history.delete(t.id);
       this.dropEmptyGroup(t.groupId);
       this.emit('tabs.onRemoved', t.id, { windowId: WIN, isWindowClosing: false });
-      if (wasActive) {
+      const sel = this.tabs.filter((x) => x.highlighted);
+      if (wasActive && sel.length) {
+        // 还有别的选中的标签页:和 Chrome 一样,第一个选中的变成当前,其余的仍然选中
+        const n = sel[0];
+        Object.assign(n, { active: true, selected: true, lastAccessed: Date.now() });
+        this.emit('tabs.onActivated', { tabId: n.id, windowId: WIN });
+        this.emit('tabs.onHighlighted', { tabIds: sel.map((x) => x.id), windowId: WIN });
+        if (n.discarded || n.status === 'unloaded') this.wake(n);
+      } else if (wasActive) {
         // 关掉当前标签页:切到右边的(在折叠分组里的跳过),没有就切到左边的
         const visible = (x) => !this.groups.get(x.groupId)?.collapsed;
         const next = this.tabs.slice(at).find(visible) ?? this.tabs.slice(0, at).reverse().find(visible) ?? this.tabs[at] ?? this.tabs[at - 1];

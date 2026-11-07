@@ -2,8 +2,8 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=318edb7a';
-import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=cc03e038';
+import { Browser } from './sim.js?v=fc856f4c';
+import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=71ea2bda';
 import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js';
 import { KEY, MSG } from '../ext/src/protocol.js';
 
@@ -231,7 +231,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const T = TEXT[lang];
     if (p.kind === 'newtab') {
       pageEl.innerHTML = `<div class="sb-ntp"><img class="sb-ntp-logo" src="${LOGO}" alt=""><p class="sb-hint">${T.newTabHint}</p><div class="sb-tiles">${tiles(lang)
-        .map((u) => `<button class="sb-tile" data-url="${esc(u)}"><span><img src="${esc(iconFor(u))}" alt=""></span>${esc(page(u, lang).title.split(/ [–|-] /)[0])}</button>`)
+        .map((u) => `<button class="sb-tile" data-url="${esc(u)}"><span><img src="${esc(iconFor(u))}" alt=""></span>${esc(page(u, lang).site?.name || page(u, lang).title.split(/ [–|-] /)[0])}</button>`)
         .join('')}</div></div>`;
       return;
     }
@@ -331,7 +331,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=f47dd662', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=8ef10995', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=61d70c69', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=ae870d14', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

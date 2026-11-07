@@ -299,7 +299,7 @@ async function dedupe(nav, auto) {
   // 后台打开的不抢焦点,只关掉重复的
   if (tab.active) await chrome.tabs.update(twin.id, { active: true });
   await chrome.tabs.remove(tab.id).catch(() => {});
-  chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active } }).catch(() => {});
+  chrome.runtime.sendMessage({ [MSG.deduped]: { url: nav.url, windowId: tab.windowId, active: tab.active, tabId: twin.id } }).catch(() => {});
 }
 
 // 收藏/固定项还没打开:让新标签页直接成为它的标签页,显示在收藏夹或固定标签里,而不是列表里多出一个

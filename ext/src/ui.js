@@ -56,6 +56,35 @@ export async function copyText(text, done) {
 
 export function hideMenu() {
   $('#menu').hidden = true;
+  owner = null;
+  menuTargets = [];
+  applyMenuTarget();
+}
+
+// 右键菜单是给谁的:菜单开着时,被右键的那一行(多选时是选中的几行)染一层主题色,和菜单里高亮的项同色。
+// 记的是选择器而不是元素:菜单开着时列表可能重画,render.js 每次重画完调用 applyMenuTarget 重新标上
+let menuTargets = [];
+const targetSel = (el) => (el.dataset.space ? `[data-space="${CSS.escape(el.dataset.space)}"]` : `[data-kind="${el.dataset.kind}"][data-id="${CSS.escape(el.dataset.id)}"]`);
+export function setMenuTarget(els) {
+  owner = null;
+  menuTargets = els.map(targetSel);
+  applyMenuTarget();
+}
+export function applyMenuTarget() {
+  for (const x of document.querySelectorAll('.menu-target')) x.classList.remove('menu-target');
+  for (const sel of menuTargets) document.querySelector(sel)?.classList.add('menu-target');
+}
+
+// 从按钮打开的菜单(右上角三个点、右下角设置、左下角最近关闭):菜单开着时再点这个按钮就关上。
+// 按下鼠标时「点了菜单外面就关」要跳过这个按钮(见 events.js),不然刚关上,这次点击又把它打开。
+// 记的是按钮的选择器:底部那排按钮每次重画都换成新的元素
+let owner = null;
+export const isMenuOwner = (el) => !!owner && !!el.closest(owner);
+export function toggleMenuFrom(sel, open) {
+  if (!$('#menu').hidden && owner === sel) return hideMenu();
+  // 先记下来:最近关闭的菜单要等读完记录才弹出
+  owner = sel;
+  open();
 }
 
 // items: [{ label, run, danger? } | { header } | { el } | '-' | 假值(跳过)]

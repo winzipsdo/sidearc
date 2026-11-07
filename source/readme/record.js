@@ -176,15 +176,16 @@ for (const lang of ['zh', 'en']) {
       await move([x2, y + (i % 2 ? 2 : -2)], 170);
       await move([x1, y], 170);
     }
-    await move([x1 - 30, y + 60], 600);
+    // 从右边移出侧边栏(1.9 起最后一个标签页下面是新建标签页的加号,往下走会经过它,让它浮出来)
+    await move([x2 + 260, y - 20], 600);
     await wait(1600);
   }, {
     // 只截侧边栏里标签页列表这一块
     crop: async ({ page, panel, where }) => {
       const side = await page.locator('.sb-panel').boundingBox();
-      const [, top] = await where(panel.locator('.row.new'), 0, 0);
-      const [, bottom] = await where(panel.locator('#tabs .row').last(), 0, 1);
-      return { x: side.x, y: top - 24, width: side.width, height: bottom + 140 - (top - 24) };
+      const [, top] = await where(panel.locator('#tabs .row[data-kind="tab"]').first(), 0, 0);
+      const [, bottom] = await where(panel.locator('#tabs .row[data-kind="tab"]').last(), 0, 1);
+      return { x: side.x, y: top - 8, width: side.width, height: bottom + 140 - (top - 8) };
     },
     width: 640,
   });

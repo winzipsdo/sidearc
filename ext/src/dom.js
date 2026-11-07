@@ -32,6 +32,8 @@ const ICONS = {
   eye: svg('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/>'),
   eyeOff: svg('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/><path d="M3 13L13 3"/>'),
   folder: svg('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/>'),
+  // 文件夹那一行的箭头:细线的 ›,收起时朝右,展开时转到朝下(样式见 sidepanel.css 的 .chev)
+  chevron: svg('<path class="chev" d="M6 3.8l4.2 4.2L6 12.2"/>'),
   folderOpen: svg('<path d="M2.5 12V4.5a1 1 0 011-1h3l1.5 1.5h4a1 1 0 011 1v1"/><path d="M2.5 12l1.6-4.3a1 1 0 01.9-.7h8.6l-1.7 5z"/>'),
   folderPlus: svg('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/><path d="M8 7.3v3.4M6.3 9h3.4"/>'),
   back: svg('<path d="M6 3.5L3 6.5l3 3"/><path d="M3 6.5h6.5a3.5 3.5 0 010 7H8"/>'),
@@ -52,11 +54,17 @@ const ICONS = {
   sliders: svg('<path d="M2 3.5h5.9M11.1 3.5H14M2 8h2.4M7.6 8H14M2 12.5h6.4M11.6 12.5H14"/><circle cx="9.5" cy="3.5" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="10" cy="12.5" r="1.6"/>'),
   recent: svg('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
 };
+// 每个图标只解析一次,之后复制:重画时每行都有好几个图标,逐个解析 SVG 文本不便宜
+const iconCache = new Map();
 export function icon(name) {
-  const el = document.createElement('span');
-  el.className = 'i';
-  el.innerHTML = ICONS[name];
-  return el;
+  let el = iconCache.get(name);
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 'i';
+    el.innerHTML = ICONS[name];
+    iconCache.set(name, el);
+  }
+  return el.cloneNode(true);
 }
 
 export const $ = (s) => document.querySelector(s);

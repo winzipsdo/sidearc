@@ -8,13 +8,14 @@ import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { MSG } from './protocol.js';
-import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, schedule, updateScrollFades } from './render.js';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js';
 import { bindLeaves, refreshLeaves } from './leaves.js';
-import { deleteHistory } from './history.js';
+import { revealTab } from './locate.js';
+import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
 import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
-import { closeSearch, hideMenu, openSearch, pushUndo, undo } from './ui.js';
+import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
@@ -61,6 +62,7 @@ function bindRows(root) {
     if (!el) return;
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (el.dataset.kind === 'folder') return toggleFolder(el.dataset.id);
+    if (el.dataset.kind === 'hist-more') return expandHistory();
     // 搜索结果里的历史记录:在新标签页打开(归入当前空间)。
     // 点开搜索结果里的任何一项(不是行上的按钮)都退出搜索
     if (el.dataset.kind === 'hist') {
@@ -128,19 +130,25 @@ function bindMenus(scroll) {
     e.preventDefault();
     const el = e.target.closest('[data-kind]');
     const dot = e.target.closest('[data-space]');
-    if (dot) return spaceMenu(e, dot.dataset.space);
+    // 菜单开着时标出它是给谁的(见 ui.js 的 setMenuTarget)
+    if (dot) return setMenuTarget([dot]), spaceMenu(e, dot.dataset.space);
     if (!el) return hideMenu();
-    if (el.dataset.kind === 'folder') return folderMenu(e, el.dataset.id);
+    if (el.dataset.kind === 'folder') return setMenuTarget([el]), folderMenu(e, el.dataset.id);
     if (el.dataset.kind === 'tab') {
       const tab = tabOf(el);
-      if (tab) tabMenu(e, tab);
+      if (!tab) return;
+      // 右键的是多选里的一项:菜单作用于选中的全部(见 menus.js 的 tabMenu),选中的几行都标出来
+      const many = tab.highlighted && document.querySelectorAll('#tabs .row.selected').length > 1;
+      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el]);
+      tabMenu(e, tab);
     } else {
       const hit = findItem(el.dataset.id);
-      if (hit) itemMenu(e, hit);
+      if (hit) setMenuTarget([el]), itemMenu(e, hit);
     }
   });
+  // 点在菜单外面就关;打开它的那个按钮除外,由按钮自己切换开关(见 ui.js 的 toggleMenuFrom)
   document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('#menu')) hideMenu();
+    if (!e.target.closest('#menu') && !isMenuOwner(e.target)) hideMenu();
   });
   window.addEventListener('blur', hideMenu);
   scroll.addEventListener('scroll', hideMenu);
@@ -161,7 +169,18 @@ function bindControls() {
     const dot = e.target.closest('[data-space]');
     if (dot) switchSpace(dot.dataset.space);
   });
-  $('#space-menu').addEventListener('click', (e) => spaceMenu(e, state.activeSpaceId));
+  // 右上角的三个点:菜单固定贴在按钮下方、右对齐,不跟着鼠标点的位置走(和右下角的设置按钮一样)
+  // 菜单开着时再点一次就关上
+  $('#space-menu').addEventListener('click', (e) => {
+    const anchor = e.currentTarget.getBoundingClientRect();
+    toggleMenuFrom('#space-menu', () => {
+      spaceMenu(e, state.activeSpaceId);
+      const menu = $('#menu');
+      menu.dataset.from = 'space';
+      menu.style.left = Math.max(4, anchor.right - menu.offsetWidth) + 'px';
+      menu.style.top = Math.min(anchor.bottom + 6, Math.max(4, innerHeight - menu.offsetHeight - 4)) + 'px';
+    });
+  });
   // 点空间名(或旁边的小箭头、折叠时的数量)折叠/展开这个空间的固定标签
   $('#pins-toggle-area').addEventListener('click', () => {
     const space = activeSpace();
@@ -170,7 +189,6 @@ function bindControls() {
     save();
     render();
   });
-  $('#new-tab').addEventListener('click', () => chrome.tabs.create({ windowId }));
   $('#clear').addEventListener('click', clearTabs);
 }
 
@@ -248,12 +266,21 @@ function bindPage() {
 
 // 浏览器这边的变化:标签页、后台发来的消息、存储
 function bindBrowser() {
-  for (const ev of ['onCreated', 'onRemoved', 'onUpdated', 'onMoved', 'onAttached', 'onDetached', 'onReplaced', 'onHighlighted']) {
-    chrome.tabs[ev].addListener(schedule);
-  }
-  chrome.tabs.onReplaced.addListener(replaceTabId);
+  // 只管本窗口的:别的窗口里标签页加载、改标题这些事件很多,每个都让这里整页重画没有必要。
+  // 别的窗口里的变化会影响到这里的(比如收藏的标签页在别的窗口关掉了),后台会改存储,下面的 storage.onChanged 会重画
+  const mine = (id) => id === windowId && schedule();
+  chrome.tabs.onCreated.addListener((tab) => mine(tab.windowId));
+  chrome.tabs.onRemoved.addListener((_, info) => mine(info.windowId));
+  chrome.tabs.onUpdated.addListener((_, __, tab) => mine(tab.windowId));
+  chrome.tabs.onMoved.addListener((_, info) => mine(info.windowId));
+  chrome.tabs.onAttached.addListener((_, info) => mine(info.newWindowId));
+  chrome.tabs.onDetached.addListener((_, info) => mine(info.oldWindowId));
+  chrome.tabs.onHighlighted.addListener((info) => mine(info.windowId));
+  // 换编号的事件不带窗口
+  chrome.tabs.onReplaced.addListener((added, removed) => (replaceTabId(added, removed), schedule()));
   chrome.tabs.onActivated.addListener((info) => {
-    if (info.windowId === windowId) followSpace(info.tabId);
+    if (info.windowId !== windowId) return;
+    followSpace(info.tabId);
     schedule();
   });
 
@@ -262,6 +289,8 @@ function bindBrowser() {
     const d = msg?.[MSG.deduped];
     if (!d || d.windowId !== windowId) return;
     pushUndo(d.active ? t('switchedToExisting') : t('alreadyOpen'), () => chrome.runtime.sendMessage({ [MSG.openDup]: d }));
+    // 侧边栏也滚到已有的那个
+    if (d.tabId != null) revealTab(d.tabId);
   });
   // 后台把新标签页绑定到了同地址的收藏/固定项:先记上绑定(存储的变化可能还没到),固定项在别的空间就跟过去
   chrome.runtime.onMessage.addListener((msg) => {
@@ -292,7 +321,8 @@ function bindBrowser() {
       schedule();
     } else if (area === 'session') {
       for (const [k, c] of Object.entries(changes)) applySession(k, c.newValue);
-      render();
+      // 后台常常接连写好几次(新开一个标签页就有好几条),合成一次重画
+      renderSoon();
     }
   });
 }

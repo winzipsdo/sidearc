@@ -21,6 +21,7 @@ const flying = new Set(); // 关掉了的标签页:canvas 已经从行里拿出�
 let raf = 0;
 
 tabReplacedHooks.push((added, removed) => {
+  if (homes.has(removed)) homes.set(added, homes.get(removed)), homes.delete(removed);
   if (!piles.has(removed)) return;
   piles.set(added, Object.assign(piles.get(removed), { id: added }));
   piles.delete(removed);
@@ -36,11 +37,34 @@ function rng(seed) {
   };
 }
 
+// 每个标签页的叶子落在哪:tabId -> [{ fx, hy }],第 i 片总是第 i 个位置(扫干净后重新落、重画、休眠换编号都不变)。
+// 每片各自随机的话很容易几片叠成一堆、旁边又空着,所以用「最佳候选」:随机挑几个候选位置,
+// 选离前面几片最远的那个(按屏幕上的距离算,行宽按 300px),新叶子总落进最空的地方。
+// fx:在行宽里的位置(0~1),只在后半段;hy:落定的高度,偏下半行
+const homes = new Map();
+const CANDIDATES = 16;
+function homeOf(tabId, i) {
+  let list = homes.get(tabId);
+  if (!list) homes.set(tabId, (list = []));
+  while (list.length <= i) {
+    const r = rng(tabId * 6271 + list.length * 15485863);
+    let best = null;
+    let bestD = -1;
+    for (let c = 0; c < CANDIDATES; c++) {
+      const fx = 0.45 + r() * 0.52;
+      const hy = ROW_H * (0.3 + r() * 0.42);
+      let d = Infinity;
+      for (const p of list) d = Math.min(d, Math.hypot((p.fx - fx) * 300, p.hy - hy));
+      if (d > bestD) (bestD = d), (best = { fx, hy });
+    }
+    list.push(best);
+  }
+  return list[i];
+}
+
 function makeLeaf(tabId, i, fall) {
   const r = rng(tabId * 7919 + i * 104729);
-  // fx:在行宽里的位置(0~1),只在后半段;hy:落定的高度,偏下半行
-  const fx = 0.45 + r() * 0.52;
-  const hy = ROW_H * (0.3 + r() * 0.42);
+  const { fx, hy } = homeOf(tabId, i);
   const rot = r() * Math.PI * 2;
   return {
     i, fx, hy, x: null, y: fall ? -10 : hy, vx: 0, vy: 0, vr: 0, rot, hrot: rot,
@@ -74,11 +98,19 @@ function blow(list) {
   }
 }
 
+// 挂到行上、量尺寸、画分成三步(见 refreshLeaves):挂上画布会让排版作废,挂一个量一个的话每量一次都要重新排一遍整页
 function attach(pile, row) {
-  if (!pile.ps.length && !pile.glow) return pile.cv.remove();
+  if (!pile.ps.length && !pile.glow) return pile.cv.remove(), false;
   if (pile.cv.parentNode !== row) row.append(pile.cv);
+  return true;
+}
+function measure(pile, row) {
   pile.rect = row.getBoundingClientRect();
-  const W = row.clientWidth;
+  pile.rowW = row.clientWidth;
+}
+// 画布尺寸跟着行宽:改尺寸也会让排版作废,所以等全部量完再改
+function fit(pile) {
+  const W = pile.rowW;
   if (W && W !== pile.W) {
     const dpr = devicePixelRatio || 1;
     pile.W = W;
@@ -86,7 +118,6 @@ function attach(pile, row) {
     pile.cv.height = ROW_H * dpr;
     pile.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
-  step(pile, performance.now(), false);
 }
 
 // 关掉了的标签页:canvas 留在原来的位置(固定定位),叶子飘走
@@ -104,6 +135,7 @@ function flyOff(pile) {
 export function refreshLeaves() {
   const now = Date.now();
   const rows = new Map([...document.querySelectorAll('#tabs .row[data-kind="tab"]')].map((el) => [+el.dataset.id, el]));
+  const shown = [];
   for (const tab of tabs) {
     const row = rows.get(tab.id);
     let pile = piles.get(tab.id);
@@ -118,15 +150,19 @@ export function refreshLeaves() {
       pile.n = want;
     }
     while (pile.n < want) pile.ps.push(makeLeaf(tab.id, pile.n++, fall));
-    if (row) attach(pile, row);
-    else pile.cv.remove();
+    if (row && attach(pile, row)) shown.push([pile, row]);
+    else if (!row) pile.cv.remove();
   }
+  for (const [pile, row] of shown) measure(pile, row);
+  const t = performance.now();
+  for (const [pile] of shown) fit(pile), step(pile, t, false);
   const ids = new Set(tabs.map((x) => x.id));
   for (const [id, pile] of piles) {
     if (ids.has(id)) continue;
     piles.delete(id);
     flyOff(pile);
   }
+  for (const id of homes.keys()) if (!ids.has(id)) homes.delete(id);
   wake();
 }
 

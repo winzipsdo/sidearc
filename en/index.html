@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-l="en">Sidearc — Arc-style vertical tabs for Chrome</title>
-<meta data-l="en" name="description" content="Sidearc puts your Chrome tabs in the side panel: vertical tabs with child tabs, spaces, pinned tabs and favorites, kept in two-way sync with Chrome's own tab strip. Free, open source, no network requests. Try it live in your browser.">
+<meta data-l="en" name="description" content="Sidearc puts your Chrome tabs in the side panel: vertical tabs with child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's own tab strip. Free, open source, no network requests. Try it live in your browser.">
 <link data-l="en" rel="canonical" href="https://winzipsdo.github.io/sidearc/en/">
 <link rel="alternate" hreflang="zh-CN" href="https://winzipsdo.github.io/sidearc/">
 <link rel="alternate" hreflang="en" href="https://winzipsdo.github.io/sidearc/en/">
@@ -37,7 +37,7 @@
       "applicationCategory": "BrowserApplication",
       "applicationSubCategory": "Chrome extension",
       "operatingSystem": "Chrome 116+",
-      "softwareVersion": "1.8.0",
+      "softwareVersion": "1.9.1",
       "downloadUrl": "https://github.com/winzipsdo/sidearc/releases/latest",
       "license": "https://github.com/winzipsdo/sidearc/blob/main/LICENSE",
       "isAccessibleForFree": true,
@@ -85,7 +85,7 @@
 <link rel="apple-touch-icon" href="../icons/128.png">
 <link rel="stylesheet" href="../style.css?v=c5efa4d2">
 <link rel="stylesheet" href="../demo/demo.css?v=642fb0f5">
-<link rel="modulepreload" href="../demo/demo.js?v=c4aad798">
+<link rel="modulepreload" href="../demo/demo.js?v=5c07b28c">
 <script>
   // 上次选过另一种语言(右上角的按钮),或者旧链接带着 ?lang=,就跳到那种语言的页面。
   // 搜索引擎的爬虫没有这些记录,不会被带走,两个页面都能各自被收录
@@ -149,7 +149,7 @@
     <div class="wrap wide">
       <div class="try-head">
         <h2><span data-l="en">Try it here, no install</span></h2>
-        <p><span data-l="en">The sidebar on the left runs Sidearc's actual code; only the browser around it is simulated. The tab strip and the pages are clickable too. Dragging needs a mouse.</span></p>
+        <p><span data-l="en">The sidebar on the left runs Sidearc's actual code; only the browser around it is simulated. The tab strip and the pages are clickable too. Works on a phone; dragging needs a mouse.</span></p>
       </div>
       <div class="try-grid">
         <div id="demo" class="demo-host"></div>
@@ -174,7 +174,7 @@
     <div class="wrap">
       <h2 class="title"><span data-l="en">Sidearc in a minute</span></h2>
       <figure class="player" id="player">
-        <video id="intro" src="../assets/intro.mp4?v=d815220d" poster="../assets/intro-poster.jpg?v=3a7880c3" controls playsinline preload="none" width="1920" height="1080"></video>
+        <video id="intro" src="../assets/intro.mp4?v=b554659b" poster="../assets/intro-poster.jpg?v=6e4730a8" controls playsinline preload="none" width="1920" height="1080"></video>
         <button class="play" id="play" type="button" hidden>
           <span class="circle"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg></span>
           <span class="label"><span data-l="en">Play the intro</span></span>
@@ -211,7 +211,7 @@
       </article>
       <article class="feature">
         <div class="text">
-          <p class="eyebrow"><span data-l="en">Fallen leaves · 1.8</span></p>
+          <p class="eyebrow"><span data-l="en">Fallen leaves</span></p>
           <h2><span data-l="en">What to close shows itself</span></h2>
           <p><span data-l="en">Leave a tab for a day and leaves start to fall. Sweep them off, or open it and they blow away.</span></p>
           <button class="try-btn" type="button" data-task="leaves"><span data-l="en">Try it above: sweep Hacker News</span> ↑</button>
@@ -280,7 +280,7 @@
           <p><span data-l="en">Pick a batch and drag, close or move them together.</span></p>
         </div>
       </div>
-      <p class="sub"><span data-l="en">Plus favorites, aliases, folders, no-history spaces, restoring last session, recently closed, duplicates, hard reload, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.en.md">Every feature in detail →</a></span></p>
+      <p class="sub"><span data-l="en">Plus favorites, aliases, folders, no-history spaces, closing a tab takes you back to where you were, one click back to the current tab, restoring last session, recently closed, duplicating a tab, hard reload, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sidearc/blob/main/docs/features.en.md">Every feature in detail →</a></span></p>
     </div>
   </section>
 
@@ -355,7 +355,7 @@
             <dt>search</dt><dd><span data-l="en">Searching with your default engine from the search box.</span></dd>
             <dt>clipboardWrite</dt><dd><span data-l="en">“Copy link address”. The clipboard is never read.</span></dd>
             <dt>sessions</dt><dd><span data-l="en">Restoring closed tabs on undo.</span></dd>
-            <dt>history</dt><dd><span data-l="en">Only for no-history spaces and folders: deleting the pages just visited from them.</span></dd>
+            <dt>history</dt><dd><span data-l="en">Listing matching pages from the last 30 days when you search, deleting one with ×, and removing the pages just visited from no-history spaces and folders. Read locally, never sent anywhere.</span></dd>
             <dt>webNavigation</dt><dd><span data-l="en">Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs).</span></dd>
             <dt>tabGroups</dt><dd><span data-l="en">Showing each space as a tab group in Chrome's tab strip and collapsing the other spaces.</span></dd>
           </dl>
@@ -379,6 +379,6 @@
     </nav>
   </div>
 </footer>
-<script type="module" src="../main.js?v=00b2aa26"></script>
+<script type="module" src="../main.js?v=7f3bf7bb"></script>
 </body>
 </html>

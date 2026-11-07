@@ -1,6 +1,6 @@
 // 主页的脚本:切换中英文、在线试用和任务清单、视频的播放按钮、复制命令。
 
-import { mountDemo } from './demo/demo.js?v=c4aad798';
+import { mountDemo } from './demo/demo.js?v=5c07b28c';
 
 const root = document.documentElement;
 const store = {
@@ -85,8 +85,8 @@ const TASKS = [
   {
     id: 'dedupe',
     on: ['dedupe'],
-    zh: ['再开一个已经开着的网站', '点顶部的 + 新建标签页,再点 Hacker News 或 Gmail:不会多开一份,而是直接切过去。'],
-    en: ['Open a site that’s already open', 'Click + in the tab strip, then pick Hacker News or Gmail: instead of a second copy, you jump to the open one.'],
+    zh: ['再开一个已经开着的网站', '点顶部的 + 新建标签页,再点 Gmail 或 YouTube:不会多开一份,而是直接切过去。'],
+    en: ['Open a site that’s already open', 'Click + in the tab strip, then pick Gmail or YouTube: instead of a second copy, you jump to the open one.'],
   },
   {
     id: 'undo',

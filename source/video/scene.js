@@ -121,6 +121,7 @@ const ICON = {
   sleep: stroke('<path d="M13 9.5A5.5 5.5 0 116.5 3a4.3 4.3 0 006.5 6.5z"/>'),
   outdent: stroke('<path d="M7.5 4h6M7.5 8h6M7.5 12h6"/><path d="M4.5 6L2.5 8l2 2"/>'),
   back: stroke('<path d="M6 3.5L3 6.5l3 3"/><path d="M3 6.5h6.5a3.5 3.5 0 010 7H8"/>'),
+  chevron: stroke('<path class="chev" d="M6 3.8l4.2 4.2L6 12.2"/>'),
   folder: stroke('<path d="M2.5 4.5a1 1 0 011-1h3l1.5 1.5h4.5a1 1 0 011 1v6a1 1 0 01-1 1h-9a1 1 0 01-1-1z"/>'),
   recent: stroke('<path d="M2.8 8a5.2 5.2 0 101.6-3.8"/><path d="M2.8 2.8v2.6h2.6"/><path d="M8 5.2V8l2 1.3"/>'),
   sliders: stroke('<path d="M2 3.5h5.9M11.1 3.5H14M2 8h2.4M7.6 8H14M2 12.5h6.4M11.6 12.5H14"/><circle cx="9.5" cy="3.5" r="1.6"/><circle cx="6" cy="8" r="1.6"/><circle cx="10" cy="12.5" r="1.6"/>'),
@@ -194,7 +195,7 @@ function panelHtml() {
       pins:
         `<div class="row open" id="p-notion" data-kind="pin"><img class="icon" src="${iconFor(U.notion)}" alt=""><span class="alias">规划</span><span class="title">${title('notion')}</span>` +
         `<span class="pin-name">规划</span><span class="title away-title">${title('weekly')}</span><button class="btn x">${ICON.sleep}</button><button class="btn x">${ICON.minus}</button><button class="btn back">${ICON.back}</button></div>` +
-        `<div class="row folder" data-kind="folder"><span class="i">${ICON.folder}</span><span class="title">旅行计划</span><span class="count">1/2</span></div>`,
+        `<div class="row folder" data-kind="folder"><span class="i">${ICON.chevron}</span><span class="title">旅行计划</span><span class="count">1/2</span></div>`,
       tabs:
         row('t-docs', 'docs', { alias: '文档', cls: 'active' }) +
         row('t-mdn', 'mdn', { depth: 1 }) +
@@ -219,7 +220,8 @@ function panelHtml() {
 <style>
 @property --accent { syntax: '<color>'; inherits: true; initial-value: #6b7cff; }
 body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei UI", system-ui, sans-serif; }
-#scroll { overflow: hidden; }
+/* 1.9 起列表一直给滚动条留位置(scrollbar-gutter: stable),视频里没有滚动条,不留 */
+#scroll { overflow: hidden; scrollbar-gutter: auto; }
 #space-name { display: grid; }
 #space-name b { grid-area: 1 / 1; font: inherit; }
 .set { display: flex; flex-direction: column; gap: 2px; }
@@ -236,7 +238,7 @@ body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei U
 #p-notion .pin-name, #p-notion .away-title, #p-notion .back { display: none; }
 #t-hn .slept { display: none; }
 #toast { left: 12px; right: 12px; }
-</style></head><body>
+</style></head><body class="shown settled">
 <header>
 <label class="search">${ICON.search}<input id="search" placeholder="搜索标签页或输入网址"></label>
 <section id="favs" class="zone grid" style="--cols:5">${favs}</section>
@@ -245,8 +247,7 @@ body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei U
 <main id="scroll">
 <section id="pins" class="zone list">${zone('pins')}</section>
 <div class="divider"><span></span><button class="ghost">清理</button></div>
-<button class="row new"><span class="i">${ICON.plus}</span><span class="title">新标签页</span></button>
-<section id="tabs" class="zone list">${zone('tabs')}</section>
+<section id="tabs" class="zone list">${zone('tabs')}<button id="new-tab" class="row new"><span class="i">${ICON.plus}</span></button></section>
 </main>
 <footer id="spaces">${dots}<button class="space-dot">${ICON.plus}</button><button class="space-dot recent">${ICON.recent}</button><button class="space-dot settings">${ICON.sliders}</button></footer>
 <div id="toast"><span>已让 1 个标签页休眠</span><button>撤销</button></div>
@@ -395,7 +396,7 @@ function scenes() {
   tw($('#sync'), 8.2, 0.4, { opacity: [0, 1] });
   tw($('#side'), 8.2, 0.85, { width: ['0px', '341px'] }, EASE.inOut);
   tw(frame(), 8.2, 0.85, { transform: ['translateX(-340px)', 'none'] }, EASE.inOut);
-  ['#favs', '.space-head', '#pins', '.divider', '.row.new', '#t-docs', '#t-mdn', '#t-lofi', '#t-hn', '#spaces'].forEach((s, i) =>
+  ['#favs', '.space-head', '#pins', '.divider', '#t-docs', '#t-mdn', '#t-lofi', '#t-hn', '#spaces'].forEach((s, i) =>
     tw(q(s), 8.55 + i * 0.05, 0.55, { opacity: [0, 1], translate: ['-12px 0', '0 0'] })
   );
   copyOut($('#copy-1'), 8.9);
@@ -744,12 +745,29 @@ function leafPile(row, t, n) {
   pile(row).drops.push({ t, n });
 }
 function resetPile(p) {
-  Object.assign(p, { ps: [], n: 0, simT: Math.min(...p.drops.map((d) => d.t)), done: new Set(), blown: false, glow: 0, sweeping: false, mouse: null, rnd: seeded(p.row.id.length * 7919 + 17) });
+  Object.assign(p, { ps: [], n: 0, simT: Math.min(...p.drops.map((d) => d.t)), done: new Set(), blown: false, glow: 0, sweeping: false, mouse: null, rnd: seeded(p.row.id.length * 7919 + 17), homes: [] });
+}
+const rowSeed = (p) => [...p.row.id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7);
+// 第 i 片叶子落在哪:和 src/leaves.js 的 homeOf 一样用「最佳候选」,挑离前面几片最远的位置,免得叠成一堆
+function homeOf(p, i) {
+  while (p.homes.length <= i) {
+    const r = seeded(rowSeed(p) * 6271 + p.homes.length * 15485863);
+    let best = null;
+    let bestD = -1;
+    for (let c = 0; c < 16; c++) {
+      const fx = 0.45 + r() * 0.52;
+      const hy = LEAF_H * (0.3 + r() * 0.42);
+      let d = Infinity;
+      for (const h of p.homes) d = Math.min(d, Math.hypot((h.fx - fx) * 300, h.hy - hy));
+      if (d > bestD) (bestD = d), (best = { fx, hy });
+    }
+    p.homes.push(best);
+  }
+  return p.homes[i];
 }
 function makeLeaf(p, i, t0) {
-  const r = seeded([...p.row.id].reduce((h, c) => h * 31 + c.charCodeAt(0), 7) * 7919 + i * 104729);
-  const fx = 0.45 + r() * 0.52;
-  const hy = LEAF_H * (0.3 + r() * 0.42);
+  const r = seeded(rowSeed(p) * 7919 + i * 104729);
+  const { fx, hy } = homeOf(p, i);
   const rot = r() * Math.PI * 2;
   return { i, fx, hy, x: null, y: -10, vx: 0, vy: 0, vr: 0, rot, hrot: rot, s: 5 + r() * 3.5, c: LEAF_COLORS[Math.floor(r() * LEAF_COLORS.length)], hp: 2 + Math.floor(r() * 2), falling: true, t0: t0 + r() * 0.6, gone: 0, cd: 0 };
 }
