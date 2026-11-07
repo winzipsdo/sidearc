@@ -217,14 +217,18 @@ test('trailLeft:随离开的时间从 1 线性降到 0,10 分钟后为 0', () =>
   assert.equal(TRAIL_TTL, 10 * 60000);
 });
 
-test('leafCount:离开后先空 24 小时,之后每满 N 小时一片,最多 LEAF_MAX 片;不落或没有时间就没有', () => {
+test('leafCount:离开满 24 小时落第一片,之后每满 N 小时多一片,最多 LEAF_MAX 片;不落或没有时间就没有', () => {
   const H = 3600000;
   assert.equal(leafCount(0, 100 * H, 12), 0);
-  assert.equal(leafCount(1000, 1000 + 35.9 * H, 12), 0);
-  assert.equal(leafCount(1000, 1000 + 36 * H, 12), 1);
-  assert.equal(leafCount(1000, 1000 + 61 * H, 12), 3);
-  assert.equal(leafCount(1000, 1000 + 61 * H, 6), 6);
-  assert.equal(leafCount(1000, 1000 + 32 * H, 8), 1);
+  assert.equal(leafCount(1000, 1000 + 23.9 * H, 12), 0);
+  assert.equal(leafCount(1000, 1000 + 24 * H, 12), 1);
+  assert.equal(leafCount(1000, 1000 + 35.9 * H, 12), 1);
+  assert.equal(leafCount(1000, 1000 + 36 * H, 12), 2);
+  assert.equal(leafCount(1000, 1000 + 61 * H, 12), 4);
+  assert.equal(leafCount(1000, 1000 + 61 * H, 6), 7);
+  assert.equal(leafCount(1000, 1000 + 32 * H, 8), 2);
+  assert.equal(leafCount(1000, 1000 + (24 + 11 * 12) * H, 12), LEAF_MAX);
+  assert.equal(leafCount(1000, 1000 + (24 + 11 * 12 - 0.1) * H, 12), LEAF_MAX - 1);
   assert.equal(leafCount(1000, 1000 + 1000 * H, 12), LEAF_MAX);
   assert.equal(leafCount(1000, 1000 + 1000 * H, 0), 0);
   assert.equal(leafCount(5000, 1000, 12), 0);
