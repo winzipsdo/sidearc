@@ -60,6 +60,11 @@ const MESSAGES = {
     keepAwake: '保持唤醒',
     stopKeepAwake: '取消保持唤醒',
     releaseChildren: '解除所有子标签',
+    splitView: '在拆分视图中打开',
+    unsplit: '取消拆分视图',
+    reverseViews: '反转视图',
+    reverseFailed: '没能反转视图:这两个标签页已经不在拆分视图里',
+    splitFailed: '没能创建拆分视图:这两个标签页要在同一个分组里',
     moveToSpace: '移到空间「{name}」',
     closeBelow: '关闭下方标签页',
 
@@ -216,6 +221,11 @@ const MESSAGES = {
     keepAwake: 'Keep awake',
     stopKeepAwake: 'Stop keeping awake',
     releaseChildren: 'Move all child tabs out',
+    splitView: 'Open in split view',
+    unsplit: 'Separate views',
+    reverseViews: 'Reverse views',
+    reverseFailed: "Couldn't reverse views: the two tabs are no longer in split view",
+    splitFailed: "Couldn't create split view: both tabs need to be in the same group",
     moveToSpace: 'Move to “{name}”',
     closeBelow: 'Close tabs below',
 

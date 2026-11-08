@@ -2,10 +2,10 @@
 
 import { $ } from './dom.js';
 import { t } from './i18n.js';
-import { canDiscard, isUnloaded, toUrl } from './logic.js';
+import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { markSlept, render, schedule } from './render.js';
-import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
+import { bind, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
 import { ask, closeSearch, pushUndo, toast } from './ui.js';
 
 // 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
@@ -87,6 +87,50 @@ export async function discardTabs(list, { withActive = false } = {}) {
     setRenderHeld(false);
   }
   toast(n ? t(unkept ? 'sleptUnkept' : 'slept', { n }) : t('nothingToSleep'));
+  schedule();
+}
+
+// 分屏(Chrome 的 Split View):扩展能分屏、取消分屏要 Chrome 155 以上,更早的版本菜单里不显示这两项
+export const canSplit = () => typeof chrome.tabs.createSplit === 'function' && typeof chrome.tabs.unsplit === 'function';
+export const inSplit = (tab) => tab?.splitViewId > SPLIT_NONE;
+
+// 把两个标签页分屏并排显示,a 在左。Chrome 只让挨着、同一个分组的标签页分屏:
+// b 不挨着就先挪到 a 右边(普通标签页可以直接挪),层级也跟 a 一样;分好之后切过去,看得到分屏
+export async function splitTabs(a, b) {
+  await setTabParent(b.id, listedParent(a.id) ?? null);
+  const [x, y] = await Promise.all([chrome.tabs.get(a.id), chrome.tabs.get(b.id)]);
+  if (Math.abs(x.index - y.index) !== 1) await chrome.tabs.move(b.id, { index: y.index < x.index ? x.index : x.index + 1 }).catch(() => {});
+  const [l, r] = (await Promise.all([chrome.tabs.get(a.id), chrome.tabs.get(b.id)])).sort((p, q) => p.index - q.index);
+  const ok = await chrome.tabs.createSplit([l.id, r.id]).then(
+    () => true,
+    () => false
+  );
+  if (!ok) toast(t('splitFailed'));
+  else if (!a.active && !b.active) await chrome.tabs.update(a.id, { active: true }).catch(() => {});
+  schedule();
+}
+
+// 取消分屏:两个标签页都留在原地,变回普通标签页。list 里可以有好几对,也可以混着不在分屏里的
+export async function unsplitTabs(list) {
+  for (const id of new Set(list.filter(inSplit).map((x) => x.splitViewId))) await chrome.tabs.unsplit(id).catch(() => {});
+  schedule();
+}
+
+// 反转视图(交换分屏的两边):Chrome 没有直接换边的接口,挪分屏里的标签页又会把分屏拆开,
+// 所以先取消分屏,把右边那个挪到左边,再重新拼起来;原来在看的那个照样在看
+export async function reverseSplit(tab) {
+  const pair = (await chrome.tabs.query({ windowId: tab.windowId })).filter((x) => x.splitViewId === tab.splitViewId);
+  if (pair.length !== 2) return;
+  const [l, r] = pair.sort((p, q) => p.index - q.index);
+  const active = pair.find((x) => x.active);
+  await chrome.tabs.unsplit(tab.splitViewId).catch(() => {});
+  await chrome.tabs.move(r.id, { index: l.index }).catch(() => {});
+  const ok = await chrome.tabs.createSplit([r.id, l.id]).then(
+    () => true,
+    () => false
+  );
+  if (!ok) toast(t('reverseFailed'));
+  if (active) await chrome.tabs.update(active.id, { active: true }).catch(() => {});
   schedule();
 }
 

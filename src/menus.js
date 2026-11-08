@@ -7,7 +7,7 @@ import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, 
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
-import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
@@ -67,6 +67,20 @@ function spaceLinks(space) {
   return [...pinned, ...buildTree(listed, tabParent, splitPartners(tabs)).map(({ tab, depth }) => ({ title: tab.title, url: tab.url || tab.pendingUrl, depth }))];
 }
 
+// 分屏(Chrome 155 以上):里面有在分屏的就是「取消分屏」;刚好选了两个、都不在分屏里就是「分屏查看」
+function splitItem(list) {
+  if (!canSplit()) return null;
+  if (list.some(inSplit)) return { icon: 'unsplit', label: t('unsplit'), run: () => unsplitTabs(list) };
+  if (list.length === 2) return { icon: 'split', label: t('splitView'), run: () => splitTabs(list[0], list[1]) };
+  return null;
+}
+
+// 右键分屏里的一个:反转视图、取消拆分视图(菜单文字和 Chrome 自己的分屏菜单一致)
+function pairItems(tab) {
+  if (!canSplit() || !inSplit(tab)) return [];
+  return [{ icon: 'reverse', label: t('reverseViews'), run: () => reverseSplit(tab) }, splitItem([tab])];
+}
+
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
 function selectionMenu(e, list) {
   const n = list.length;
@@ -77,6 +91,7 @@ function selectionMenu(e, list) {
     scatterItem(list),
     markdownItem(list.map((x) => ({ title: x.title, url: x.url || x.pendingUrl }))),
     '-',
+    splitItem(list),
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
       .map((s) => ({
@@ -116,8 +131,9 @@ export function tabMenu(e, tab) {
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
     scatterItem([tab]),
-    // 移动:放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
+    // 移动:反转视图、取消拆分视图、放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
     '-',
+    ...pairItems(tab),
     children.length > 0 && {
       icon: 'ungroup',
       label: t('releaseChildren'),
@@ -155,8 +171,9 @@ export function itemMenu(e, { item, kind, space, folder }) {
     '-',
     bind.has(item.id) && { icon: 'minus', label: t('close'), run: () => closeItemTab(item) },
     ...memoryItems(tab),
-    // 移动:收藏和固定标签之间、文件夹进出、移到别的空间
+    // 移动:反转视图、取消拆分视图、收藏和固定标签之间、文件夹进出、移到别的空间
     '-',
+    ...pairItems(tab),
     kind === 'fav'
       ? { icon: 'move', label: t('moveToPins'), title: t('moveToPinsTip'), run: () => moveItem(item.id, 'pin') }
       : { icon: 'move', label: t('moveToFavs'), run: () => moveItem(item.id, 'fav') },
