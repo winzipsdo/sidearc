@@ -75,6 +75,15 @@ function splitItem(list) {
   return null;
 }
 
+// 右键一个不在分屏里的标签页:和正在看的标签页拼成拆分视图(正在看的在左)。
+// 两个要在同一个分组里(Chrome 的要求),所以收藏的和列表里的不能拼;正在看的已经在分屏里也不显示
+function withCurrentItem(tab) {
+  if (!tab || !canSplit() || tab.active || inSplit(tab) || tab.pinned) return null;
+  const cur = tabs.find((x) => x.active);
+  if (!cur || inSplit(cur) || cur.pinned || cur.groupId !== tab.groupId) return null;
+  return { icon: 'split', label: t('splitWithCurrent'), run: () => splitTabs(cur, tab) };
+}
+
 // 右键分屏里的一个:反转视图、取消拆分视图(菜单文字和 Chrome 自己的分屏菜单一致)
 function pairItems(tab) {
   if (!canSplit() || !inSplit(tab)) return [];
@@ -131,8 +140,9 @@ export function tabMenu(e, tab) {
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
     scatterItem([tab]),
-    // 移动:反转视图、取消拆分视图、放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
+    // 移动:和当前标签页拆分、反转视图、取消拆分视图、放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
     '-',
+    withCurrentItem(tab),
     ...pairItems(tab),
     children.length > 0 && {
       icon: 'ungroup',
@@ -171,8 +181,9 @@ export function itemMenu(e, { item, kind, space, folder }) {
     '-',
     bind.has(item.id) && { icon: 'minus', label: t('close'), run: () => closeItemTab(item) },
     ...memoryItems(tab),
-    // 移动:反转视图、取消拆分视图、收藏和固定标签之间、文件夹进出、移到别的空间
+    // 移动:和当前标签页拆分、反转视图、取消拆分视图、收藏和固定标签之间、文件夹进出、移到别的空间
     '-',
+    withCurrentItem(tab),
     ...pairItems(tab),
     kind === 'fav'
       ? { icon: 'move', label: t('moveToPins'), title: t('moveToPinsTip'), run: () => moveItem(item.id, 'pin') }
