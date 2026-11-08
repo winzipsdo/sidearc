@@ -4,14 +4,16 @@ import { itemFromTab, removeItem } from './items.js';
 import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js';
 import { moveUnit, moveUnits } from './splits.js';
 import { render, schedule } from './render.js';
-import { h } from './dom.js';
+import { h, icon } from './dom.js';
 import { t } from './i18n.js';
 import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
 import { switchSpace } from './spaces.js';
-import { moveTabToSpace } from './tabs.js';
+import { canSplit, inSplit, moveTabToSpace, splitTabs } from './tabs.js';
 import { hideMenu } from './ui.js';
 
 function clearMarks() {
+  for (const el of document.querySelectorAll('.split-hint')) el.remove();
+  for (const el of document.querySelectorAll('.drop-split')) el.classList.remove('drop-split');
   for (const el of document.querySelectorAll('.drop-before, .drop-after, .drop-end, .drop-on, .drop-into'))
     el.classList.remove('drop-before', 'drop-after', 'drop-top', 'drop-end', 'drop-on', 'drop-into');
 }
@@ -48,6 +50,20 @@ function nestElement(zone, e) {
   if (dragging.kind !== 'tab' || zone.dataset.zone !== 'tab') return null;
   const els = [...zone.querySelectorAll('[data-kind="tab"]')].filter((el) => !isDragged(el));
   return els[dropInto(rectsOf(els), e.clientY)] ?? null;
+}
+
+// 拖一个标签页到另一行中间偏右(右边 42%):两个拼成拆分视图,拖的那个在右边;中间偏左还是变成子标签。
+// 只在一个拖到一个上、两个都不在拆分视图里、在同一个分组里时才有(Chrome 155 以上)
+function splitTarget(zone, e) {
+  if (dragging.kind !== 'tab' || dragging.ids || !canSplit()) return null;
+  const el = nestElement(zone, e);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (e.clientX < r.left + r.width * 0.58) return null;
+  const a = tabs.find((x) => x.id === +el.dataset.id);
+  const b = tabs.find((x) => x.id === +dragging.id);
+  if (!a || !b || a.id === b.id || inSplit(a) || inSplit(b) || a.pinned || b.pinned || a.groupId !== b.groupId) return null;
+  return { el, a, b };
 }
 
 // 展开的文件夹里,最后一项的下半部分 = 放到这个文件夹的末尾。
@@ -242,6 +258,12 @@ export function bindDrag() {
     if (overSelf(target, e)) return;
     const end = folderEnd(target, e);
     if (end) return end.last.classList.add(end.last.dataset.kind ? 'drop-after' : 'drop-into');
+    const split = splitTarget(target, e);
+    if (split) {
+      split.el.classList.add('drop-split');
+      split.el.append(h('span', { class: 'split-hint' }, icon('split'), t('splitDrop')));
+      return;
+    }
     const into = nestElement(target, e);
     const ref = !into && refElement(target, e);
     if (into) into.classList.add('drop-into');
@@ -270,6 +292,12 @@ export function bindDrag() {
       return;
     }
     if (overSelf(target, e)) return finishDrag();
+    const split = splitTarget(target, e);
+    if (split) {
+      finishDrag();
+      await splitTabs(split.a, split.b);
+      return;
+    }
     const zone = target.dataset.zone;
     const intoId = (folderEnd(target, e)?.folder ?? nestElement(target, e))?.dataset.id;
     const refId = refElement(target, e)?.dataset.id;
