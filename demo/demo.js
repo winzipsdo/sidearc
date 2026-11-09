@@ -331,7 +331,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=8ef10995', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=90155d27', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=b2c6e57b', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=b036c3df', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

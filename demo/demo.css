@@ -23,8 +23,9 @@
   font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   color: var(--w-fg);
 }
+/* 深色:跟随系统,或者主页右上角选了深色(<html data-theme>) */
 @media (prefers-color-scheme: dark) {
-  .sb {
+  :root:not([data-theme="light"]) .sb {
     --w-bg: #202124;
     --w-bar: #1b1c1f;
     --w-tab: #35363a;
@@ -45,6 +46,27 @@
     --g-cyan: #78d9ec;
     --g-orange: #fcad70;
   }
+}
+:root[data-theme="dark"] .sb {
+  --w-bg: #202124;
+  --w-bar: #1b1c1f;
+  --w-tab: #35363a;
+  --w-tab-hover: rgba(255, 255, 255, 0.07);
+  --w-fg: #e8eaed;
+  --w-fg-2: #9aa0a6;
+  --w-line: rgba(255, 255, 255, 0.1);
+  --w-omni: #282a2d;
+  --w-page: #1f2023;
+  --w-sk: #2e3034;
+  --g-grey: #dadce0;
+  --g-blue: #8ab4f8;
+  --g-red: #f28b82;
+  --g-yellow: #fdd663;
+  --g-green: #81c995;
+  --g-pink: #ff8bcb;
+  --g-purple: #c58af9;
+  --g-cyan: #78d9ec;
+  --g-orange: #fcad70;
 }
 .sb [data-color="grey"] { --g: var(--g-grey); }
 .sb [data-color="blue"] { --g: var(--g-blue); }

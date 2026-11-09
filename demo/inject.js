@@ -27,6 +27,27 @@
       : r.top - box.top;
     if (d) sc.scrollBy({ top: d, behavior: o.behavior ?? 'auto' });
   };
+  // 浅色 / 深色跟着主页右上角的选择(<html data-theme>):iframe 里的 prefers-color-scheme 只认系统,
+  // 所以把插件样式里「深色」的那些规则改成总是生效或总是不生效;没选(跟随系统)时恢复原样
+  const DARK = '(prefers-color-scheme: dark)';
+  const darkRules = new Set();
+  const applyTheme = () => {
+    const theme = parent.document.documentElement.dataset.theme;
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch {
+        continue;
+      }
+      for (const r of rules) if (r instanceof CSSMediaRule && r.media.mediaText.includes('prefers-color-scheme: dark')) darkRules.add(r);
+    }
+    for (const r of darkRules) r.media.mediaText = theme === 'dark' ? 'all' : theme === 'light' ? 'not all' : DARK;
+    document.documentElement.style.colorScheme = theme || '';
+  };
+  new MutationObserver(applyTheme).observe(parent.document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  document.addEventListener('DOMContentLoaded', applyTheme);
+  addEventListener('load', applyTheme);
   // 侧边栏打开时会先显示上次存的画面;试用每次都是新的,不用上次的
   try {
     localStorage.removeItem('snapshot');

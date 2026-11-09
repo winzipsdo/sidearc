@@ -40,7 +40,7 @@ function dropLang(html, other) {
 
 // 英文页在 en/ 下:页面里的相对地址(脚本、样式、图片、视频)都往上一级
 const relative = (v) => !/^(#|[a-z][a-z0-9+.-]*:|\/|\.\.\/)/i.test(v);
-const upOneLevel = (html) => html.replace(/\s(src|href|poster)="([^"]*)"/g, (all, attr, v) => (v && relative(v) ? ` ${attr}="../${v}"` : all));
+const upOneLevel = (html) => html.replace(/\s(src|srcset|href|poster)="([^"]*)"/g, (all, attr, v) => (v && relative(v) ? ` ${attr}="../${v}"` : all));
 
 // 视频时长:读 MP4 里 mvhd 的 timescale 和 duration
 function mp4Seconds(file) {

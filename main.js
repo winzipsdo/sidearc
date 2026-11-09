@@ -1,6 +1,6 @@
-// 主页的脚本:切换中英文、在线试用和任务清单、视频的播放按钮、复制命令。
+// 主页的脚本:切换中英文、在线试用和任务清单、滚动淡入、视频的播放按钮、复制命令。
 
-import { mountDemo } from './demo/demo.js?v=c70f2987';
+import { mountDemo } from './demo/demo.js?v=5b8fd442';
 
 const root = document.documentElement;
 const store = {
@@ -32,8 +32,8 @@ if (browserLang !== root.dataset.lang && !store.get('lang')) {
   bar.className = 'lang-hint';
   bar.lang = zh ? 'zh-CN' : 'en';
   bar.innerHTML = zh
-    ? '这个页面有中文版。<a href="../">查看中文版 →</a><button type="button" aria-label="关闭">×</button>'
-    : 'This page is also available in English. <a href="en/">View in English →</a><button type="button" aria-label="Close">×</button>';
+    ? '这个页面有中文版。<a href="../">查看中文版 ›</a><button type="button" aria-label="关闭">×</button>'
+    : 'This page is also available in English. <a href="en/">View in English ›</a><button type="button" aria-label="Close">×</button>';
   bar.querySelector('a').addEventListener('click', () => store.set('lang', browserLang));
   bar.querySelector('button').addEventListener('click', () => {
     store.set('lang', root.dataset.lang);
@@ -41,6 +41,33 @@ if (browserLang !== root.dataset.lang && !store.get('lang')) {
   });
   document.body.prepend(bar);
 }
+
+// ---------- 浅色 / 深色:默认跟随系统,点右上角的按钮在两者之间切换,记住选择(页面开头的脚本会先套上) ----------
+
+const dark = matchMedia('(prefers-color-scheme: dark)');
+const themeBtn = document.getElementById('theme');
+const themeNow = () => root.dataset.theme || (dark.matches ? 'dark' : 'light');
+function showTheme() {
+  root.dataset.themeNow = themeNow();
+  const toDark = themeNow() === 'light';
+  const zh = root.dataset.lang === 'zh';
+  themeBtn.setAttribute('aria-label', zh ? (toDark ? '切换到深色' : '切换到浅色') : toDark ? 'Switch to dark' : 'Switch to light');
+  themeBtn.title = themeBtn.getAttribute('aria-label');
+}
+themeBtn.addEventListener('click', () => {
+  const next = themeNow() === 'dark' ? 'light' : 'dark';
+  // 选的和系统一样:不再写死,以后跟着系统走
+  if ((next === 'dark') === dark.matches) {
+    delete root.dataset.theme;
+    store.set('theme', '');
+  } else {
+    root.dataset.theme = next;
+    store.set('theme', next);
+  }
+  showTheme();
+});
+dark.addEventListener('change', showTheme);
+showTheme();
 
 // 当前版本号(由 source/build.js 从 main 的 manifest.json 写进来)
 fetch(new URL('ext/version.json', import.meta.url))
@@ -143,12 +170,34 @@ document.getElementById('q-reset').addEventListener('click', () => {
 // 功能介绍里的「在上面试试」:滚到试用,并让对应的任务闪一下
 for (const btn of document.querySelectorAll('[data-task]')) {
   btn.addEventListener('click', () => {
-    document.getElementById('try').scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('.try-grid').scrollIntoView({ behavior: 'smooth' });
     const li = list.querySelector(`[data-id="${btn.dataset.task}"]`);
     li.classList.remove('flash');
     void li.offsetWidth;
     li.classList.add('flash');
   });
+}
+
+// ---------- 滚动到时淡入:给 <html> 加上 reveal-on 才隐藏(见 style.css),看不到 IntersectionObserver 时什么都不做 ----------
+
+if ('IntersectionObserver' in window) {
+  const seen = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add('in');
+        seen.unobserve(e.target);
+      }
+    },
+    { rootMargin: '0px 0px -8% 0px' }
+  );
+  // 一开始就在视野里的不做动画,免得首屏闪一下
+  for (const el of document.querySelectorAll('.reveal')) {
+    const r = el.getBoundingClientRect();
+    if (r.top < innerHeight && r.bottom > 0) el.classList.add('in');
+    else seen.observe(el);
+  }
+  root.classList.add('reveal-on');
 }
 
 // ---------- 视频:先显示封面和大播放按钮,点了再带声音播放并换成浏览器自带的控制条 ----------
@@ -176,9 +225,10 @@ for (const btn of document.querySelectorAll('[data-copy]')) {
     } catch {
       return;
     }
-    const zh = btn.querySelector('[data-l="zh"]');
-    const en = btn.querySelector('[data-l="en"]');
-    [zh.textContent, en.textContent] = ['已复制', 'Copied'];
-    setTimeout(() => ([zh.textContent, en.textContent] = ['复制', 'Copy']), 1500);
+    // 生成的页面里每个按钮只剩一种语言的文字
+    const label = btn.querySelector('[data-l]');
+    const zh = root.dataset.lang === 'zh';
+    label.textContent = zh ? '已复制' : 'Copied';
+    setTimeout(() => (label.textContent = zh ? '复制' : 'Copy'), 1500);
   });
 }
