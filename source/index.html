@@ -248,26 +248,25 @@
       <header class="sec-head reveal">
         <span class="shield"><svg viewBox="0 0 16 16" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/><path d="M6 8l1.5 1.5L10.5 6.5"/></svg></span>
         <h2><span data-l="zh">不联网。<br>数据只在本机。</span><span data-l="en">No network.<br>Your data stays local.</span></h2>
-        <p><span data-l="zh">没有网络请求、没有统计、没有第三方脚本,一切都留在你的浏览器里。</span><span data-l="en">No network requests, no analytics, no third-party scripts. Everything stays in your browser.</span></p>
+        <p><span data-l="zh">没有网络请求、没有统计、没有第三方脚本。<br>一切都留在你的浏览器里,卸载即删除。</span><span data-l="en">No network requests, no analytics, no third-party scripts. Everything stays in your browser and goes when you uninstall.</span></p>
       </header>
       <div class="perms-box reveal">
-        <p class="sub"><span data-l="zh">纯原生 JS/CSS,没有依赖,每一行都能直接读。空间、收藏夹、固定标签和别名都存在浏览器本地,卸载扩展即删除。</span><span data-l="en">Plain JS/CSS with no dependencies, so every line is readable as is. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall.</span></p>
-        <details>
-          <summary><span data-l="zh">每项权限用来做什么</span><span data-l="en">What each permission is for</span></summary>
-          <dl class="perms">
-            <dt>sidePanel</dt><dd><span data-l="zh">全部界面都显示在浏览器侧边栏里。</span><span data-l="en">The whole interface lives in the side panel.</span></dd>
-            <dt>tabs</dt><dd><span data-l="zh">读取标签页的标题、网址和图标来列出它们,并执行切换、移动、关闭、新建。</span><span data-l="en">Listing tabs (title, URL, icon) and switching, moving, closing and opening them.</span></dd>
-            <dt>storage</dt><dd><span data-l="zh">在本地保存空间、收藏夹、固定标签、别名,以及重启后恢复用的标签页状态。</span><span data-l="en">Saving spaces, favorites, pinned tabs, aliases and tab state for restoring after a restart.</span></dd>
-            <dt>favicon</dt><dd><span data-l="zh">显示收藏夹和固定标签的网站图标。</span><span data-l="en">Showing site icons for favorites and pinned tabs.</span></dd>
-            <dt>search</dt><dd><span data-l="zh">在搜索栏输入关键词回车时,用浏览器的默认搜索引擎搜索。</span><span data-l="en">Searching with your default engine from the search box.</span></dd>
-            <dt>clipboardWrite</dt><dd><span data-l="zh">「复制链接地址」时把网址写入剪贴板,不读取剪贴板。</span><span data-l="en">“Copy link address”. The clipboard is never read.</span></dd>
-            <dt>sessions</dt><dd><span data-l="zh">撤销「关闭标签页」时,从最近关闭的记录里恢复它。</span><span data-l="en">Restoring closed tabs on undo.</span></dd>
-            <dt>history</dt><dd><span data-l="zh">搜索时列出最近 30 天里匹配的网页,点 × 删掉某一条;「不记录历史」的空间和文件夹里,删除刚从里面访问的网址。只在本地读,不上传。</span><span data-l="en">Listing matching pages from the last 30 days when you search, deleting one with ×, and removing the pages just visited from no-history spaces and folders. Read locally, never sent anywhere.</span></dd>
-            <dt>webNavigation</dt><dd><span data-l="zh">判断新标签页是不是从某个页面里的链接打开的(子标签),以及它的地址是否已经打开(相同地址只开一份)。</span><span data-l="en">Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs).</span></dd>
-            <dt>tabGroups</dt><dd><span data-l="zh">把每个空间显示成顶部标签栏里的一个标签页分组,切换空间时折叠其他空间的分组。</span><span data-l="en">Showing each space as a tab group in Chrome's tab strip and collapsing the other spaces.</span></dd>
-          </dl>
-        </details>
-        <a class="text-link" href="https://github.com/winzipsdo/sidearc/blob/main/PRIVACY.md"><span data-l="zh">阅读完整的隐私政策</span><span data-l="en">Read the full privacy policy</span> <span class="chev" aria-hidden="true">›</span></a>
+        <div class="link-row">
+          <button class="text-link" type="button" id="perms-toggle" aria-expanded="true" aria-controls="perms"><span data-l="zh">每项权限用来做什么</span><span data-l="en">What each permission is for</span> <span class="chev" aria-hidden="true">›</span></button>
+          <a class="text-link" href="https://github.com/winzipsdo/sidearc/blob/main/PRIVACY.md"><span data-l="zh">阅读完整的隐私政策</span><span data-l="en">Read the full privacy policy</span> <span class="chev" aria-hidden="true">›</span></a>
+        </div>
+        <dl class="perms" id="perms">
+          <dt>sidePanel</dt><dd><span data-l="zh">全部界面都显示在浏览器侧边栏里。</span><span data-l="en">The whole interface lives in the side panel.</span></dd>
+          <dt>tabs</dt><dd><span data-l="zh">读取标签页的标题、网址和图标来列出它们,并执行切换、移动、关闭、新建。</span><span data-l="en">Listing tabs (title, URL, icon) and switching, moving, closing and opening them.</span></dd>
+          <dt>storage</dt><dd><span data-l="zh">在本地保存空间、收藏夹、固定标签、别名,以及重启后恢复用的标签页状态。</span><span data-l="en">Saving spaces, favorites, pinned tabs, aliases and tab state for restoring after a restart.</span></dd>
+          <dt>favicon</dt><dd><span data-l="zh">显示收藏夹和固定标签的网站图标。</span><span data-l="en">Showing site icons for favorites and pinned tabs.</span></dd>
+          <dt>search</dt><dd><span data-l="zh">在搜索栏输入关键词回车时,用浏览器的默认搜索引擎搜索。</span><span data-l="en">Searching with your default engine from the search box.</span></dd>
+          <dt>clipboardWrite</dt><dd><span data-l="zh">「复制链接地址」时把网址写入剪贴板,不读取剪贴板。</span><span data-l="en">“Copy link address”. The clipboard is never read.</span></dd>
+          <dt>sessions</dt><dd><span data-l="zh">撤销「关闭标签页」时,从最近关闭的记录里恢复它。</span><span data-l="en">Restoring closed tabs on undo.</span></dd>
+          <dt>history</dt><dd><span data-l="zh">搜索时列出最近 30 天里匹配的网页,点 × 删掉某一条;「不记录历史」的空间和文件夹里,删除刚从里面访问的网址。只在本地读,不上传。</span><span data-l="en">Listing matching pages from the last 30 days when you search, deleting one with ×, and removing the pages just visited from no-history spaces and folders. Read locally, never sent anywhere.</span></dd>
+          <dt>webNavigation</dt><dd><span data-l="zh">判断新标签页是不是从某个页面里的链接打开的(子标签),以及它的地址是否已经打开(相同地址只开一份)。</span><span data-l="en">Telling whether a new tab was opened from a link on a page (child tabs) and whether its address is already open (no duplicate tabs).</span></dd>
+          <dt>tabGroups</dt><dd><span data-l="zh">把每个空间显示成顶部标签栏里的一个标签页分组,切换空间时折叠其他空间的分组。</span><span data-l="en">Showing each space as a tab group in Chrome's tab strip and collapsing the other spaces.</span></dd>
+        </dl>
       </div>
     </div>
   </section>
@@ -286,7 +285,7 @@
         </li>
         <li>
           <h3><span data-l="zh">加载扩展</span><span data-l="en">Load it</span></h3>
-          <p><span data-l="zh">打开下面的地址,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择仓库所在的文件夹。</span><span data-l="en">Open this address, turn on Developer mode (top right), click “Load unpacked” and choose the repository folder.</span></p>
+          <p><span data-l="zh">打开这个地址,开启「开发者模式」,点「加载已解压的扩展程序」,选择仓库文件夹。</span><span data-l="en">Open this address, turn on Developer mode, click “Load unpacked” and choose the repository folder.</span></p>
           <div class="code"><code>chrome://extensions</code><button class="copy" type="button" data-copy="chrome://extensions"><span data-l="zh">复制</span><span data-l="en">Copy</span></button></div>
         </li>
         <li>

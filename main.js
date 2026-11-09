@@ -42,6 +42,17 @@ if (browserLang !== root.dataset.lang && !store.get('lang')) {
   document.body.prepend(bar);
 }
 
+// ---------- 隐私:「每项权限用来做什么」展开 / 收起权限列表(没有脚本时列表一直显示) ----------
+
+const permsToggle = document.getElementById('perms-toggle');
+const perms = document.getElementById('perms');
+const showPerms = (open) => {
+  perms.hidden = !open;
+  permsToggle.setAttribute('aria-expanded', String(open));
+};
+showPerms(false);
+permsToggle.addEventListener('click', () => showPerms(perms.hidden));
+
 // ---------- 浅色 / 深色:默认跟随系统,点右上角的按钮在两者之间切换,记住选择(页面开头的脚本会先套上) ----------
 
 const dark = matchMedia('(prefers-color-scheme: dark)');
