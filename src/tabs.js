@@ -5,7 +5,7 @@ import { t } from './i18n.js';
 import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { markSlept, render, schedule } from './render.js';
-import { bind, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
+import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
 import { ask, closeSearch, pushUndo, toast } from './ui.js';
 
 // 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
@@ -93,6 +93,9 @@ export async function discardTabs(list, { withActive = false } = {}) {
 // 分屏(Chrome 的 Split View):扩展能分屏、取消分屏要 Chrome 155 以上,更早的版本菜单里不显示这两项
 export const canSplit = () => typeof chrome.tabs.createSplit === 'function' && typeof chrome.tabs.unsplit === 'function';
 export const inSplit = (tab) => tab?.splitViewId > SPLIT_NONE;
+// 能拼进拆分视图的:不在分屏里、不是 Chrome 固定的、也不是收藏或固定标签。
+// 收藏和固定标签在侧边栏里有自己的位置,和列表里的标签页拼成一对后两边对不上
+export const pairable = (tab) => !!tab && !inSplit(tab) && !tab.pinned && !itemByTab().has(tab.id);
 
 // 把两个标签页分屏并排显示,a 在左。Chrome 只让挨着、同一个分组的标签页分屏:
 // b 不挨着就先挪到 a 右边(普通标签页可以直接挪),层级也跟 a 一样;分好之后切过去,看得到分屏

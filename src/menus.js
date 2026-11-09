@@ -7,7 +7,7 @@ import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, 
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
 import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
-import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
@@ -71,16 +71,16 @@ function spaceLinks(space) {
 function splitItem(list) {
   if (!canSplit()) return null;
   if (list.some(inSplit)) return { icon: 'unsplit', label: t('unsplit'), run: () => unsplitTabs(list) };
-  if (list.length === 2) return { icon: 'split', label: t('splitView'), run: () => splitTabs(list[0], list[1]) };
+  if (list.length === 2 && list.every(pairable)) return { icon: 'split', label: t('splitView'), run: () => splitTabs(list[0], list[1]) };
   return null;
 }
 
 // 右键一个不在分屏里的标签页:和正在看的标签页拼成拆分视图(正在看的在左)。
-// 两个要在同一个分组里(Chrome 的要求),所以收藏的和列表里的不能拼;正在看的已经在分屏里也不显示
+// 两个要在同一个分组里(Chrome 的要求);收藏、固定标签不能拼(见 pairable),正在看的已经在分屏里也不显示
 function withCurrentItem(tab) {
-  if (!tab || !canSplit() || tab.active || inSplit(tab) || tab.pinned) return null;
+  if (!canSplit() || !pairable(tab) || tab.active) return null;
   const cur = tabs.find((x) => x.active);
-  if (!cur || inSplit(cur) || cur.pinned || cur.groupId !== tab.groupId) return null;
+  if (!pairable(cur) || cur.groupId !== tab.groupId) return null;
   return { icon: 'split', label: t('splitWithCurrent'), run: () => splitTabs(cur, tab) };
 }
 

@@ -8,7 +8,7 @@ import { h, icon } from './dom.js';
 import { t } from './i18n.js';
 import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
 import { switchSpace } from './spaces.js';
-import { canSplit, inSplit, moveTabToSpace, splitTabs } from './tabs.js';
+import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js';
 import { hideMenu } from './ui.js';
 
 function clearMarks() {
@@ -62,7 +62,7 @@ function splitTarget(zone, e) {
   if (e.clientX < r.left + r.width * 0.58) return null;
   const a = tabs.find((x) => x.id === +el.dataset.id);
   const b = tabs.find((x) => x.id === +dragging.id);
-  if (!a || !b || a.id === b.id || inSplit(a) || inSplit(b) || a.pinned || b.pinned || a.groupId !== b.groupId) return null;
+  if (!pairable(a) || !pairable(b) || a.id === b.id || a.groupId !== b.groupId) return null;
   return { el, a, b };
 }
 
