@@ -52,11 +52,19 @@ The full behavior of every feature is in **[Features in detail](docs/features.en
 
 ## Install
 
-1. Download the latest `sidearc-<version>.zip` from [Releases](https://github.com/winzipsdo/sidearc/releases/latest) and unzip it — or clone this repository to follow the latest code.
-2. Open `chrome://extensions`, turn on Developer mode (top right), click "Load unpacked" and choose the unzipped folder (or the repository folder).
+Installing from source is the recommended way: Sidearc has zero dependencies and no build step, so the repository is the extension.
+
+1. Clone this repository: `git clone https://github.com/winzipsdo/sidearc.git`
+2. Open `chrome://extensions`, turn on Developer mode (top right), click "Load unpacked" and choose the repository folder.
 3. Click the toolbar icon, or press `Alt+S` (`⌥ Option+S` on Mac), to toggle the sidebar.
 
 Requires Chrome 116 or later.
+
+**Updating**: run `git pull` in the repository folder, then close and reopen the sidebar to get the latest version. The few updates that touch the background part (`background.js` or `manifest.json`) also need the reload button on Sidearc's card in `chrome://extensions`; if unsure, reloading is harmless and keeps your spaces, favorites and settings.
+
+**Make it yours**: the code is plain JS/CSS with nothing to compile. If something doesn't fit how you work, ask an AI coding assistant (such as Claude Code) to change it in the repository, say "make the rows more compact" or "open new tabs at the top of the list", then close and reopen the sidebar to see it. If a later `git pull` conflicts with your changes, it can merge them for you too.
+
+**Without git**: download `sidearc-<version>.zip` from [Releases](https://github.com/winzipsdo/sidearc/releases/latest), unzip it and load it the same way. To update, unzip the new version over the same folder (Chrome treats a different folder as a different extension, so your spaces and favorites wouldn't show up), then click reload in `chrome://extensions`.
 
 **Sidebar on the left**: Chrome shows side panels on the right by default. To put it on the left like Arc, open `chrome://settings/appearance` and set the side panel position to left.
 
@@ -106,7 +114,7 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 
 ## Development
 
-No build step: the code is plain ES modules — edit, then reload the extension at `chrome://extensions`.
+No build step: the code is plain ES modules. After changing the sidebar's code, close and reopen the sidebar; after changing the background (`background.js` and the modules it imports) or `manifest.json`, reload the extension at `chrome://extensions`.
 
 ```bash
 npm test

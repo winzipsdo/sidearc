@@ -52,11 +52,19 @@ Chrome 自己的标签栏跟着侧边栏走:在哪边拖,另一边都跟着动�
 
 ## 安装
 
-1. 从 [Releases](https://github.com/winzipsdo/sidearc/releases/latest) 下载最新的 `sidearc-<版本号>.zip` 并解压。想跟着最新代码走,也可以直接克隆本仓库。
-2. 打开 `chrome://extensions`,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择解压出的文件夹(或仓库所在文件夹)。
+推荐从源码安装:插件零依赖、没有构建步骤,仓库里的文件就是插件本身。
+
+1. 克隆本仓库:`git clone https://github.com/winzipsdo/sidearc.git`
+2. 打开 `chrome://extensions`,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择仓库所在的文件夹。
 3. 点工具栏上的插件图标,或按 `Alt+S`(Mac 上是 `⌥ Option+S`)打开/关闭侧边栏。
 
 需要 Chrome 116 或更高版本。
+
+**更新**:在仓库文件夹里 `git pull`,然后把侧边栏关掉再打开,用的就是最新版本。少数更新改到了后台的部分(`background.js` 或 `manifest.json`),这时到 `chrome://extensions` 点一下 Sidearc 的刷新按钮;拿不准时点一下也没坏处,空间、收藏和设置都还在。
+
+**按自己的习惯改**:代码是原生 JS/CSS,不用编译。哪里用着不顺手,可以直接让 AI 编程助手(比如 Claude Code)在仓库里改,比如「行再紧凑一点」「新标签页开在列表最上面」;改完关掉再打开侧边栏就能看到效果。之后 `git pull` 和你的改动冲突时,同样可以让它帮你合并。
+
+**不用 git**:也可以从 [Releases](https://github.com/winzipsdo/sidearc/releases/latest) 下载 `sidearc-<版本号>.zip`,解压后同样用「加载已解压的扩展程序」装上。更新时把新版本解压到同一个文件夹覆盖旧文件(换了文件夹,Chrome 会当成另一个插件,之前的空间和收藏就看不到了),再到 `chrome://extensions` 点一下刷新。
 
 ### 把侧边栏放到左边
 
@@ -146,7 +154,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 
 ## 开发
 
-没有构建步骤:代码是原生 ES 模块,改完在 `chrome://extensions` 里重新加载扩展即可。
+没有构建步骤:代码是原生 ES 模块。改了侧边栏的代码,关掉再打开侧边栏就能看到;改了后台(`background.js` 和它引用的模块)或 `manifest.json`,在 `chrome://extensions` 里重新加载扩展。
 
 测试用 Node 自带的测试运行器,不需要安装依赖(需要 Node 20 或更高版本):
 
