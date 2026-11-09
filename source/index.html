@@ -67,8 +67,8 @@
   <div class="nav-in">
     <a class="brand" href="#top"><img src="assets/logo.svg" alt="" width="22" height="22">Sidearc</a>
     <nav class="links">
-      <a href="#video"><span data-l="zh">影片</span><span data-l="en">Film</span></a>
       <a href="#try"><span data-l="zh">在线试用</span><span data-l="en">Try it</span></a>
+      <a href="#video"><span data-l="zh">影片</span><span data-l="en">Film</span></a>
       <a href="#features"><span data-l="zh">功能</span><span data-l="en">Features</span></a>
       <a href="#privacy"><span data-l="zh">隐私</span><span data-l="en">Privacy</span></a>
       <a href="#install"><span data-l="zh">安装</span><span data-l="en">Install</span></a>
@@ -82,42 +82,11 @@
 </header>
 
 <main id="top">
-  <section class="hero">
-    <div class="wrap">
-      <p class="hero-name"><img src="assets/logo.svg" alt="" width="40" height="40"><span>Sidearc</span></p>
-      <h1><span data-l="zh">更懂你的<br><span class="grad">侧边栏标签管理。</span></span><span data-l="en">Vertical tabs<br><span class="grad">that get you.</span></span></h1>
-      <p class="lead"><span data-l="zh">竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。</span><span data-l="en">Stacked in the side panel, split into spaces, in two-way sync with Chrome's own tab strip.</span></p>
-      <div class="cta">
-        <a class="pill-btn" href="#try"><span data-l="zh">在线试用</span><span data-l="en">Try it now</span></a>
-        <a class="pill-btn ghost" href="#install"><span data-l="zh">免费安装</span><span data-l="en">Get it free</span></a>
-      </div>
-      <figure class="hero-shot">
-        <img data-l="zh" class="lt" src="assets/hero/zh-light.webp" width="2000" height="1360" alt="Sidearc 的竖排标签页和 Chrome 顶部的标签栏" loading="lazy" fetchpriority="high"><img data-l="zh" class="dk" src="assets/hero/zh-dark.webp" width="2000" height="1360" alt="Sidearc 的竖排标签页和 Chrome 顶部的标签栏" loading="lazy" fetchpriority="high">
-        <img data-l="en" class="lt" src="assets/hero/en-light.webp" width="2000" height="1360" alt="Sidearc's vertical tabs beside Chrome's tab strip" loading="lazy" fetchpriority="high"><img data-l="en" class="dk" src="assets/hero/en-dark.webp" width="2000" height="1360" alt="Sidearc's vertical tabs beside Chrome's tab strip" loading="lazy" fetchpriority="high">
-      </figure>
-    </div>
-  </section>
-
-  <section id="video" class="video dark">
-    <div class="wrap">
-      <header class="sec-head reveal">
-        <h2><span data-l="zh">1 分钟,看懂 Sidearc。</span><span data-l="en">Sidearc in a minute.</span></h2>
-      </header>
-      <figure class="player reveal" id="player">
-        <video id="intro" src="assets/intro.mp4" poster="assets/intro-poster.jpg" controls playsinline preload="none" width="1920" height="1080"></video>
-        <button class="play" id="play" type="button" hidden>
-          <span class="circle"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg></span>
-          <span class="label"><span data-l="zh">播放影片</span><span data-l="en">Play the film</span></span>
-        </button>
-      </figure>
-    </div>
-  </section>
-
-  <section id="try" class="try alt">
+  <section id="try" class="hero try">
     <div class="wrap wide">
-      <header class="sec-head reveal">
-        <h2><span data-l="zh">不用安装,直接上手。</span><span data-l="en">Try it here. No install.</span></h2>
-        <p><span data-l="zh">这就是 Sidearc 本身的代码,只有外面的浏览器是模拟的。拖拽要用电脑。</span><span data-l="en">This is Sidearc's real code. Only the browser around it is simulated. Dragging needs a mouse.</span></p>
+      <header class="hero-head">
+        <h1><span data-l="zh">更懂你的<span class="grad">侧边栏标签管理</span></span><span data-l="en">Vertical tabs <span class="grad">that get you</span></span></h1>
+        <p class="lead"><span data-l="zh">竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。下面就是插件本身,直接上手。</span><span data-l="en">Stacked, split into spaces, in two-way sync with Chrome's tab strip. Below is the real extension. Go ahead and play.</span></p>
       </header>
       <div class="try-grid">
         <div id="demo" class="demo-host"></div>
@@ -138,17 +107,32 @@
     </div>
   </section>
 
+  <section id="video" class="video dark">
+    <div class="wrap">
+      <header class="sec-head reveal">
+        <h2><span data-l="zh">1 分钟,看懂 Sidearc</span><span data-l="en">Sidearc in a minute</span></h2>
+      </header>
+      <figure class="player reveal" id="player">
+        <video id="intro" src="assets/intro.mp4" poster="assets/intro-poster.jpg" controls playsinline preload="none" width="1920" height="1080"></video>
+        <button class="play" id="play" type="button" hidden>
+          <span class="circle"><svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path fill="currentColor" d="M8 5.5v13l10.5-6.5z"/></svg></span>
+          <span class="label"><span data-l="zh">播放影片</span><span data-l="en">Play the film</span></span>
+        </button>
+      </figure>
+    </div>
+  </section>
+
   <section id="features" class="feature">
     <div class="wrap">
       <header class="sec-head reveal">
         <p class="eyebrow"><span data-l="zh">双向同步</span><span data-l="en">Two-way sync</span></p>
-        <h2><span data-l="zh">不是第二份列表,<br>是同一份。</span><span data-l="en">Not a second list.<br>The same one.</span></h2>
+        <h2><span data-l="zh">不是第二份列表,<br>是同一份</span><span data-l="en">Not a second list<br>The same one</span></h2>
         <p><span data-l="zh">Chrome 自己的标签栏跟着侧边栏走:在哪边拖,另一边都跟着动。你自己建的分组原样保留。</span><span data-l="en">Chrome's tab strip follows the sidebar: drag on either side and the other one moves with it. Groups you made yourself are left alone.</span></p>
         <button class="text-link" type="button" data-task="drag"><span data-l="zh">在上面试试:拖动一个标签页</span><span data-l="en">Try it above: drag a tab</span> <span class="chev" aria-hidden="true">›</span></button>
       </header>
       <div class="shot reveal">
-        <img data-l="zh" src="assets/readme/zh/sync.gif" width="860" height="595" alt="在侧边栏里拖动,顶部标签栏跟着变;在顶部拖动,侧边栏也跟着变" loading="lazy">
-        <img data-l="en" src="assets/readme/en/sync.gif" width="860" height="595" alt="Dragging in the sidebar moves the tab strip, and the other way round" loading="lazy">
+        <video data-l="zh" class="clip" width="1720" height="1190" poster="assets/readme/zh/sync.webp" muted loop playsinline preload="none" aria-label="在侧边栏里拖动,顶部标签栏跟着变;在顶部拖动,侧边栏也跟着变"><source src="assets/readme/zh/sync.webm" type="video/webm"><source src="assets/readme/zh/sync.mp4" type="video/mp4"></video>
+        <video data-l="en" class="clip" width="1720" height="1190" poster="assets/readme/en/sync.webp" muted loop playsinline preload="none" aria-label="Dragging in the sidebar moves the tab strip, and the other way round"><source src="assets/readme/en/sync.webm" type="video/webm"><source src="assets/readme/en/sync.mp4" type="video/mp4"></video>
       </div>
     </div>
   </section>
@@ -156,13 +140,13 @@
     <div class="wrap">
       <header class="sec-head reveal">
         <p class="eyebrow"><span data-l="zh">空间</span><span data-l="en">Spaces</span></p>
-        <h2><span data-l="zh">工作、学习、生活,<br>各有一套。</span><span data-l="en">Work, study, life.<br>Each gets its own.</span></h2>
+        <h2><span data-l="zh">工作、学习、生活,<br>各有一套</span><span data-l="en">Work, study, life<br>Each gets its own</span></h2>
         <p><span data-l="zh">每个空间有自己的标签页和主题色,在顶部就是一个分组。点折叠的分组或底部圆点,整个侧边栏就切过去。</span><span data-l="en">Every space has its own tabs and color, and shows up top as a tab group. Open its group or click its dot, and the whole sidebar switches.</span></p>
         <button class="text-link" type="button" data-task="space"><span data-l="zh">在上面试试:点顶部的「工作」分组</span><span data-l="en">Try it above: open the “Work” group up top</span> <span class="chev" aria-hidden="true">›</span></button>
       </header>
       <div class="shot reveal">
-        <img data-l="zh" src="assets/readme/zh/spaces.gif" width="860" height="595" alt="点开顶部折叠的分组或底部圆点,切换空间" loading="lazy">
-        <img data-l="en" src="assets/readme/en/spaces.gif" width="860" height="595" alt="Open a collapsed group up top, or click a dot, to switch spaces" loading="lazy">
+        <video data-l="zh" class="clip" width="1720" height="1190" poster="assets/readme/zh/spaces.webp" muted loop playsinline preload="none" aria-label="点开顶部折叠的分组或底部圆点,切换空间"><source src="assets/readme/zh/spaces.webm" type="video/webm"><source src="assets/readme/zh/spaces.mp4" type="video/mp4"></video>
+        <video data-l="en" class="clip" width="1720" height="1190" poster="assets/readme/en/spaces.webp" muted loop playsinline preload="none" aria-label="Open a collapsed group up top, or click a dot, to switch spaces"><source src="assets/readme/en/spaces.webm" type="video/webm"><source src="assets/readme/en/spaces.mp4" type="video/mp4"></video>
       </div>
     </div>
   </section>
@@ -170,13 +154,13 @@
     <div class="wrap">
       <header class="sec-head reveal">
         <p class="eyebrow leaf"><span data-l="zh">落叶</span><span data-l="en">Fallen leaves</span></p>
-        <h2><span data-l="zh">该关的,<br>自己会冒出来。</span><span data-l="en">What to close<br>shows itself.</span></h2>
+        <h2><span data-l="zh">该关的,<br>自己会冒出来</span><span data-l="en">What to close<br>shows itself</span></h2>
         <p><span data-l="zh">一天没进去的标签页开始落叶子。扫几下就干净,点开就吹走。</span><span data-l="en">Leave a tab for a day and leaves start to fall. Sweep them off, or open it and they blow away.</span></p>
         <button class="text-link" type="button" data-task="leaves"><span data-l="zh">在上面试试:扫一扫 Hacker News</span><span data-l="en">Try it above: sweep Hacker News</span> <span class="chev" aria-hidden="true">›</span></button>
       </header>
       <div class="shot narrow reveal">
-        <img data-l="zh" src="assets/readme/zh/leaves.gif" width="640" height="412" alt="鼠标左右扫几下,把落叶扫干净" loading="lazy">
-        <img data-l="en" src="assets/readme/en/leaves.gif" width="640" height="412" alt="Sweep the mouse back and forth to clear the leaves" loading="lazy">
+        <video data-l="zh" class="clip" width="1280" height="796" poster="assets/readme/zh/leaves.webp" muted loop playsinline preload="none" aria-label="鼠标左右扫几下,把落叶扫干净"><source src="assets/readme/zh/leaves.webm" type="video/webm"><source src="assets/readme/zh/leaves.mp4" type="video/mp4"></video>
+        <video data-l="en" class="clip" width="1280" height="796" poster="assets/readme/en/leaves.webp" muted loop playsinline preload="none" aria-label="Sweep the mouse back and forth to clear the leaves"><source src="assets/readme/en/leaves.webm" type="video/webm"><source src="assets/readme/en/leaves.mp4" type="video/mp4"></video>
       </div>
     </div>
   </section>
@@ -184,7 +168,7 @@
   <section class="more alt">
     <div class="wrap">
       <header class="sec-head reveal">
-        <h2><span data-l="zh">还有很多。</span><span data-l="en">And plenty more.</span></h2>
+        <h2><span data-l="zh">还有很多</span><span data-l="en">And plenty more</span></h2>
       </header>
       <div class="grid reveal">
         <div class="item" style="--c:#6b7cff">
@@ -247,7 +231,7 @@
     <div class="wrap">
       <header class="sec-head reveal">
         <span class="shield"><svg viewBox="0 0 16 16" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2l5 2v4c0 3-2.2 5.2-5 6-2.8-.8-5-3-5-6V4z"/><path d="M6 8l1.5 1.5L10.5 6.5"/></svg></span>
-        <h2><span data-l="zh">不联网。<br>数据只在本机。</span><span data-l="en">No network.<br>Your data stays local.</span></h2>
+        <h2><span data-l="zh">不联网<br>数据只在本机</span><span data-l="en">No network<br>Your data stays local</span></h2>
         <p><span data-l="zh">没有网络请求、没有统计、没有第三方脚本。<br>一切都留在你的浏览器里,卸载即删除。</span><span data-l="en">No network requests, no analytics, no third-party scripts. Everything stays in your browser and goes when you uninstall.</span></p>
       </header>
       <div class="perms-box reveal">
@@ -274,7 +258,7 @@
   <section id="install" class="install alt">
     <div class="wrap">
       <header class="sec-head reveal">
-        <h2><span data-l="zh">三步装上。</span><span data-l="en">Three steps to install.</span></h2>
+        <h2><span data-l="zh">三步装上</span><span data-l="en">Three steps to install</span></h2>
         <p><span data-l="zh">推荐从源码安装:零依赖,仓库就是插件本身。</span><span data-l="en">Install from source: zero dependencies, the repository is the extension.</span></p>
       </header>
       <ol class="steps">
@@ -324,7 +308,7 @@
   <section id="shortcuts" class="shortcuts">
     <div class="wrap">
       <header class="sec-head reveal">
-        <h2><span data-l="zh">快捷键。</span><span data-l="en">Shortcuts.</span></h2>
+        <h2><span data-l="zh">快捷键</span><span data-l="en">Shortcuts</span></h2>
       </header>
       <div class="table">
         <table>
@@ -344,6 +328,12 @@
     </div>
   </section>
 </main>
+
+<!-- 翻页模式下右边悬浮的进度条:每页一个点,点了跳过去(main.js 按区块生成点,名字在这里) -->
+<nav class="pager" id="pager" hidden aria-label="Pages">
+  <i class="pager-track"><i class="pager-fill" id="pager-fill"></i></i>
+  <ol id="pager-dots" data-zh="在线试用,影片,双向同步,空间,落叶,还有很多,隐私,安装,快捷键" data-en="Try it,Film,Two-way sync,Spaces,Fallen leaves,And more,Privacy,Install,Shortcuts"></ol>
+</nav>
 
 <footer class="foot">
   <div class="wrap">

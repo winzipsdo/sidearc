@@ -280,8 +280,45 @@ document.addEventListener('click', (e) => {
   goTo(target);
 });
 
+// 右边的进度条:每页一个点(名字在 #pager-dots 的 data-zh / data-en 里),滚动时填满轨道、标出当前页
+const pager = document.getElementById('pager');
+const pagerFill = document.getElementById('pager-fill');
+const dotList = document.getElementById('pager-dots');
+const names = (dotList.dataset[root.dataset.lang] || '').split(',');
+const dots = slides.map((el, i) => {
+  const li = document.createElement('li');
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.setAttribute('aria-label', names[i] || String(i + 1));
+  const tip = document.createElement('span');
+  tip.textContent = names[i] || String(i + 1);
+  b.append(tip);
+  b.addEventListener('click', () => goTo(el));
+  li.append(b);
+  dotList.append(li);
+  return b;
+});
+let pagerRaf = 0;
+function showPager() {
+  pagerRaf = 0;
+  const on = root.classList.contains('slides');
+  pager.hidden = !on;
+  if (!on) return;
+  const mainTop = mainEl.getBoundingClientRect().top + scrollY;
+  const y = scrollY + 48 - mainTop + innerHeight * 0.3;
+  let current = 0;
+  slides.forEach((el, i) => {
+    if ((pages.get(el)?.start ?? Infinity) <= y) current = i;
+  });
+  dots.forEach((b, i) => b.setAttribute('aria-current', String(i === current)));
+  const max = document.documentElement.scrollHeight - innerHeight;
+  pagerFill.style.height = `${max > 0 ? Math.min(100, (scrollY / max) * 100) : 0}%`;
+}
+addEventListener('scroll', () => (pagerRaf ||= requestAnimationFrame(showPager)), { passive: true });
+
 fitSlides();
-slidesOk.addEventListener('change', fitSlides);
+showPager();
+slidesOk.addEventListener('change', () => (fitSlides(), showPager()));
 // 打开时地址带着 #:等排好再滚过去
 if (location.hash && root.classList.contains('slides')) {
   const target = document.getElementById(location.hash.slice(1));
@@ -300,8 +337,30 @@ if (location.hash && root.classList.contains('slides')) {
   };
   if (target) document.readyState === 'complete' ? goTwice() : addEventListener('load', goTwice, { once: true });
 }
-addEventListener('resize', fitSlides);
+addEventListener('resize', () => (fitSlides(), showPager()));
 new ResizeObserver(fitSlides).observe(mainEl);
+
+// ---------- 功能演示的短片:滚到时才加载、播放,滚走就停;系统开了「减少动态效果」时不自动播,显示播放控件 ----------
+
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clips = [...document.querySelectorAll('video.clip')];
+if (calm || !('IntersectionObserver' in window)) {
+  for (const v of clips) {
+    v.controls = true;
+    v.preload = 'metadata';
+  }
+} else {
+  const watch = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) e.target.play().catch(() => {});
+        else e.target.pause();
+      }
+    },
+    { threshold: 0.25 }
+  );
+  for (const v of clips) watch.observe(v);
+}
 
 // ---------- 视频:先显示封面和大播放按钮,点了再带声音播放并换成浏览器自带的控制条 ----------
 

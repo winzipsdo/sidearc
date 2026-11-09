@@ -53,7 +53,7 @@ node source/pages.js
 
 ## README 里的动图
 
-`main` 的 README 开头的三张动图(双向同步、空间、落叶)放在这个分支的 `assets/readme/<zh|en>/`,README 用 `https://winzipsdo.github.io/sidearc/assets/readme/...` 引用,`main` 上不放大文件。它们是在在线试用里(插件本身的代码)用脚本操作一遍录下来的,界面改了重新录:
+`main` 的 README 开头的三张动图(双向同步、空间、落叶)放在这个分支的 `assets/readme/<zh|en>/`,README 用 `https://winzipsdo.github.io/sidearc/assets/readme/...` 引用,`main` 上不放大文件。同一次录制还会生成同名的 `.mp4`、`.webm`(2 倍分辨率)和封面 `.webp`,主页的功能介绍用的是这些视频,比 GIF 清楚。它们是在在线试用里(插件本身的代码)用脚本操作一遍录下来的,界面改了重新录:
 
 ```bash
 NODE_PATH=$(npm root -g) node source/readme/record.js          # 全部

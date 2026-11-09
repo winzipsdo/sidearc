@@ -1,8 +1,9 @@
-// 录 README 里的动图:在在线试用里(插件本身的代码)用脚本操作一遍,录屏后转成 GIF,中英文各一套:
+// 录 README 里的动图和主页上的演示视频:在在线试用里(插件本身的代码)用脚本操作一遍,录屏后转成 GIF 和视频,中英文各一套:
 //   assets/readme/<zh|en>/sync.gif    双向同步:侧边栏里拖,顶部标签栏跟着变;顶部拖,侧边栏跟着变
 //   assets/readme/<zh|en>/spaces.gif  空间:点顶部折叠的分组、底部圆点切换,侧边栏换颜色
 //   assets/readme/<zh|en>/leaves.gif  落叶:鼠标左右扫几下,落满叶子的一行扫干净(只截侧边栏里的列表,放大了看)
 // README 用 https://winzipsdo.github.io/sidearc/assets/readme/... 引用这些图,main 上不放大文件。
+// 同名的 .mp4、.webm 是给主页用的:按 2 倍分辨率录,比 GIF 清楚得多(GIF 只有 256 色,还得缩小了才不太大)。
 // 需要 Playwright 和 ffmpeg。在 gh-pages 的工作目录里运行(Playwright 装在全局时让 require 找得到它):
 //   NODE_PATH=$(npm root -g) node source/readme/record.js
 // Chrome 不在 Playwright 默认的位置时,用环境变量 CHROME 指定。
@@ -35,10 +36,11 @@ const BASE = `http://127.0.0.1:${server.address().port}/source/readme/stage.html
 const browser = await chromium.launch({ executablePath: process.env.CHROME || undefined, args: ['--force-color-profile=srgb'] });
 
 // 每一段:打开录制台,等插件就绪,跑一遍操作,录下来。
-// crop:把浏览器窗口放大 2 倍(CSS zoom,无头模式的 screencast 不管设备像素比)再录,只截 crop(page) 给的那块(落叶很小,整个窗口缩下来看不清)
+// 都把浏览器窗口放大 2 倍(CSS zoom,无头模式的 screencast 不管设备像素比)再录,视频就是 2 倍清晰度;
+// crop:只截 crop(page) 给的那块(落叶很小,整个窗口缩下来看不清)。width:GIF 的宽度,视频是它的 2 倍
 async function record(lang, name, script, { crop, width = GIF_W } = {}) {
   if (ONLY.length && !ONLY.includes(name)) return;
-  const k = crop ? 2 : 1;
+  const k = 2;
   const dir = mkdtempSync(join(tmpdir(), 'sidearc-readme-'));
   const ctx = await browser.newContext({ viewport: { width: W * k, height: H * k }, locale: lang === 'zh' ? 'zh-CN' : 'en-US', colorScheme: 'light' });
   const page = await ctx.newPage();
@@ -58,7 +60,7 @@ async function record(lang, name, script, { crop, width = GIF_W } = {}) {
   const panel = page.frameLocator('.sb-panel');
 
   // 鼠标:真的移动(触发页面事件),同时挪动画出来的指针
-  let at = [W - 40, H - 40];
+  let at = [W * k - 40, H * k - 40];
   const move = async (to, ms = 500, down = false) => {
     const steps = Math.max(2, Math.round(ms / 16));
     const [x0, y0] = at;
@@ -117,8 +119,16 @@ async function record(lang, name, script, { crop, width = GIF_W } = {}) {
     ...['-vf', `fps=${FPS},${box ? `crop=${Math.round(box.width)}:${Math.round(box.height)}:${Math.round(box.x)}:${Math.round(box.y)},` : ''}scale=${width}:-1:flags=lanczos,split[a][b];[a]palettegen=stats_mode=diff:max_colors=160[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle`],
     out,
   ]);
+  // 主页用的视频:2 倍宽,H.264(mp4,Safari)和 VP9(webm),没有声音
+  const vf = `fps=30,${box ? `crop=${Math.round(box.width)}:${Math.round(box.height)}:${Math.round(box.x)}:${Math.round(box.y)},` : ''}scale=${width * 2}:-2:flags=lanczos,format=yuv420p`;
+  const input = ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', join(dir, 'frames.txt'), '-an', '-vf', vf];
+  execFileSync('ffmpeg', [...input, '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-tune', 'animation', '-movflags', '+faststart', out.replace(/\.gif$/, '.mp4')]);
+  execFileSync('ffmpeg', [...input, '-c:v', 'libvpx-vp9', '-crf', '32', '-b:v', '0', '-row-mt', '1', '-deadline', 'good', out.replace(/\.gif$/, '.webm')]);
+  // 封面:视频的第一帧,还没开始播的时候显示
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out.replace(/\.gif$/, '.mp4'), '-frames:v', '1', '-c:v', 'libwebp', '-quality', '85', out.replace(/\.gif$/, '.webp')]);
   rmSync(dir, { recursive: true, force: true });
-  console.log(`已生成 assets/readme/${lang}/${name}.gif(${(statSync(out).size / 1048576).toFixed(1)} MB)`);
+  const mb = (f) => (statSync(f).size / 1048576).toFixed(1);
+  console.log(`已生成 assets/readme/${lang}/${name}.gif(${mb(out)} MB)、.mp4(${mb(out.replace(/\.gif$/, '.mp4'))} MB)、.webm(${mb(out.replace(/\.gif$/, '.webm'))} MB)`);
 }
 
 const row = (panel, text) => panel.locator('#tabs .row', { hasText: text });
