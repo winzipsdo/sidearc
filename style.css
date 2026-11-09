@@ -154,7 +154,7 @@ section, .feature { padding: 104px 0; }
 .lang-hint button:hover { color: var(--fg); }
 
 /* 首屏 */
-.hero { padding: 72px 0 0; overflow: hidden; text-align: center; }
+.hero { padding: 72px 0 104px; text-align: center; }
 .hero-name { display: inline-flex; align-items: center; gap: 10px; font-size: clamp(19px, 2.2vw, 24px); font-weight: 600; }
 .hero-name img { width: 1.3em; height: 1.3em; }
 .hero h1 { margin-top: 20px; font-size: clamp(48px, 9vw, 96px); line-height: 1.04; font-weight: 600; letter-spacing: -0.015em; }
@@ -162,13 +162,13 @@ section, .feature { padding: 104px 0; }
 .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .lead { max-width: 640px; margin: 26px auto 0; color: var(--fg-2); font-size: clamp(19px, 2.4vw, 24px); line-height: 1.38; text-wrap: balance; }
 .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 36px; }
-/* 产品大图:贴着下一个区块,像从下面升上来 */
-.hero-shot { max-width: 1040px; margin: 64px auto -1px; }
+/* 产品大图:四角圆角,下面留白再接下一个区块 */
+.hero-shot { max-width: 1040px; margin: 64px auto 0; }
 .hero-shot .dk { display: none; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .hero-shot .lt { display: none; } :root:not([data-theme="light"]) .hero-shot .dk { display: block; } }
 :root[data-theme="dark"] .hero-shot .lt { display: none; }
 :root[data-theme="dark"] .hero-shot .dk { display: block; }
-.hero-shot img { width: 100%; border-radius: var(--radius-sm) var(--radius-sm) 0 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 -10px 60px rgba(0, 0, 0, 0.08); }
+.hero-shot img { width: 100%; border-radius: var(--radius-sm); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 30px 60px rgba(0, 0, 0, 0.12); }
 
 /* 在线试用:左边是假的浏览器窗口(样式见 demo/demo.css),右边是任务清单 */
 .try .sec-head { margin-bottom: 56px; }
@@ -308,7 +308,7 @@ td:first-child { color: var(--fg); }
   .nav-in { justify-content: space-between; }
   .wrap, .wrap.wide, .nav-in { width: calc(100% - 32px); }
   section, .feature { padding: 64px 0; }
-  .hero { padding: 48px 0 0; }
+  .hero { padding: 48px 0 64px; }
   .hero-shot { margin-top: 40px; }
   .try .sec-head, .video .sec-head { margin-bottom: 36px; }
   .feature .shot, .grid, .steps { margin-top: 36px; }
