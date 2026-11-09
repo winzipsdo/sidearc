@@ -2,7 +2,7 @@
 // 离上次离开(或扫干净)满一天落第一片,之后每再过 N 小时多落一片,最多 12 片(N 在设置里选,见 logic.js 的 leafCount)。
 // 叶子只铺在行的后半段,不挡图标和标题开头;画在每行一块 canvas 上,不接鼠标,点击照常落到行上。
 // 鼠标划过把叶子拨开,停下后落回原处;左右快速来回扫几下就扫干净,从现在重新计时(不打开它);
-// 点进去(成了当前标签页)叶子被风吹走;关掉时叶子跟着飘走。
+// 点进去(成了当前标签页)叶子被风吹走;关掉时叶子跟着飘走。打开侧边栏时,已经落着的叶子也从上面飘下来。
 // 列表会整体重画,canvas 和每片叶子的状态都记在这里,重画后挪到新的行上,不会重新落一遍。
 // 只有在动(飘落、被拨开、飞走)的时候才逐帧画,静止时不占资源
 
@@ -19,6 +19,9 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const piles = new Map(); // tabId -> { id, cv, ctx, W, ps: 叶子, n: 一共落过几片, mouse, rect, glow, sweeping }
 const flying = new Set(); // 关掉了的标签页:canvas 已经从行里拿出来,叶子飘走后删掉
 let raf = 0;
+// 打开侧边栏后第一次铺叶子之前:这时已经该有的叶子也飘下来,而不是一下子都在
+let opening = true;
+const OPEN_DELAY = 350; // 等列表淡入(见 sidepanel.css)得差不多了再落
 
 tabReplacedHooks.push((added, removed) => {
   if (homes.has(removed)) homes.set(added, homes.get(removed)), homes.delete(removed);
@@ -62,7 +65,7 @@ function homeOf(tabId, i) {
   return list[i];
 }
 
-function makeLeaf(tabId, i, fall) {
+function makeLeaf(tabId, i, fall, delay = 0) {
   const r = rng(tabId * 7919 + i * 104729);
   const { fx, hy } = homeOf(tabId, i);
   const rot = r() * Math.PI * 2;
@@ -72,7 +75,7 @@ function makeLeaf(tabId, i, fall) {
     c: COLORS[Math.floor(r() * COLORS.length)],
     hp: 2 + Math.floor(r() * 2), // 扫几下才飞走
     falling: fall,
-    t0: performance.now() + (fall ? r() * 600 : 0),
+    t0: performance.now() + (fall ? delay + r() * (delay ? 700 : 600) : 0),
     gone: 0,
     cd: 0,
   };
@@ -113,6 +116,8 @@ function fit(pile) {
   const W = pile.rowW;
   if (W && W !== pile.W) {
     const dpr = devicePixelRatio || 1;
+    // 宽度变了(侧边栏刚打开、拖宽拖窄):叶子按比例直接换到新位置,不要从旧位置滑过去
+    for (const p of pile.ps) if (p.x != null) p.x = pile.W ? (p.x * W) / pile.W : p.fx * W;
     pile.W = W;
     pile.cv.width = W * dpr;
     pile.cv.height = ROW_H * dpr;
@@ -136,12 +141,15 @@ export function refreshLeaves() {
   const now = Date.now();
   const rows = new Map([...document.querySelectorAll('#tabs .row[data-kind="tab"]')].map((el) => [+el.dataset.id, el]));
   const shown = [];
+  let matched = false;
   for (const tab of tabs) {
     const row = rows.get(tab.id);
+    if (row) matched = true;
     let pile = piles.get(tab.id);
     if (!pile && !row) continue;
-    // 第一次看到这一行:已经该有的叶子直接铺好;之后新增的才从上面飘下来
-    const fall = !!pile && !reduceMotion.matches;
+    // 第一次看到这一行:已经该有的叶子直接铺好;之后新增的才从上面飘下来。刚打开侧边栏时都飘下来
+    const fall = (!!pile || opening) && !reduceMotion.matches;
+    const delay = !pile && opening ? OPEN_DELAY : 0;
     pile ??= newPile(tab.id);
     const want = leavesOn(tab, now);
     // 少了:点进去了,或者设置改成了更久才落一片。多出来的被风吹走
@@ -149,7 +157,7 @@ export function refreshLeaves() {
       blow(pile.ps.filter((p) => p.i >= want && !p.gone));
       pile.n = want;
     }
-    while (pile.n < want) pile.ps.push(makeLeaf(tab.id, pile.n++, fall));
+    while (pile.n < want) pile.ps.push(makeLeaf(tab.id, pile.n++, fall, delay));
     if (row && attach(pile, row)) shown.push([pile, row]);
     else if (!row) pile.cv.remove();
   }
@@ -163,6 +171,8 @@ export function refreshLeaves() {
     flyOff(pile);
   }
   for (const id of homes.keys()) if (!ids.has(id)) homes.delete(id);
+  // 真的标签页画成了行才算打开完(先显示的上次画面不算);设置还没读到时叶子数是 0,也等下一次
+  if (matched && leafHours) opening = false;
   wake();
 }
 
@@ -192,6 +202,8 @@ function frame(now) {
 function step(pile, now, move) {
   const { ctx, W, mouse: m } = pile;
   let busy = false;
+  // 还没量到行宽(侧边栏刚打开、还没排好):先不动,量到后(ResizeObserver 会再调 refreshLeaves)再开始
+  if (!W) return false;
   ctx.clearRect(0, 0, W, ROW_H);
   if (pile.glow) {
     const k = 1 - (now - pile.glow) / GLOW_MS;
