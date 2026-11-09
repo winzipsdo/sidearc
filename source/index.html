@@ -242,16 +242,16 @@
   <section id="install" class="install">
     <div class="wrap">
       <h2 class="title"><span data-l="zh">三步安装</span><span data-l="en">Install in three steps</span></h2>
-      <p class="sub"><span data-l="zh">需要 Chrome 116 或更高版本。暂时还没上架应用商店。</span><span data-l="en">Requires Chrome 116 or later. Not on the Chrome Web Store yet.</span></p>
+      <p class="sub"><span data-l="zh">推荐从源码安装:零依赖、没有构建步骤,仓库里的文件就是插件本身。需要 Chrome 116 或更高版本,暂时还没上架应用商店。</span><span data-l="en">Installing from source is recommended: zero dependencies and no build step, so the repository is the extension. Requires Chrome 116 or later; not on the Chrome Web Store yet.</span></p>
       <ol class="steps">
         <li>
-          <h3><span data-l="zh">下载并解压</span><span data-l="en">Download and unzip</span></h3>
-          <p><span data-l="zh">从 Releases 下载最新的 <code>sidearc-版本号.zip</code> 并解压。想跟着最新代码走,也可以克隆仓库。</span><span data-l="en">Get the latest <code>sidearc-&lt;version&gt;.zip</code> from Releases and unzip it, or clone the repository to follow the latest code.</span></p>
-          <a class="btn small" href="https://github.com/winzipsdo/sidearc/releases/latest"><span data-l="zh">打开 Releases</span><span data-l="en">Open Releases</span></a>
+          <h3><span data-l="zh">克隆仓库</span><span data-l="en">Clone the repository</span></h3>
+          <p><span data-l="zh">不用 git 的话,也可以从 <a href="https://github.com/winzipsdo/sidearc/releases/latest">Releases</a> 下载 zip 解压。</span><span data-l="en">No git? Download the zip from <a href="https://github.com/winzipsdo/sidearc/releases/latest">Releases</a> and unzip it instead.</span></p>
+          <div class="code"><code>git clone https://github.com/winzipsdo/sidearc.git</code><button class="copy" type="button" data-copy="git clone https://github.com/winzipsdo/sidearc.git"><span data-l="zh">复制</span><span data-l="en">Copy</span></button></div>
         </li>
         <li>
           <h3><span data-l="zh">加载扩展</span><span data-l="en">Load it</span></h3>
-          <p><span data-l="zh">打开下面的地址,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择解压出的文件夹。</span><span data-l="en">Open this address, turn on Developer mode (top right), click “Load unpacked” and choose the unzipped folder.</span></p>
+          <p><span data-l="zh">打开下面的地址,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择仓库所在的文件夹。</span><span data-l="en">Open this address, turn on Developer mode (top right), click “Load unpacked” and choose the repository folder.</span></p>
           <div class="code"><code>chrome://extensions</code><button class="copy" type="button" data-copy="chrome://extensions"><span data-l="zh">复制</span><span data-l="en">Copy</span></button></div>
         </li>
         <li>
@@ -260,6 +260,20 @@
           <div class="keys"><kbd>Alt+S</kbd><span>Windows / Linux</span><kbd>⌥ Option+S</kbd><span>Mac</span></div>
         </li>
       </ol>
+      <div class="tip">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M13 2.5V5h-2.5"/></svg>
+        <p>
+          <span data-l="zh"><b>更新:</b>在仓库里 <code>git pull</code>,把侧边栏关掉再打开,就是最新版本。少数更新改到了后台(<code>background.js</code> 或 <code>manifest.json</code>),到 <code>chrome://extensions</code> 点一下 Sidearc 的刷新按钮;拿不准时点一下也没坏处,空间、收藏和设置都还在。</span>
+          <span data-l="en"><b>Updating:</b> run <code>git pull</code> in the repository, then close and reopen the sidebar. The few updates that touch the background (<code>background.js</code> or <code>manifest.json</code>) also need the reload button on Sidearc's card in <code>chrome://extensions</code>; if unsure, reloading is harmless and keeps your spaces, favorites and settings.</span>
+        </p>
+      </div>
+      <div class="tip">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5l4 4-7 7h-4v-4z"/><path d="M8 4l4 4"/></svg>
+        <p>
+          <span data-l="zh"><b>按自己的习惯改:</b>代码是原生 JS/CSS,不用编译。哪里用着不顺手,直接让 AI 编程助手(比如 Claude Code)在仓库里改,比如「行再紧凑一点」;改完关掉再打开侧边栏就能看到效果。</span>
+          <span data-l="en"><b>Make it yours:</b> the code is plain JS/CSS with nothing to compile. If something doesn't fit how you work, ask an AI coding assistant (such as Claude Code) to change it in the repository, say "make the rows more compact", then close and reopen the sidebar to see it.</span>
+        </p>
+      </div>
       <div class="tip">
         <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10"/></svg>
         <p>

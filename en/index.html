@@ -83,7 +83,7 @@
 </script>
 <link rel="icon" href="../assets/logo.svg?v=852405be" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../icons/128.png">
-<link rel="stylesheet" href="../style.css?v=c5efa4d2">
+<link rel="stylesheet" href="../style.css?v=129bbf18">
 <link rel="stylesheet" href="../demo/demo.css?v=642fb0f5">
 <link rel="modulepreload" href="../demo/demo.js?v=c70f2987">
 <script>
@@ -287,16 +287,16 @@
   <section id="install" class="install">
     <div class="wrap">
       <h2 class="title"><span data-l="en">Install in three steps</span></h2>
-      <p class="sub"><span data-l="en">Requires Chrome 116 or later. Not on the Chrome Web Store yet.</span></p>
+      <p class="sub"><span data-l="en">Installing from source is recommended: zero dependencies and no build step, so the repository is the extension. Requires Chrome 116 or later; not on the Chrome Web Store yet.</span></p>
       <ol class="steps">
         <li>
-          <h3><span data-l="en">Download and unzip</span></h3>
-          <p><span data-l="en">Get the latest <code>sidearc-&lt;version&gt;.zip</code> from Releases and unzip it, or clone the repository to follow the latest code.</span></p>
-          <a class="btn small" href="https://github.com/winzipsdo/sidearc/releases/latest"><span data-l="en">Open Releases</span></a>
+          <h3><span data-l="en">Clone the repository</span></h3>
+          <p><span data-l="en">No git? Download the zip from <a href="https://github.com/winzipsdo/sidearc/releases/latest">Releases</a> and unzip it instead.</span></p>
+          <div class="code"><code>git clone https://github.com/winzipsdo/sidearc.git</code><button class="copy" type="button" data-copy="git clone https://github.com/winzipsdo/sidearc.git"><span data-l="en">Copy</span></button></div>
         </li>
         <li>
           <h3><span data-l="en">Load it</span></h3>
-          <p><span data-l="en">Open this address, turn on Developer mode (top right), click “Load unpacked” and choose the unzipped folder.</span></p>
+          <p><span data-l="en">Open this address, turn on Developer mode (top right), click “Load unpacked” and choose the repository folder.</span></p>
           <div class="code"><code>chrome://extensions</code><button class="copy" type="button" data-copy="chrome://extensions"><span data-l="en">Copy</span></button></div>
         </li>
         <li>
@@ -305,6 +305,20 @@
           <div class="keys"><kbd>Alt+S</kbd><span>Windows / Linux</span><kbd>⌥ Option+S</kbd><span>Mac</span></div>
         </li>
       </ol>
+      <div class="tip">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.5-3.6"/><path d="M13 2.5V5h-2.5"/></svg>
+        <p>
+          
+          <span data-l="en"><b>Updating:</b> run <code>git pull</code> in the repository, then close and reopen the sidebar. The few updates that touch the background (<code>background.js</code> or <code>manifest.json</code>) also need the reload button on Sidearc's card in <code>chrome://extensions</code>; if unsure, reloading is harmless and keeps your spaces, favorites and settings.</span>
+        </p>
+      </div>
+      <div class="tip">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 2.5l4 4-7 7h-4v-4z"/><path d="M8 4l4 4"/></svg>
+        <p>
+          
+          <span data-l="en"><b>Make it yours:</b> the code is plain JS/CSS with nothing to compile. If something doesn't fit how you work, ask an AI coding assistant (such as Claude Code) to change it in the repository, say "make the rows more compact", then close and reopen the sidebar to see it.</span>
+        </p>
+      </div>
       <div class="tip">
         <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10"/></svg>
         <p>
