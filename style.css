@@ -293,6 +293,21 @@ td:first-child { color: var(--fg); }
   .reveal-on .reveal.in { opacity: 1; transform: none; }
 }
 
+/* 幻灯片式翻页(只在大屏幕上,main.js 判断后给 <html> 加 .slides):每个区块至少一屏、内容居中,
+   滚动停下时吸附到最近的一页;下一页从下面滑上来盖住上一页(区块是 sticky 的,一个叠一个)。
+   比一屏高的区块,main.js 把它的 top 设成负数,先滚到底再被下一页盖住 */
+.slides { scroll-snap-type: y mandatory; scroll-padding-top: 48px; }
+.slides .slide { position: sticky; top: 48px; min-height: calc(100svh - 48px); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 -24px 48px rgba(0, 0, 0, 0.12); }
+/* 吸附点:不放在 sticky 的区块上(停住时位置不动,会一直吸回去),而是 main.js 在每页的起点(太高的页再加一个底边)放的隐形标记 */
+.snap-mark { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-snap-align: start; }
+.snap-mark.end { scroll-snap-align: end; }
+.slides .slide:not(.alt):not(.dark) { background: var(--bg); }
+.slides main > .slide:first-child { box-shadow: none; }
+.slides .slide > .wrap { width: min(980px, 100% - 44px); }
+.slides .slide > .wrap.wide { width: min(1380px, 100% - 44px); }
+.slides .foot { position: relative; z-index: 1; }
+main { position: relative; }
+
 @media (max-width: 1180px) {
   .try-grid { grid-template-columns: minmax(0, 1fr); }
   .q-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0 12px; }

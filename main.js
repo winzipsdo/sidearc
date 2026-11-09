@@ -170,8 +170,12 @@ document.getElementById('q-reset').addEventListener('click', () => {
 // 功能介绍里的「在上面试试」:滚到试用,并让对应的任务闪一下
 for (const btn of document.querySelectorAll('[data-task]')) {
   btn.addEventListener('click', () => {
-    document.querySelector('.try-grid').scrollIntoView({ behavior: 'smooth' });
+    goTo(document.querySelector('.try-grid'), { atEnd: true });
     const li = list.querySelector(`[data-id="${btn.dataset.task}"]`);
+    // 清单在自己的框里滚动时,把这一条滚到框的中间
+    const box = list.getBoundingClientRect();
+    const at = li.getBoundingClientRect();
+    if (list.scrollHeight > list.clientHeight) list.scrollTo({ top: list.scrollTop + at.top - box.top - (box.height - at.height) / 2, behavior: 'smooth' });
     li.classList.remove('flash');
     void li.offsetWidth;
     li.classList.add('flash');
@@ -199,6 +203,94 @@ if ('IntersectionObserver' in window) {
   }
   root.classList.add('reveal-on');
 }
+
+// ---------- 幻灯片式翻页:大屏幕、没开「减少动态效果」时才启用(样式见 style.css 的 .slides) ----------
+
+const slidesOk = matchMedia('(min-width: 1000px) and (min-height: 680px) and (prefers-reduced-motion: no-preference)');
+const slides = [...document.querySelectorAll('main > section')];
+// 比一屏高的页:sticky 的 top 设成「屏幕高 - 页高」(负数),滚到它的底边才停住,内容一点不漏
+const mainEl = document.querySelector('main');
+let marks = [];
+const pages = new Map(); // 区块 -> { start, end }:在 main 里原本的位置(停住叠在一起时浏览器自己算不对)
+function fitSlides() {
+  const on = slidesOk.matches;
+  root.classList.toggle('slides', on);
+  for (const m of marks) m.remove();
+  marks = [];
+  pages.clear();
+  const room = innerHeight - 48;
+  let y = 0; // 这一页在 main 里的起点(区块一个接一个,不受 sticky 停住的影响)
+  slides.forEach((el, i) => {
+    el.classList.toggle('slide', on);
+    el.style.zIndex = on ? String(i + 1) : '';
+    el.style.top = '';
+    if (!on) return;
+    const h = el.offsetHeight;
+    pages.set(el, { start: y, end: y + Math.max(0, h - room) });
+    const stops = [y];
+    // 只高出一点的页不多加一站,底下那一点在下一页滑上来时露出来就够了
+    if (h > room) el.style.top = `${48 + room - h}px`;
+    if (h > room + 120) stops.push(y + h - room);
+    for (const top of stops) {
+      const m = document.createElement('i');
+      m.className = 'snap-mark';
+      m.style.top = `${top}px`;
+      mainEl.append(m);
+      marks.push(m);
+    }
+    y += h;
+  });
+  // 最后一站:页脚完整露出来(滚到页面最底下)
+  if (on) {
+    const end = document.createElement('i');
+    end.className = 'snap-mark end';
+    end.style.top = `${y + document.querySelector('.foot').offsetHeight - 1}px`;
+    mainEl.append(end);
+    marks.push(end);
+  }
+}
+// 滚到某个元素所在的那一页:翻页模式下按原本的位置算(atEnd:滚到这一页的底边,比如试用区要看到整个演示窗口),
+// 平时就用浏览器自己的 scrollIntoView
+function goTo(el, { atEnd = false } = {}) {
+  const page = root.classList.contains('slides') && slides.find((s) => s.contains(el));
+  if (!page || !pages.has(page)) return el.scrollIntoView({ behavior: 'smooth' });
+  const { start, end } = pages.get(page);
+  const mainTop = mainEl.getBoundingClientRect().top + scrollY;
+  scrollTo({ top: mainTop + (atEnd ? end : start) - 48, behavior: 'smooth' });
+}
+// 页内链接(导航、「在线试用」「免费安装」按钮等):翻页模式下自己滚,地址栏照样带上 #
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[href^="#"]');
+  if (!a || !root.classList.contains('slides') || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
+  const target = document.getElementById(a.getAttribute('href').slice(1));
+  if (!target) return;
+  e.preventDefault();
+  history.pushState(null, '', a.getAttribute('href'));
+  goTo(target);
+});
+
+fitSlides();
+slidesOk.addEventListener('change', fitSlides);
+// 打开时地址带着 #:等排好再滚过去
+if (location.hash && root.classList.contains('slides')) {
+  const target = document.getElementById(location.hash.slice(1));
+  // 浏览器自己会先平滑地滚向锚点(按停住的位置算,会停错地方):等加载完,关掉平滑滚动直接跳过去,过一会儿再校正一次
+  const go = () => {
+    fitSlides();
+    const { start } = pages.get(slides.find((el) => el.contains(target))) ?? {};
+    if (start == null) return;
+    root.style.scrollBehavior = 'auto';
+    scrollTo({ top: mainEl.getBoundingClientRect().top + scrollY + start - 48, behavior: 'instant' });
+    requestAnimationFrame(() => (root.style.scrollBehavior = ''));
+  };
+  const goTwice = () => {
+    go();
+    setTimeout(go, 400);
+  };
+  if (target) document.readyState === 'complete' ? goTwice() : addEventListener('load', goTwice, { once: true });
+}
+addEventListener('resize', fitSlides);
+new ResizeObserver(fitSlides).observe(mainEl);
 
 // ---------- 视频:先显示封面和大播放按钮,点了再带声音播放并换成浏览器自带的控制条 ----------
 
