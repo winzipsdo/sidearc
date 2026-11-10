@@ -129,7 +129,9 @@ function fit(pile) {
 function flyOff(pile) {
   const live = pile.ps.filter((p) => !p.gone);
   const r = pile.rect;
-  if (!live.length || !r || reduceMotion.matches || r.bottom < 0 || r.top > innerHeight) return pile.cv.remove();
+  // 上次重画时这一行就没画出来(比如已经被收藏或固定,或者被搜索滤掉了):叶子不在眼前,悄悄扔掉,
+  // 不然会从它很久以前所在的位置凭空飞出一阵
+  if (!pile.shown || !live.length || !r || reduceMotion.matches || r.bottom < 0 || r.top > innerHeight) return pile.cv.remove();
   Object.assign(pile.cv.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: pile.W + 'px', height: ROW_H + 'px', borderRadius: '11px' });
   document.body.append(pile.cv);
   blow(live);
@@ -158,7 +160,8 @@ export function refreshLeaves() {
       pile.n = want;
     }
     while (pile.n < want) pile.ps.push(makeLeaf(tab.id, pile.n++, fall, delay));
-    if (row && attach(pile, row)) shown.push([pile, row]);
+    pile.shown = !!row && attach(pile, row);
+    if (pile.shown) shown.push([pile, row]);
     else if (!row) pile.cv.remove();
   }
   for (const [pile, row] of shown) measure(pile, row);
