@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --test test/*.test.js",
+    "e2e": "node test/e2e/run.js",
     "screenshots": "node store/screenshots/make.js",
     "pack": "node scripts/pack.js",
     "release-notes": "node scripts/release-notes.js"
