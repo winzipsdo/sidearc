@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { hasPrefix, KEY, MSG, PREFIX } from '../src/protocol.js';
+import { hasPrefix, KEY, MSG, PREFIX, TAB_KEYS } from '../src/protocol.js';
 
 test('KEY:按前缀拼出会话存储的键', () => {
   assert.equal(KEY.space(12), 't:12');
@@ -24,4 +24,10 @@ test('hasPrefix', () => {
 
 test('MSG:消息名互不相同', () => {
   assert.equal(new Set(Object.values(MSG)).size, Object.keys(MSG).length);
+});
+
+test('TAB_KEYS:每个前缀都分好了类,按 tabId 存的都在里面(新加前缀忘了归类会在这里报出来)', () => {
+  const perTab = new Set(TAB_KEYS.map((key) => key(1).split(':')[0]));
+  const notTab = new Set([PREFIX.bind, PREFIX.group, PREFIX.trail]); // id 是 itemId、groupId、windowId
+  for (const [name, p] of Object.entries(PREFIX)) assert.ok(perTab.has(p) !== notTab.has(p), `${name} 要么在 TAB_KEYS 里,要么在这里的 notTab 里`);
 });

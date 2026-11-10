@@ -21,7 +21,9 @@ export const tabSlept = new Map();
 export const tabSeen = new Map();
 // 右键撒上去的落叶片数:tabId -> 片数
 export const tabScattered = new Map();
-const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen, [PREFIX.scattered]: tabScattered };
+// 按 tabId 记的那几张表(都在 protocol.js 的 TAB_KEYS 里):标签页换编号时跟着挪,见 replaceTabId
+export const TAB_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen, [PREFIX.scattered]: tabScattered };
+const SESSION_MAPS = { ...TAB_MAPS, [PREFIX.bind]: bind };
 
 export const tabs = [];
 export let windowId;
@@ -211,7 +213,7 @@ export function subtreeIds(tabId) {
 export const tabReplacedHooks = [];
 
 export function replaceTabId(added, removed) {
-  for (const map of [tabSpace, tabAlias, tabParent, tabSlept, tabSeen, tabScattered]) {
+  for (const map of Object.values(TAB_MAPS)) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }

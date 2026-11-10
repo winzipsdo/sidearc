@@ -15,6 +15,9 @@ export const PREFIX = {
 };
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));
 export const hasPrefix = (key, prefix) => key.startsWith(prefix + ':');
+// 按 tabId 存、只属于这个标签页自己的键:标签页换了编号(比如休眠后)要挪到新编号上,关掉时要删掉。
+// 新加这类键只往这里加,后台的 onReplaced、onRemoved 都从这里取。bind、group、trail 的 id 不是 tabId,不在这里
+export const TAB_KEYS = [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen, KEY.scattered];
 
 // 会话存储:侧边栏已经在恢复上次没回来的标签页了,后台别再提示(见 background.js 的 keepLastSession)
 export const LAST_TAKEN = '_lastTaken';

@@ -1,7 +1,7 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
 import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js';
-import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX } from './src/protocol.js';
+import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX, TAB_KEYS } from './src/protocol.js';
 import { startGroupSync } from './src/groups.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
@@ -37,7 +37,7 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     const all = await chrome.storage.session.get(null);
     const set = {};
     const remove = [];
-    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen, KEY.scattered]) {
+    for (const key of TAB_KEYS) {
       if (!(key(removedId) in all)) continue;
       set[key(addedId)] = all[key(removedId)];
       remove.push(key(removedId));
@@ -69,7 +69,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
-  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId), KEY.seen(tabId), KEY.scattered(tabId)];
+  const own = TAB_KEYS.map((key) => key(tabId));
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
