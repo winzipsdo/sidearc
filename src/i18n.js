@@ -347,7 +347,6 @@ export function resolveLang(pref) {
 let pref = 'auto';
 let lang = resolveLang(pref);
 export const langPref = () => pref;
-export const currentLang = () => lang;
 export function setLangPref(next) {
   pref = next === 'zh' || next === 'en' ? next : 'auto';
   lang = resolveLang(pref);

@@ -9,7 +9,7 @@ import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.j
 import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
-import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
+import { formatDuration, LANGS, langPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
 import { copyText, showMenu } from './ui.js';
 
