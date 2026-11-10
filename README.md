@@ -140,7 +140,8 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 | `_locales/` | 扩展名称下的简介、快捷键说明的中英文(由 Chrome 按浏览器语言显示) |
 | `src/logic.js` | 不碰浏览器的纯逻辑(网址判断、树形排列、拖拽落点、文件夹等) |
 | `src/protocol.js` | 侧边栏和后台共用的约定:会话存储的键、消息格式 |
-| `test/` | `src/logic.js`、`src/protocol.js` 和 `src/i18n.js` 的测试 |
+| `test/` | 单元测试:`src/logic.js`、`src/protocol.js`、`src/store.js` 和 `src/i18n.js` |
+| `test/e2e/` | 端到端测试:在真实的 Chrome 里加载扩展跑一遍(`npm run e2e`) |
 | `icons/` | 扩展图标 |
 | `store/` | Chrome 应用商店的上架资料、截图和宣传图;`store/screenshots/make.js` 用来重新生成截图 |
 | `README.en.md` | 英文版说明 |
@@ -156,11 +157,19 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 
 没有构建步骤:代码是原生 ES 模块。改了侧边栏的代码,关掉再打开侧边栏就能看到;改了后台(`background.js` 和它引用的模块)或 `manifest.json`,在 `chrome://extensions` 里重新加载扩展。
 
-测试用 Node 自带的测试运行器,不需要安装依赖(需要 Node 20 或更高版本):
+测试用 Node 自带的测试运行器,不需要安装依赖(需要 Node 22 或更高版本):
 
 ```bash
 npm test
 ```
+
+端到端测试在真实的 Chrome 里加载扩展,检查单元测试测不到的地方:浏览器重启后的恢复、空间和标签页分组的同步、新标签页的归属和查重、关闭和撤销、休眠换编号、拆分视图。每个测试启动一个全新的 Chrome(默认不显示窗口,`HEADFUL=1` 时显示),全部跑完要几分钟;需要本机装有 Chrome(拆分视图要 155 或更高版本),装在别处时用环境变量 `CHROME` 指定路径。改了后台、分组或标签页相关的逻辑时跑一遍:
+
+```bash
+npm run e2e
+```
+
+只跑名字里带某个词的,比如拆分视图的几个:`npm run e2e -- split`。
 
 界面改动后,可以重新生成应用商店的截图和小宣传图,中英文各一套(英文版在 `store/en/`;需要本机装有 Chrome,侧边栏部分直接套用 `sidepanel.css`):
 
