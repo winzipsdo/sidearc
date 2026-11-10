@@ -9,6 +9,7 @@ import {
   bind,
   findItem,
   itemByTab,
+  refreshTabs,
   save,
   setBind,
   setRenderHeld,
@@ -99,6 +100,8 @@ export async function closeItemTab(item) {
   } finally {
     setRenderHeld(false);
   }
+  // 重画前重新读一遍标签页:手里的列表还是关之前读的,里面还有它,已经解绑了,会被当成普通标签页画出来一下(带着落叶)
+  await refreshTabs();
   render();
 }
 
