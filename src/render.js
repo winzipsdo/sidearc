@@ -1,7 +1,7 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
 import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, splitPartners, TRAIL_TTL, trailLeft } from './logic.js';
+import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, SPLIT_NONE, splitPartners, TRAIL_TTL, trailLeft } from './logic.js';
 import { formatDuration, t } from './i18n.js';
 import { applyCursor } from './keys.js';
 import { refreshLeaves } from './leaves.js';
@@ -127,8 +127,11 @@ export function refreshTrail() {
   const byId = new Map(tabs.map((t) => [t.id, t]));
   const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
   const next = new Map();
-  // 最近离开、还开着、10 分钟以内的,取设置里选的个数
-  for (const x of trail.filter((x) => byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
+  // 最近离开、还开着、10 分钟以内的,取设置里选的个数。
+  // 和当前标签页在同一个分屏里的不算:它就并排显示在眼前,不是离开了
+  const split = tabs.find((t) => t.active)?.splitViewId;
+  const onScreen = (t) => t.active || (split > SPLIT_NONE && t.splitViewId === split);
+  for (const x of trail.filter((x) => byId.has(x.id) && !onScreen(byId.get(x.id)) && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
   for (const [id, at] of next) {
     let s = trailShown.get(id);
     if (!s || s.at !== at) s = { at, start: trailOut.has(id) ? -Infinity : now };
