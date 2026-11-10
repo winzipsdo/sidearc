@@ -8,6 +8,7 @@
 
 ### 内部改进
 
+- **加了在真实 Chrome 里跑的端到端测试(`npm run e2e`)。** 使用上没有变化。覆盖单元测试测不到的地方:浏览器重启后的恢复、空间和标签页分组的同步、新标签页的归属和查重、关闭和撤销、休眠换编号、拆分视图;共 9 个测试,跑完大约 5 分钟。 [`c7c3f40`](https://github.com/winzipsdo/sidearc/commit/c7c3f40) [`8e24a1f`](https://github.com/winzipsdo/sidearc/commit/8e24a1f) [`7b3d08f`](https://github.com/winzipsdo/sidearc/commit/7b3d08f)
 - **标签页换编号、关闭时要处理的那几项数据,只在一处列出,并加了测试。** 使用上没有变化。以前同一份清单抄在三个地方,新加一项时漏改一处,休眠后这项数据就会丢;现在漏了测试会报出来。另外删掉了两处没用到的代码。 [`6c3e2e2`](https://github.com/winzipsdo/sidearc/commit/6c3e2e2) [`cb74e05`](https://github.com/winzipsdo/sidearc/commit/cb74e05)
 
 ## 2026-11-10
