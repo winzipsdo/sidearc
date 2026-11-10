@@ -265,6 +265,7 @@ export function render() {
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
+        sleptLabel(tab),
         keep,
         sound,
         unfold,
@@ -278,6 +279,8 @@ export function render() {
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      // 休眠了的和下面的标签页一样在行尾标着睡了多久,和已经关掉的(同样变淡)分得开
+      tab && sleptLabel(tab),
       elsewhere,
       keep,
       sound,
