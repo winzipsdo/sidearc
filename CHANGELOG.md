@@ -18,6 +18,7 @@
 ### 内部改进
 
 - **应用商店截图换成了现在的界面(按钮是「整理」),截图脚本在 Windows 上也能用了。** 以前在 Windows 上跑不起来;另外加了淡入动画以后,截出来的侧边栏是一片空白。 [`4434122`](https://github.com/winzipsdo/sidearc/commit/4434122)
+- **侧边栏打开时 `splits.js` 也和其他模块一起提前加载。** 它是唯一漏在预加载清单外的模块,会比别的晚一步才开始下载。 [`0118a16`](https://github.com/winzipsdo/sidearc/commit/0118a16)
 
 ## 2026-11-11
 
