@@ -2,10 +2,10 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=fc856f4c';
+import { Browser } from './sim.js?v=496aad92';
 import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=71ea2bda';
-import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js';
-import { KEY, MSG } from '../ext/src/protocol.js';
+import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=503bcbcb';
+import { KEY, MSG } from '../ext/src/protocol.js?v=503bcbcb';
 
 const TEXT = {
   zh: { back: '后退', forward: '前进', reload: '重新加载', newTab: '新建标签页', close: '关闭', toggle: '打开/关闭侧边栏', search: '搜索或输入网址', play: '播放', pause: '暂停', newTabHint: '点一个快捷方式。已经开着的网站不会再开一份:会直接切过去。', muted: '已静音' },
@@ -331,7 +331,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=90155d27', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=ec23c8d2', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sidearc';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=b036c3df', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=b2a92537', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

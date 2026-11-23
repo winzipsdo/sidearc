@@ -1,16 +1,19 @@
 // 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。
 
-import { itemFromTab, removeItem } from './items.js';
-import { dropBefore, dropInto, isFolder } from './logic.js';
-import { render, schedule } from './render.js';
-import { h } from './dom.js';
-import { t } from './i18n.js';
-import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js';
-import { switchSpace } from './spaces.js';
-import { moveTabToSpace } from './tabs.js';
-import { hideMenu } from './ui.js';
+import { itemFromTab, removeItem } from './items.js?v=503bcbcb';
+import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js?v=503bcbcb';
+import { moveUnit, moveUnits } from './splits.js?v=503bcbcb';
+import { render, schedule } from './render.js?v=503bcbcb';
+import { h, icon } from './dom.js?v=503bcbcb';
+import { t } from './i18n.js?v=503bcbcb';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js?v=503bcbcb';
+import { switchSpace } from './spaces.js?v=503bcbcb';
+import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js?v=503bcbcb';
+import { hideMenu } from './ui.js?v=503bcbcb';
 
 function clearMarks() {
+  for (const el of document.querySelectorAll('.split-hint')) el.remove();
+  for (const el of document.querySelectorAll('.drop-split')) el.classList.remove('drop-split');
   for (const el of document.querySelectorAll('.drop-before, .drop-after, .drop-end, .drop-on, .drop-into'))
     el.classList.remove('drop-before', 'drop-after', 'drop-top', 'drop-end', 'drop-on', 'drop-into');
 }
@@ -49,6 +52,20 @@ function nestElement(zone, e) {
   return els[dropInto(rectsOf(els), e.clientY)] ?? null;
 }
 
+// 拖一个标签页到另一行中间偏右(右边 42%):两个拼成拆分视图,拖的那个在右边;中间偏左还是变成子标签。
+// 只在一个拖到一个上、两个都不在拆分视图里、在同一个分组里时才有(Chrome 155 以上)
+function splitTarget(zone, e) {
+  if (dragging.kind !== 'tab' || dragging.ids || !canSplit()) return null;
+  const el = nestElement(zone, e);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (e.clientX < r.left + r.width * 0.58) return null;
+  const a = tabs.find((x) => x.id === +el.dataset.id);
+  const b = tabs.find((x) => x.id === +dragging.id);
+  if (!pairable(a) || !pairable(b) || a.id === b.id || a.groupId !== b.groupId) return null;
+  return { el, a, b };
+}
+
 // 展开的文件夹里,最后一项的下半部分 = 放到这个文件夹的末尾。
 // 这个位置和「文件夹后面」在界面上是同一处,不单独判断的话就只能落到文件夹外面。
 // 返回 { folder: 文件夹那一行, last: 最后一项 },不是这种情况返回 null
@@ -81,23 +98,27 @@ function refElement(zone, e) {
   return els[dropBefore(rectsOf(els), e.clientX, e.clientY, zone.classList.contains('grid'))] ?? null;
 }
 
-// 在浏览器的标签栏里把 ids 挪成紧挨着的一串:第一个放到 where 指定的位置,其余依次跟在后面
+// 在浏览器的标签栏里把 ids 挪成紧挨着的一串:第一个放到 where 指定的位置,其余依次跟在后面。
+// 分屏的两个标签页作为一组挪,而且不直接挪它们(会被 Chrome 拆开,见 splits.js 的 moveUnit)
 async function moveGroup(ids, where) {
   const index = async (id) => (await chrome.tabs.get(id)).index;
-  const move = (id, to, from) => (to === from ? null : chrome.tabs.move(id, { index: to }).catch(() => {}));
-  const from = await index(ids[0]);
+  const start = async (unit) => Math.min(...(await Promise.all(unit.map(index))));
+  const at = new Map(tabs.map((t) => [t.id, t.index]));
+  const [first, ...rest] = moveUnits(ids, splitPartners(tabs), (id) => at.get(id) ?? 0);
+  // 往后挪时,挪走的这几个原来占的位置空出来,目标位置要往前让
+  const from = await start(first);
   if (where.before != null) {
     const r = await index(where.before);
-    await move(ids[0], from < r ? r - 1 : r, from);
+    await moveUnit(first, from < r ? r - first.length : r);
   } else if (where.after != null) {
     const a = await index(where.after);
-    await move(ids[0], from < a ? a : a + 1, from);
+    await moveUnit(first, from < a ? a - first.length + 1 : a + 1);
   }
-  let prev = ids[0];
-  for (const id of ids.slice(1)) {
-    const [p, f] = [await index(prev), await index(id)];
-    await move(id, f < p ? p : p + 1, f);
-    prev = id;
+  let prev = first.at(-1);
+  for (const unit of rest) {
+    const [p, f] = [await index(prev), await start(unit)];
+    await moveUnit(unit, f < p ? p - unit.length + 1 : p + 1);
+    prev = unit.at(-1);
   }
   schedule();
 }
@@ -107,6 +128,10 @@ const withSubtrees = (tabIds) => [...new Set(tabIds.flatMap(subtreeIds))];
 
 // 把标签页(连同子标签)拖到 refId 之前:和 refId 同级;refId 为空则放到末尾并成为顶级
 async function dropTab(tabIds, refId) {
+  // 放在分屏右边那个之前 = 插进这一对中间(Chrome 会拆开分屏):改成放在这一对前面
+  const partner = splitPartners(tabs).get(refId);
+  const indexOf = (id) => tabs.find((x) => x.id === id)?.index ?? 0;
+  if (partner != null && indexOf(partner) < indexOf(refId)) refId = partner;
   const moving = withSubtrees(tabIds);
   if (refId != null && moving.includes(refId)) return;
   const rest = listedTabs().filter((t) => !moving.includes(t.id));
@@ -183,7 +208,7 @@ async function performDrop(d, zone, refId, intoId) {
   render();
 }
 
-// 落点所在的区域。拖固定项时,固定区下面的分隔线(「清理」那一行)也算固定区的末尾:
+// 落点所在的区域。拖固定项时,固定区下面的分隔线(「整理」那一行)也算固定区的末尾:
 // 文件夹排在最后时,它下面没有别的位置能表示「放到文件夹外面」。
 // 从下面列表拖上来的标签页不算,免得拖过分隔线就被意外固定
 const dropTarget = (e) =>
@@ -196,7 +221,8 @@ export function bindDrag() {
     if (!el) return;
     hideMenu();
     // 拖的是多选里的一个:选中的标签页一起拖(和顶部标签栏一样,选中 = 浏览器里高亮的标签页)
-    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => x.tab.highlighted).map((x) => String(x.tab.id)) : [];
+    const picked = selectedIds();
+    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => picked.has(x.tab.id)).map((x) => String(x.tab.id)) : [];
     const multi = selected.length > 1 && selected.includes(el.dataset.id);
     setDragging({ kind: el.dataset.kind, id: el.dataset.id, ids: multi ? selected : undefined });
     e.dataTransfer.effectAllowed = 'move';
@@ -232,6 +258,12 @@ export function bindDrag() {
     if (overSelf(target, e)) return;
     const end = folderEnd(target, e);
     if (end) return end.last.classList.add(end.last.dataset.kind ? 'drop-after' : 'drop-into');
+    const split = splitTarget(target, e);
+    if (split) {
+      split.el.classList.add('drop-split');
+      split.el.append(h('span', { class: 'split-hint' }, icon('split'), t('splitDrop')));
+      return;
+    }
     const into = nestElement(target, e);
     const ref = !into && refElement(target, e);
     if (into) into.classList.add('drop-into');
@@ -239,7 +271,7 @@ export function bindDrag() {
     else {
       // 放到末尾:列表在最后一行下面画顶层的插入线,收藏夹网格在最后一个磁贴右边画竖线;区域是空的才高亮整个区域
       const grid = target.classList.contains('grid');
-      const last = [...target.children].filter((el) => el.matches(grid ? '.tile' : '.row[data-kind], .folder-empty') && !isDragged(el)).at(-1);
+      const last = [...target.querySelectorAll(grid ? '.tile' : '.row[data-kind], .folder-empty')].filter((el) => !isDragged(el)).at(-1);
       if (last) last.classList.add(...(grid ? ['drop-after'] : ['drop-after', 'drop-top']));
       else target.classList.add('drop-end');
     }
@@ -260,6 +292,12 @@ export function bindDrag() {
       return;
     }
     if (overSelf(target, e)) return finishDrag();
+    const split = splitTarget(target, e);
+    if (split) {
+      finishDrag();
+      await splitTabs(split.a, split.b);
+      return;
+    }
     const zone = target.dataset.zone;
     const intoId = (folderEnd(target, e)?.folder ?? nestElement(target, e))?.dataset.id;
     const refId = refElement(target, e)?.dataset.id;

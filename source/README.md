@@ -16,7 +16,7 @@
 ## 在线试用是怎么跑起来的
 
 左边的侧边栏就是插件的 `sidepanel.html`(放在 iframe 里),后台 `background.js` 也在一个看不见的 iframe 里跑。
-插件的代码一行没改:`source/build.js` 只在复制出来的 `sidepanel.html` 最前面插了一行 `demo/inject.js`,
+插件的代码没改:`source/build.js` 只在复制出来的 `sidepanel.html` 最前面插了一行 `demo/inject.js`(模块之间的引用会加上版本号,见下面「修改主页文字」),
 它把 `window.chrome` 换成 `demo/sim.js` 模拟的接口(标签页、分组、存储、消息、最近关闭、网页导航……)。
 所以插件的新功能,重新运行一次 `source/build.js` 就会出现在试用里。
 

@@ -1,14 +1,14 @@
 // 固定标签里的文件夹:{ id, folder: true, name, open, noHistory?, items: [项] }。
 // 文件夹只放在空间的固定区顶层,里面只放固定项,不再嵌套。
 
-import { t } from './i18n.js';
-import { isFolder } from './logic.js';
-import { render } from './render.js';
-import { closeItemTab, detachTab } from './items.js';
-import { h } from './dom.js';
-import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js';
-import { createTab, returnBeforeClose } from './tabs.js';
-import { ask, pushUndo, toast } from './ui.js';
+import { t } from './i18n.js?v=503bcbcb';
+import { isFolder } from './logic.js?v=503bcbcb';
+import { render } from './render.js?v=503bcbcb';
+import { closeItemTab, detachTab } from './items.js?v=503bcbcb';
+import { h } from './dom.js?v=503bcbcb';
+import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js?v=503bcbcb';
+import { createTab, returnBeforeClose } from './tabs.js?v=503bcbcb';
+import { ask, pushUndo, toast } from './ui.js?v=503bcbcb';
 
 export function findFolder(id) {
   for (const space of state.spaces) {

@@ -1,14 +1,15 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
-import { t } from './i18n.js';
-import { addressOf, isAway, pinnedItems, toUrl } from './logic.js';
-import { MSG } from './protocol.js';
-import { render, schedule } from './render.js';
+import { t } from './i18n.js?v=503bcbcb';
+import { addressOf, isAway, pinnedItems, toUrl } from './logic.js?v=503bcbcb';
+import { MSG } from './protocol.js?v=503bcbcb';
+import { render, schedule } from './render.js?v=503bcbcb';
 import {
   activeSpace,
   bind,
   findItem,
   itemByTab,
+  refreshTabs,
   save,
   setBind,
   setRenderHeld,
@@ -23,9 +24,9 @@ import {
   uid,
   unbind,
   windowId,
-} from './store.js';
-import { createTab, focusTab, returnBeforeClose } from './tabs.js';
-import { ask, pushUndo, toast } from './ui.js';
+} from './store.js?v=503bcbcb';
+import { createTab, focusTab, returnBeforeClose } from './tabs.js?v=503bcbcb';
+import { ask, pushUndo, toast } from './ui.js?v=503bcbcb';
 
 // 复制一个收藏/固定标签:副本放在它正下方(在文件夹里就还在这个文件夹里)。
 // 原来开着的,副本也用 Chrome 的复制打开(连前进后退记录)并绑上;没开的副本也先不开。
@@ -99,6 +100,8 @@ export async function closeItemTab(item) {
   } finally {
     setRenderHeld(false);
   }
+  // 重画前重新读一遍标签页:手里的列表还是关之前读的,里面还有它,已经解绑了,会被当成普通标签页画出来一下(带着落叶)
+  await refreshTabs();
   render();
 }
 

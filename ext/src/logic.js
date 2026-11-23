@@ -1,6 +1,6 @@
 // 不碰浏览器和页面的纯逻辑,可以直接用 node --test 测。
 
-import { hasPrefix, PREFIX } from './protocol.js';
+import { hasPrefix, PREFIX } from './protocol.js?v=503bcbcb';
 
 // 搜索栏里输入的文字如果是网址,补全成能打开的地址;否则返回 null(当作搜索词)
 export function toUrl(text) {
@@ -15,6 +15,78 @@ export function addressOf(url) {
   if (!/^https?:/i.test(url)) return null;
   const i = url.indexOf('#');
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
+}
+
+// 「按域名整理」时一个地址算哪个站、哪个子域名:{ site, host }。
+// site 是去掉子域名的主域名(mail.google.com 和 docs.google.com 都是 google.com)。没带完整的公共后缀表,
+// 只认 .co.uk、.com.cn 这类常见的两段后缀。IP、localhost 整个算一个站,端口算在 host 里。
+// 不是网页的:chrome://、about: 这类按协议算一个站,扩展的页面各个扩展各算各的
+const SECOND_LEVEL = /^(com|co|net|org|gov|edu|ac|or|ne|go|gob)$/;
+export function domainOf(address) {
+  let url;
+  try {
+    url = new URL(address);
+  } catch {
+    return { site: '', host: '' };
+  }
+  if (!/^https?:$/.test(url.protocol)) {
+    const site = /^(chrome|edge|about):$/.test(url.protocol) ? url.protocol : `${url.protocol}//${url.host}`;
+    return { site, host: url.host };
+  }
+  const name = url.hostname.replace(/\.$/, '').replace(/^www\./, '');
+  const host = url.port ? `${name}:${url.port}` : name;
+  if (name.startsWith('[') || /^\d+(\.\d+){3}$/.test(name)) return { site: name, host };
+  const parts = name.split('.');
+  const keep = parts.at(-1).length === 2 && SECOND_LEVEL.test(parts.at(-2) ?? '') ? 3 : 2;
+  return { site: parts.slice(-keep).join('.'), host };
+}
+
+// 「按域名整理」排好以后的顺序(tabId 数组)。tree 是 buildTree 排出来的列表,partners 同它的。
+// 一个顶级标签页连同子标签是一块,拆分视图的一对也是一块(按左边那个算),整块地挪,块里面不动。
+// 同一个站的排在一起,站里面同一个子域名的再排在一起;都按第一次出现的先后排,不按字母:
+// 原来在上面的还在上面,再整理一次也不会变
+export function domainOrder(tree, partners = new Map()) {
+  const blocks = [];
+  tree.forEach(({ tab, depth }, i) => {
+    const joins = i > 0 && (depth > 0 || partners.get(tab.id) === tree[i - 1].tab.id);
+    if (joins) blocks.at(-1).ids.push(tab.id);
+    else blocks.push({ ...domainOf(tab.url || tab.pendingUrl), ids: [tab.id] });
+  });
+  const sites = new Map();
+  for (const { site, host, ids } of blocks) {
+    if (!sites.has(site)) sites.set(site, new Map());
+    const hosts = sites.get(site);
+    hosts.set(host, [...(hosts.get(host) ?? []), ...ids]);
+  }
+  return [...sites.values()].flatMap((hosts) => [...hosts.values()].flat());
+}
+
+// 「复制成 Markdown」:把标签页写成「- [标题](地址)」的列表,方便贴给 AI。
+// links: [{ title, url, depth? }],depth 是缩进几层(子标签页、文件夹里的项);只有 title 没有 url 的是文件夹那一行,写成纯文字。
+// 新标签页、空白页没内容,跳过;文件夹里一个都不剩就整个不写。heading 给了就在最前面加一行标题。返回 { text, count }(count 是写了几个链接)
+const BLANK_PAGE = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp|^about:blank/i;
+// 标题里的方括号和反斜杠转义,换行压成空格;地址里的空格、括号、尖括号转成 %xx,免得把链接截断
+const mdText = (s) => s.replace(/\s+/g, ' ').trim().replace(/[\\[\]]/g, (c) => '\\' + c);
+const mdUrl = (s) => s.replace(/[\s()<>]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2, '0'));
+export function toMarkdown(links, heading) {
+  const lines = [];
+  let count = 0;
+  let group = null;
+  for (const { title, url, depth = 0 } of links) {
+    const pad = '  '.repeat(depth);
+    if (!url) {
+      group = { line: `${pad}- ${mdText(title || '')}`, depth };
+      continue;
+    }
+    if (BLANK_PAGE.test(url)) continue;
+    // 文件夹那一行等到它里面有第一个链接时才写
+    if (group && depth > group.depth) lines.push(group.line);
+    group = null;
+    lines.push(`${pad}- [${mdText(title || '') || mdText(url)}](${mdUrl(url)})`);
+    count++;
+  }
+  if (!count) return { text: '', count };
+  return { text: (heading ? `## ${mdText(heading)}\n\n` : '') + lines.join('\n'), count };
 }
 
 // 空间的固定区里可以有文件夹:{ id, folder: true, name, open, noHistory?, items: [项] },只在顶层,不嵌套
@@ -67,10 +139,24 @@ export function favColumns(count, width, { min = 54, gap = 7 } = {}) {
   return rows ? Math.ceil(count / rows) : 1;
 }
 
+// Chrome 的分屏(Split View):两个标签页并排显示在一个窗口里,它们的 splitViewId 相同;不在分屏里的是 -1,旧版 Chrome 没有这个字段。
+// 返回 tabId -> 和它分屏的 tabId(两个方向都有);只算两个都在 tabs 里的
+export const SPLIT_NONE = -1;
+export function splitPartners(tabs) {
+  const by = new Map();
+  for (const t of tabs) if (t.splitViewId > SPLIT_NONE) by.set(t.splitViewId, [...(by.get(t.splitViewId) ?? []), t.id]);
+  const out = new Map();
+  for (const [a, b, more] of by.values()) if (b != null && more == null) out.set(a, b).set(b, a);
+  return out;
+}
+
 // 把标签页按树形排好:[{ tab, depth }],最多两级(depth 0 / 1)。父标签页不在列表里的子标签按顶级显示。
-// listed 是要显示的标签页(带 id),parentOf 是 tabId -> 父 tabId 的 Map
-export function buildTree(listed, parentOf) {
+// listed 是要显示的标签页(带 id),parentOf 是 tabId -> 父 tabId 的 Map。
+// partners(见 splitPartners)给了的话,分屏的两个标签页总是挨着,按标签栏里的左右排,在先遇到的那个的位置和层级上;
+// 两个各自的子标签跟在这一对后面。Chrome 一挪分屏里的标签页就会拆开分屏,所以侧边栏不能把它俩分开排
+export function buildTree(listed, parentOf, partners = new Map()) {
   const ids = new Set(listed.map((t) => t.id));
+  const byId = new Map(listed.map((t) => [t.id, t]));
   const kids = new Map();
   const roots = [];
   for (const t of listed) {
@@ -83,9 +169,13 @@ export function buildTree(listed, parentOf) {
   const seen = new Set();
   const walk = (t, depth) => {
     if (seen.has(t.id)) return;
-    seen.add(t.id);
-    out.push({ tab: t, depth });
-    for (const k of kids.get(t.id) ?? []) walk(k, 1);
+    const p = byId.get(partners.get(t.id));
+    const unit = p && !seen.has(p.id) ? [t, p].sort((a, b) => a.index - b.index) : [t];
+    for (const x of unit) {
+      seen.add(x.id);
+      out.push({ tab: x, depth });
+    }
+    for (const x of unit) for (const k of kids.get(x.id) ?? []) walk(k, 1);
   };
   roots.forEach((t) => walk(t, 0));
   // 父子关系万一成环,剩下的按顶级兜底
@@ -131,17 +221,26 @@ export function groupColor(hex) {
 
 // 顶部标签栏应有的样子:[{ spaceId, ids }],从左到右。spaceId 为 null 的一块是收藏(不进分组)。
 // 顺序和侧边栏一致:收藏;然后每个空间按空间顺序,先固定标签,再列表(子标签紧跟父标签)。
-// tabs 是本窗口未被浏览器原生固定的标签页(按 index 排好);不属于任何现有空间的归入当前空间
+// tabs 是本窗口未被浏览器原生固定的标签页(按 index 排好);不属于任何现有空间的归入当前空间。
+// 分屏的两个标签页总是挨着、保持标签栏里的左右,排在先排到的那个的位置上(另一个是收藏或固定项时也一样)
 export function buildLayout(state, session, tabs) {
   const spaceIds = new Set((state?.spaces ?? []).map((s) => s.id));
   const spaceOf = tabSpaces(state, session);
   const ids = new Set(tabs.map((t) => t.id));
+  const indexOf = new Map(tabs.map((t) => [t.id, t.index]));
+  const partners = splitPartners(tabs);
   const boundTab = (item) => {
     const id = session[`${PREFIX.bind}:${item.id}`];
     return ids.has(id) ? id : null;
   };
   const used = new Set();
-  const take = (id) => (id == null || used.has(id) ? [] : (used.add(id), [id]));
+  const take = (id) => {
+    if (id == null || used.has(id)) return [];
+    const p = partners.get(id);
+    const unit = p != null && !used.has(p) ? [id, p].sort((a, b) => indexOf.get(a) - indexOf.get(b)) : [id];
+    unit.forEach((x) => used.add(x));
+    return unit;
+  };
   const parents = new Map();
   for (const [k, v] of Object.entries(session)) if (hasPrefix(k, PREFIX.parent)) parents.set(+k.slice(2), v);
 
@@ -155,7 +254,7 @@ export function buildLayout(state, session, tabs) {
     const listed = tabs.filter((t) => !used.has(t.id) && !pinned.has(t.id) && home(t) === space.id);
     chunks.push({
       spaceId: space.id,
-      ids: [...pinnedItems(space).flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents).flatMap(({ tab }) => take(tab.id))],
+      ids: [...pinnedItems(space).flatMap((item) => take(boundTab(item))), ...buildTree(listed, parents, partners).flatMap(({ tab }) => take(tab.id))],
     });
   }
   return chunks.filter((c) => c.ids.length);
@@ -192,14 +291,17 @@ export function nextTrail(rec, tabId, now, prevAlive = true) {
   if (prev != null && prev !== tabId && prevAlive) trail = [{ id: prev, at: now }, ...trail.filter((x) => x.id !== prev)];
   return { active: tabId, trail: trail.slice(0, TRAIL_SIZE) };
 }
-// 落叶:很久没进去过的标签页,离上次离开先空出一天(LEAF_GRACE 小时),之后每再过 N 小时落一片叶子,最多 LEAF_MAX 片。
+// 落叶:很久没进去过的标签页,离上次离开满一天(LEAF_GRACE 小时)落第一片,之后每再过 N 小时多落一片,最多 LEAF_MAX 片。
 // N 在设置里选(LEAF_CHOICES 之一,0 = 不落),没设置过是 LEAF_HOURS
 export const LEAF_MAX = 12;
 export const LEAF_GRACE = 24;
 export const LEAF_HOURS = 12;
 export const LEAF_CHOICES = [6, 8, 12];
-export const leafCount = (since, now, hours) =>
-  hours > 0 && since ? Math.min(LEAF_MAX, Math.max(0, Math.floor((now - since - LEAF_GRACE * 3600000) / (hours * 3600000)))) : 0;
+export function leafCount(since, now, hours) {
+  if (!(hours > 0) || !since) return 0;
+  const past = now - since - LEAF_GRACE * 3600000;
+  return past < 0 ? 0 : Math.min(LEAF_MAX, 1 + Math.floor(past / (hours * 3600000)));
+}
 
 // 足迹还剩多少(1 = 刚离开,0 = 到 10 分钟):竖条的长度和深浅都按它缩小、变淡
 export const trailLeft = (at, now) => Math.min(1, Math.max(0, 1 - (now - at) / TRAIL_TTL));

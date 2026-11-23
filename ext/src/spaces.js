@@ -1,11 +1,11 @@
 // 对空间的操作:切换、新建、编辑、删除、开关「不记录历史」。
 
-import { t } from './i18n.js';
-import { pinnedItems } from './logic.js';
-import { KEY } from './protocol.js';
-import { render, schedule } from './render.js';
-import { applySession, bind, COLORS, itemByTab, normalize, save, state, tabs, tabSpace, uid } from './store.js';
-import { ask, toast } from './ui.js';
+import { t } from './i18n.js?v=503bcbcb';
+import { pinnedItems } from './logic.js?v=503bcbcb';
+import { KEY } from './protocol.js?v=503bcbcb';
+import { render, schedule } from './render.js?v=503bcbcb';
+import { applySession, bind, COLORS, itemByTab, normalize, save, state, tabs, tabSpace, uid } from './store.js?v=503bcbcb';
+import { ask, toast } from './ui.js?v=503bcbcb';
 
 // focusTabId:切过去后要看的标签页(比如刚移过去的那个);不给就切到该空间里最近用过的
 export async function switchSpace(id, focusTabId) {

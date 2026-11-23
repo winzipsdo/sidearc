@@ -1,21 +1,22 @@
 // 把页面和浏览器的事件接到各个操作上。拖拽的事件在 drag.js。
 
-import { $, FALLBACK_ICON } from './dom.js';
-import { bindDrag } from './drag.js';
-import { bindKeys } from './keys.js';
-import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
-import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
-import { moveToFolder, toggleFolder } from './folders.js';
-import { applyStaticText, setLangPref, t } from './i18n.js';
-import { MSG } from './protocol.js';
-import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js';
-import { bindLeaves, refreshLeaves } from './leaves.js';
-import { revealTab } from './locate.js';
-import { deleteHistory, expandHistory } from './history.js';
-import { switchSpace } from './spaces.js';
-import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabs, visibleTabs, windowId } from './store.js';
-import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
-import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
+import { $, FALLBACK_ICON } from './dom.js?v=503bcbcb';
+import { bindDrag } from './drag.js?v=503bcbcb';
+import { bindKeys } from './keys.js?v=503bcbcb';
+import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js?v=503bcbcb';
+import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js?v=503bcbcb';
+import { moveToFolder, toggleFolder } from './folders.js?v=503bcbcb';
+import { applyStaticText, setLangPref, t } from './i18n.js?v=503bcbcb';
+import { splitPartners } from './logic.js?v=503bcbcb';
+import { MSG } from './protocol.js?v=503bcbcb';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js?v=503bcbcb';
+import { bindLeaves, refreshLeaves } from './leaves.js?v=503bcbcb';
+import { revealTab } from './locate.js?v=503bcbcb';
+import { deleteHistory, expandHistory } from './history.js?v=503bcbcb';
+import { switchSpace } from './spaces.js?v=503bcbcb';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js?v=503bcbcb';
+import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js?v=503bcbcb';
+import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js?v=503bcbcb';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 
@@ -32,9 +33,11 @@ function selectRange(tab) {
   chrome.tabs.highlight({ windowId, tabs: [anchor, ...range].map((x) => x.index) }).catch(() => {});
 }
 
-// 取消多选:只留当前标签页
+// 取消多选:只留当前标签页(和它分屏的那个 Chrome 不让取消高亮,本来也不算选中,跳过)
 function clearSelection() {
-  for (const tab of tabs) if (tab.highlighted && !tab.active) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
+  const active = tabs.find((t) => t.active);
+  const partner = active && splitPartners(tabs).get(active.id);
+  for (const tab of tabs) if (tab.highlighted && !tab.active && tab.id !== partner) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
 }
 
 // 列表里的行和磁贴:点击、中键
@@ -139,7 +142,7 @@ function bindMenus(scroll) {
       if (!tab) return;
       // 右键的是多选里的一项:菜单作用于选中的全部(见 menus.js 的 tabMenu),选中的几行都标出来
       const many = tab.highlighted && document.querySelectorAll('#tabs .row.selected').length > 1;
-      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el]);
+      setMenuTarget(many ? [...document.querySelectorAll('#tabs .row.selected')] : [el], el);
       tabMenu(e, tab);
     } else {
       const hit = findItem(el.dataset.id);
@@ -163,7 +166,7 @@ function bindMenus(scroll) {
   document.addEventListener('visibilitychange', () => document.hidden && hideMenu());
 }
 
-// 空间圆点、空间菜单按钮、新标签页、清理、Arc 文件选择
+// 空间圆点、空间菜单按钮、新标签页、按域名整理、Arc 文件选择
 function bindControls() {
   $('#spaces').addEventListener('click', (e) => {
     const dot = e.target.closest('[data-space]');
@@ -189,7 +192,8 @@ function bindControls() {
     save();
     render();
   });
-  $('#clear').addEventListener('click', clearTabs);
+  // 双击只算第一下:第二下会提示「已经排好」,把带撤销的提示条顶掉(键盘回车时 detail 是 0)
+  $('#tidy').addEventListener('click', (e) => e.detail < 2 && tidyTabs());
 }
 
 function bindSearch() {
@@ -280,6 +284,8 @@ function bindBrowser() {
   chrome.tabs.onReplaced.addListener((added, removed) => (replaceTabId(added, removed), schedule()));
   chrome.tabs.onActivated.addListener((info) => {
     if (info.windowId !== windowId) return;
+    // 点进去了:撒上去的落叶也被吹走(后台也会删存储里的,这里先删,免得这次重画还留着)
+    tabScattered.delete(info.tabId);
     followSpace(info.tabId);
     schedule();
   });

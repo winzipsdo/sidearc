@@ -1,12 +1,12 @@
 // 对标签页的操作:打开、关闭、撤销关闭、别名、移到别的空间、搜索栏回车。
 
-import { $ } from './dom.js';
-import { t } from './i18n.js';
-import { canDiscard, isUnloaded, toUrl } from './logic.js';
-import { KEY, MSG } from './protocol.js';
-import { markSlept, render, schedule } from './render.js';
-import { bind, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
-import { ask, closeSearch, pushUndo, toast } from './ui.js';
+import { $ } from './dom.js?v=503bcbcb';
+import { t } from './i18n.js?v=503bcbcb';
+import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js?v=503bcbcb';
+import { KEY, MSG } from './protocol.js?v=503bcbcb';
+import { markSlept, render, schedule } from './render.js?v=503bcbcb';
+import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabReplacedHooks, tabSpace, tabs, trail, windowId } from './store.js?v=503bcbcb';
+import { ask, closeSearch, inTurn, pushUndo, toast } from './ui.js?v=503bcbcb';
 
 // 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
 function shownTabIds() {
@@ -51,9 +51,11 @@ function switchTarget(tab, skip) {
 
 // 休眠:让 Chrome 回收这些标签页(页面从内存里卸掉,标签还在,点回去会重新加载)。
 // Chrome 不能回收当前标签页:withActive 为真(用户点的就是它、多选里包括它、休眠整个文件夹)时先切走再休眠它;
-// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去
+// 否则(休眠整个空间)跳过当前标签页,不然就得切到别的空间去。
+// 开着保持唤醒的,手动休眠时顺便取消,免得一行睡着了还挂着锁
 export async function discardTabs(list, { withActive = false } = {}) {
   let n = 0;
+  let unkept = 0;
   const active = withActive && list.find((x) => x.active && !isUnloaded(x));
   // 动效从点下去这一刻就开始(记下这一行现在的底色和阴影,从这里过渡到休眠的样子),
   // 不然切走、换编号、重画这几步会让整行先跳成别的样子再跳回来
@@ -69,15 +71,69 @@ export async function discardTabs(list, { withActive = false } = {}) {
   setRenderHeld(true);
   try {
     for (const tab of list.filter(canDiscard)) {
+      // 先在原来的编号上取消,Chrome 回收换编号时会带过去
+      const keep = tab.autoDiscardable === false;
+      if (keep) await chrome.tabs.update(tab.id, { autoDiscardable: true }).catch(() => {});
       const done = await chrome.tabs.discard(tab.id).catch(() => null);
-      if (!done) continue;
+      if (!done) {
+        if (keep) await chrome.tabs.update(tab.id, { autoDiscardable: false }).catch(() => {});
+        continue;
+      }
       n++;
+      if (keep) unkept++;
       if (done.id !== tab.id) replaceTabId(done.id, tab.id);
     }
   } finally {
     setRenderHeld(false);
   }
-  toast(n ? t('slept', { n }) : t('nothingToSleep'));
+  toast(n ? t(unkept ? 'sleptUnkept' : 'slept', { n }) : t('nothingToSleep'));
+  schedule();
+}
+
+// 分屏(Chrome 的 Split View):扩展能分屏、取消分屏要 Chrome 155 以上,更早的版本菜单里不显示这两项
+export const canSplit = () => typeof chrome.tabs.createSplit === 'function' && typeof chrome.tabs.unsplit === 'function';
+export const inSplit = (tab) => tab?.splitViewId > SPLIT_NONE;
+// 能拼进拆分视图的:不在分屏里、不是 Chrome 固定的、也不是收藏或固定标签。
+// 收藏和固定标签在侧边栏里有自己的位置,和列表里的标签页拼成一对后两边对不上
+export const pairable = (tab) => !!tab && !inSplit(tab) && !tab.pinned && !itemByTab().has(tab.id);
+
+// 把两个标签页分屏并排显示,a 在左。Chrome 只让挨着、同一个分组的标签页分屏:
+// b 不挨着就先挪到 a 右边(普通标签页可以直接挪),层级也跟 a 一样;分好之后切过去,看得到分屏
+export async function splitTabs(a, b) {
+  await setTabParent(b.id, listedParent(a.id) ?? null);
+  const [x, y] = await Promise.all([chrome.tabs.get(a.id), chrome.tabs.get(b.id)]);
+  if (Math.abs(x.index - y.index) !== 1) await chrome.tabs.move(b.id, { index: y.index < x.index ? x.index : x.index + 1 }).catch(() => {});
+  const [l, r] = (await Promise.all([chrome.tabs.get(a.id), chrome.tabs.get(b.id)])).sort((p, q) => p.index - q.index);
+  const ok = await chrome.tabs.createSplit([l.id, r.id]).then(
+    () => true,
+    () => false
+  );
+  if (!ok) toast(t('splitFailed'));
+  else if (!a.active && !b.active) await chrome.tabs.update(a.id, { active: true }).catch(() => {});
+  schedule();
+}
+
+// 取消分屏:两个标签页都留在原地,变回普通标签页。list 里可以有好几对,也可以混着不在分屏里的
+export async function unsplitTabs(list) {
+  for (const id of new Set(list.filter(inSplit).map((x) => x.splitViewId))) await chrome.tabs.unsplit(id).catch(() => {});
+  schedule();
+}
+
+// 反转视图(交换分屏的两边):Chrome 没有直接换边的接口,挪分屏里的标签页又会把分屏拆开,
+// 所以先取消分屏,把右边那个挪到左边,再重新拼起来;原来在看的那个照样在看
+export async function reverseSplit(tab) {
+  const pair = (await chrome.tabs.query({ windowId: tab.windowId })).filter((x) => x.splitViewId === tab.splitViewId);
+  if (pair.length !== 2) return;
+  const [l, r] = pair.sort((p, q) => p.index - q.index);
+  const active = pair.find((x) => x.active);
+  await chrome.tabs.unsplit(tab.splitViewId).catch(() => {});
+  await chrome.tabs.move(r.id, { index: l.index }).catch(() => {});
+  const ok = await chrome.tabs.createSplit([r.id, l.id]).then(
+    () => true,
+    () => false
+  );
+  if (!ok) toast(t('reverseFailed'));
+  if (active) await chrome.tabs.update(active.id, { active: true }).catch(() => {});
   schedule();
 }
 
@@ -118,9 +174,41 @@ export async function moveTabToSpace(tabId, spaceId) {
   render();
 }
 
-export function clearTabs() {
-  const doomed = listedTabs().filter((t) => !t.active);
-  closeWithUndo(doomed, t('cleared', { n: doomed.length }));
+// 换过编号的标签页(休眠、撤销关闭):旧编号 -> 新编号。撤销整理时按它找到现在的标签页
+const renumbered = new Map();
+tabReplacedHooks.push((added, removed) => renumbered.set(removed, added));
+const currentId = (id) => (renumbered.has(id) ? currentId(renumbered.get(id)) : id);
+
+// 让后台重排一个空间(见 groups.js 的 arrangeSpace)。排好之前先不重画,免得看着一行行地跳
+async function arrange(spaceId, order) {
+  setRenderHeld(true);
+  try {
+    return await chrome.runtime.sendMessage({ [MSG.arrange]: { windowId, spaceId, order } });
+  } catch {
+    return null;
+  } finally {
+    setRenderHeld(false);
+    schedule();
+  }
+}
+
+// 按域名整理当前空间。连点只算一次:第二次会提示「已经排好」,把带撤销的提示条顶掉
+let tidying = false;
+export async function tidyTabs() {
+  if (tidying) return;
+  tidying = true;
+  try {
+    const spaceId = state.activeSpaceId;
+    await inTurn(async () => {
+      const res = await arrange(spaceId);
+      if (!res) toast(t('tidyFailed'));
+      else if (!res.before) toast(t('alreadyTidy'));
+      // 撤销时可能已经切到了别的空间,编号也可能换过
+      else pushUndo(t('tidied'), () => arrange(spaceId, res.before.map((x) => ({ ...x, id: currentId(x.id) }))));
+    });
+  } finally {
+    tidying = false;
+  }
 }
 
 // 关闭一个标签页;它的子标签会跟着关,所以一起记下来以便撤销
@@ -158,6 +246,7 @@ async function reopenTabs(saved, orphans, spaceId) {
     tab ??= await createTab({ url: s.url, windowId, index: s.index, active: false }).catch(() => null);
     if (!tab) continue;
     idMap.set(s.id, tab.id);
+    if (tab.id !== s.id) renumbered.set(s.id, tab.id);
     if (s.active) focus = tab.id;
   }
   // 放回原来的位置(从前往后依次归位)

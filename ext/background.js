@@ -1,8 +1,8 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, tabSpaces } from './src/logic.js';
-import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX } from './src/protocol.js';
-import { startGroupSync } from './src/groups.js';
+import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js?v=503bcbcb';
+import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX, TAB_KEYS } from './src/protocol.js?v=503bcbcb';
+import { arrangeSpace, startGroupSync } from './src/groups.js?v=503bcbcb';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
@@ -37,7 +37,7 @@ chrome.tabs.onReplaced.addListener((addedId, removedId) =>
     const all = await chrome.storage.session.get(null);
     const set = {};
     const remove = [];
-    for (const key of [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen]) {
+    for (const key of TAB_KEYS) {
       if (!(key(removedId) in all)) continue;
       set[key(addedId)] = all[key(removedId)];
       remove.push(key(removedId));
@@ -69,7 +69,7 @@ chrome.tabs.onUpdated.addListener((tabId, info) => {
 chrome.tabs.onRemoved.addListener(async (tabId, info) => {
   const all = await chrome.storage.session.get(null);
   // 它自己的数据,加上指向它的:绑定到它的固定项、挂在它下面的子标签
-  const own = [KEY.space(tabId), KEY.alias(tabId), KEY.parent(tabId), KEY.fresh(tabId), KEY.slept(tabId), KEY.seen(tabId)];
+  const own = TAB_KEYS.map((key) => key(tabId));
   const keys = Object.keys(all).filter((k) => own.includes(k) || ((hasPrefix(k, PREFIX.bind) || hasPrefix(k, PREFIX.parent)) && all[k] === tabId));
   const children = keys.filter((k) => hasPrefix(k, PREFIX.parent) && all[k] === tabId).map((k) => +k.slice(2));
   // 绑定在收藏/固定项上的标签页不在列表里,它的子标签在列表里是单独显示的,看不出和它是一起的:
@@ -174,6 +174,7 @@ async function restoreStep() {
     if (asleep && (e.z ?? r.time)) set[KEY.slept(tab.id)] = e.z ?? r.time;
     // 上次离开的时间(落叶从这时算起):重启后 Chrome 的 lastAccessed 不一定靠得住,接着用原来记的
     if (e.v) set[KEY.seen(tab.id)] = e.v;
+    if (e.l) set[KEY.scattered(tab.id)] = e.l;
   }
   // 父子关系要等两头都对上
   r.tabs.forEach((e, pos) => {
@@ -210,6 +211,7 @@ async function saveSnapshot() {
       b: binds.get(t.id),
       z: all[KEY.slept(t.id)],
       v: all[KEY.seen(t.id)],
+      l: all[KEY.scattered(t.id)],
     })),
   };
   await chrome.storage.local.set({ snapshot });
@@ -273,6 +275,8 @@ async function dedupe(nav, auto) {
   if (first) await chrome.storage.session.set({ [NEW(nav.tabId)]: Date.now() });
   const tab = await chrome.tabs.get(nav.tabId).catch(() => null);
   if (!tab) return;
+  // 分屏里新开的(比如「在分屏中打开链接」)是用户有意并排看的:不关掉,也不收进收藏/固定项
+  if (tab.splitViewId > SPLIT_NONE) return chrome.storage.session.remove(NEW(nav.tabId));
   // 空间是隔离的:只和同一个空间里的标签页、固定项比,外加所有空间共用的收藏夹。
   // 还没分到空间的(侧边栏没开着)按当前空间算
   const [{ state }, all] = await Promise.all([chrome.storage.local.get('state'), chrome.storage.session.get(null)]);
@@ -315,7 +319,11 @@ chrome.webNavigation.onCommitted.addListener((nav) => serial(() => dedupe(nav, n
 chrome.webNavigation.onHistoryStateUpdated.addListener((nav) => serial(() => dedupe(nav, true)));
 
 // 侧边栏的请求:keepTab 不查重这个标签页;openDup 撤销了查重,照原样再开一份
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  if (msg?.[MSG.arrange]) {
+    serial(() => arrangeSpace(msg[MSG.arrange])).then(reply, (e) => (console.error(e), reply(null)));
+    return true; // 排完了才回复
+  }
   if (msg?.[MSG.keepTab] != null) keep(msg[MSG.keepTab]);
   if (msg?.[MSG.openDup]) {
     const { url, windowId, active } = msg[MSG.openDup];
@@ -344,6 +352,8 @@ chrome.tabs.onActivated.addListener(({ tabId, windowId }) =>
     // 同时记下离开原来那个标签页的时间,侧边栏的落叶从这时算起
     const left = prevAlive && rec?.active != null && rec.active !== tabId ? { [KEY.seen(rec.active)]: now } : {};
     await chrome.storage.session.set({ [key]: nextTrail(rec, tabId, now, prevAlive), ...left });
+    // 点进这个标签页:之前撒上去的落叶和按时间落的一起被吹走
+    await chrome.storage.session.remove(KEY.scattered(tabId));
   })
 );
 // 关掉的标签页从足迹里去掉;关掉的窗口整条删掉

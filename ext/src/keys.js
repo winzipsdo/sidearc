@@ -2,11 +2,11 @@
 // 选中框的样子参考 Switch:蓝青色的粗边框来回呼吸,移到新的项上轻轻一弹;往走不过去的方向按,选中的项朝那边晃一下。
 // 鼠标一动就收起选中框;重画后按 kind + id 找回原来的项,找不到(比如刚关掉)就落在同一位置附近的项上。
 
-import { $ } from './dom.js';
-import { t } from './i18n.js';
-import { visibleTabs } from './store.js';
-import { closeWithUndo } from './tabs.js';
-import { hideMenu, openSearch } from './ui.js';
+import { $ } from './dom.js?v=503bcbcb';
+import { t } from './i18n.js?v=503bcbcb';
+import { selectedIds, visibleTabs } from './store.js?v=503bcbcb';
+import { closeWithUndo } from './tabs.js?v=503bcbcb';
+import { hideMenu, openSearch } from './ui.js?v=503bcbcb';
 
 let cursor = null; // { kind, id, index }
 
@@ -139,7 +139,8 @@ export function bindKeys() {
     // 多选了几个标签页(Shift/⌘ 点击):Delete 把选中的一起关掉,和右键菜单里的「关闭」一样可以撤销。
     // 键盘选中框在别的项上时还是只关那一项
     if (e.key === 'Delete' || e.key === 'Backspace') {
-      const selected = visibleTabs().map((x) => x.tab).filter((x) => x.highlighted);
+      const picked = selectedIds();
+      const selected = visibleTabs().map((x) => x.tab).filter((x) => picked.has(x.id));
       if (selected.length > 1 && (!el || selected.some((x) => el.dataset.kind === 'tab' && +el.dataset.id === x.id))) {
         e.preventDefault();
         return closeWithUndo(selected, t('closedTabs', { n: selected.length }));

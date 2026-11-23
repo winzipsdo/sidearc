@@ -1,9 +1,9 @@
 // 侧边栏的全部状态,以及只读写状态、不碰界面的函数。
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
-import { t } from './i18n.js';
-import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, TRAIL_SHOW } from './logic.js';
-import { KEY, PREFIX } from './protocol.js';
+import { t } from './i18n.js?v=503bcbcb';
+import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js?v=503bcbcb';
+import { KEY, PREFIX } from './protocol.js?v=503bcbcb';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
 export const uid = () => crypto.randomUUID().slice(0, 8);
@@ -19,7 +19,11 @@ export const tabParent = new Map();
 export const tabSlept = new Map();
 // 上次离开(或扫干净落叶)的时间:tabId -> 毫秒。没有记录的(装扩展之前就开着的)用 Chrome 的 lastAccessed
 export const tabSeen = new Map();
-const SESSION_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.bind]: bind, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen };
+// 右键撒上去的落叶片数:tabId -> 片数
+export const tabScattered = new Map();
+// 按 tabId 记的那几张表(都在 protocol.js 的 TAB_KEYS 里):标签页换编号时跟着挪,见 replaceTabId
+export const TAB_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen, [PREFIX.scattered]: tabScattered };
+const SESSION_MAPS = { ...TAB_MAPS, [PREFIX.bind]: bind };
 
 export const tabs = [];
 export let windowId;
@@ -105,6 +109,14 @@ export function setTabSeen(tabId, at) {
   tabSeen.set(tabId, at);
   return chrome.storage.session.set({ [KEY.seen(tabId)]: at });
 }
+export function setTabScattered(tabId, n) {
+  if (!n) {
+    tabScattered.delete(tabId);
+    return chrome.storage.session.remove(KEY.scattered(tabId));
+  }
+  tabScattered.set(tabId, n);
+  return chrome.storage.session.set({ [KEY.scattered(tabId)]: n });
+}
 export function setBind(itemId, tabId) {
   bind.set(itemId, tabId);
   return chrome.storage.session.set({ [KEY.bind(itemId)]: tabId });
@@ -154,8 +166,8 @@ export function listedTabs() {
   return tabs.filter((t) => !byTab.has(t.id) && tabSpace.get(t.id) === sid);
 }
 
-// 当前空间的标签页按树形排好:[{ tab, depth }]
-export const treeTabs = () => buildTree(listedTabs(), tabParent);
+// 当前空间的标签页按树形排好:[{ tab, depth }]。分屏的两个挨着(见 logic.js 的 buildTree)
+export const treeTabs = () => buildTree(listedTabs(), tabParent, splitPartners(tabs));
 
 // 实际显示的行:搜索时平铺,只留匹配项
 export function visibleTabs() {
@@ -170,13 +182,28 @@ export function listedParent(tabId) {
   return p != null && listedTabs().some((t) => t.id === p) ? p : null;
 }
 
+// 多选了的标签页 id:浏览器里高亮的那些。当前标签页在分屏里时,Chrome 会把和它分屏的那个也高亮(而且取消不掉),
+// 只高亮了这一对时不算多选;另外又选了别的,这一对都算选中
+export function selectedIds() {
+  const lit = tabs.filter((t) => t.highlighted).map((t) => t.id);
+  const active = tabs.find((t) => t.active);
+  const partner = active && splitPartners(tabs).get(active.id);
+  return new Set(lit.length === 2 && lit.includes(active.id) && lit.includes(partner) ? [active.id] : lit);
+}
+
 // tabId 及其所有后代,按树形顺序
+// 分屏的两个标签页算一体:挪一个就带上另一个(和另一个的子标签),拖动、移到别的空间都不会把它们分开
 export function subtreeIds(tabId) {
   const tree = treeTabs();
-  const i = tree.findIndex((x) => x.tab.id === tabId);
+  const partners = splitPartners(tabs);
+  let i = tree.findIndex((x) => x.tab.id === tabId);
   if (i < 0) return [tabId];
-  const out = [tabId];
-  for (let j = i + 1; j < tree.length && tree[j].depth > tree[i].depth; j++) out.push(tree[j].tab.id);
+  // 从这一对的左边那个开始(树里一对总是挨着,见 buildTree)
+  if (i > 0 && partners.get(tree[i].tab.id) === tree[i - 1].tab.id) i--;
+  const out = [tree[i].tab.id];
+  let j = i + 1;
+  if (j < tree.length && partners.get(tree[i].tab.id) === tree[j].tab.id) out.push(tree[j++].tab.id);
+  for (; j < tree.length && tree[j].depth > tree[i].depth; j++) out.push(tree[j].tab.id);
   return out;
 }
 
@@ -186,7 +213,7 @@ export function subtreeIds(tabId) {
 export const tabReplacedHooks = [];
 
 export function replaceTabId(added, removed) {
-  for (const map of [tabSpace, tabAlias, tabParent, tabSlept, tabSeen]) {
+  for (const map of Object.values(TAB_MAPS)) {
     if (map.has(removed)) map.set(added, map.get(removed));
     map.delete(removed);
   }

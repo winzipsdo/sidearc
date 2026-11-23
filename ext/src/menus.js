@@ -1,16 +1,17 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
-import { canDiscard, durationParts, isAway, isUnloaded, LEAF_CHOICES, pinnedItems, TRAIL_SIZE } from './logic.js';
-import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
-import { render } from './render.js';
-import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, leafHours, listedParent, listedTabs, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
-import { closeTab, closeWithUndo, discardTabs, editTabAlias, moveTabToSpace, toggleAutoDiscard } from './tabs.js';
-import { $, faviconFor, h, icon } from './dom.js';
-import { formatDuration, LANGS, langPref, setLangPref, t } from './i18n.js';
-import { lastSessionCount, restoreLastSession } from './restore.js';
-import { copyText, showMenu } from './ui.js';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js?v=503bcbcb';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=503bcbcb';
+import { canScatter, scatterLeaves } from './leaves.js?v=503bcbcb';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=503bcbcb';
+import { render } from './render.js?v=503bcbcb';
+import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=503bcbcb';
+import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=503bcbcb';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=503bcbcb';
+import { $, faviconFor, h, icon } from './dom.js?v=503bcbcb';
+import { formatDuration, LANGS, langPref, t } from './i18n.js?v=503bcbcb';
+import { lastSessionCount, restoreLastSession } from './restore.js?v=503bcbcb';
+import { copyText, showMenu } from './ui.js?v=503bcbcb';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {
@@ -29,6 +30,13 @@ function memoryItems(tab) {
   ];
 }
 
+// 撒落叶(只有下面列表里的标签页落叶,收藏和固定标签没有):关了落叶时不显示;都落满了置灰
+function scatterItem(list) {
+  if (!leafHours) return null;
+  const full = !list.some(canScatter);
+  return { icon: 'leaf', label: t('scatterLeaves'), disabled: full, title: full ? t('leavesFullTip') : null, run: () => scatterLeaves(list) };
+}
+
 // 硬性重新加载:不走缓存,整页重新从服务器取,和 Ctrl/⌘+Shift+R 一样(菜单里不标快捷键,免得菜单变宽)。没开着的项不显示
 function hardReloadItem(list) {
   if (!list.length) return null;
@@ -39,6 +47,49 @@ function hardReloadItem(list) {
   };
 }
 
+// 复制成 Markdown:「- [标题](地址)」一行一个,方便贴给 AI。用网页自己的标题,不用别名(别名是给自己看的,AI 看网页标题更明白)。
+// 一个能复制的都没有(只有新标签页)时置灰
+function markdownItem(links, heading) {
+  const { text, count } = toMarkdown(links, heading);
+  return { icon: 'markdown', label: t('copyMarkdown'), disabled: !count, title: count ? null : t('nothingToCopy'), run: () => copyText(text, t('copiedMarkdown', { n: count })) };
+}
+
+// 一个空间的全部标签页,按侧边栏里的顺序:先固定区(文件夹写成一行,里面的项缩进;没开着的项用存下的地址),再下面的列表(子标签页缩进)。
+// 收藏所有空间共用,不算在哪个空间里
+function spaceLinks(space) {
+  const byTab = itemByTab();
+  const page = (item, depth) => {
+    const tab = tabs.find((x) => x.id === bind.get(item.id));
+    return { title: tab?.title || item.title, url: tab?.url || item.url, depth };
+  };
+  const pinned = space.pinned.flatMap((x) => (isFolder(x) ? [{ title: x.name, depth: 0 }, ...x.items.map((i) => page(i, 1))] : [page(x, 0)]));
+  const listed = tabs.filter((x) => !byTab.has(x.id) && tabSpace.get(x.id) === space.id);
+  return [...pinned, ...buildTree(listed, tabParent, splitPartners(tabs)).map(({ tab, depth }) => ({ title: tab.title, url: tab.url || tab.pendingUrl, depth }))];
+}
+
+// 分屏(Chrome 155 以上):里面有在分屏的就是「取消分屏」;刚好选了两个、都不在分屏里就是「分屏查看」
+function splitItem(list) {
+  if (!canSplit()) return null;
+  if (list.some(inSplit)) return { icon: 'unsplit', label: t('unsplit'), run: () => unsplitTabs(list) };
+  if (list.length === 2 && list.every(pairable)) return { icon: 'split', label: t('splitView'), run: () => splitTabs(list[0], list[1]) };
+  return null;
+}
+
+// 右键一个不在分屏里的标签页:和正在看的标签页拼成拆分视图(正在看的在左)。
+// 两个要在同一个分组里(Chrome 的要求);收藏、固定标签不能拼(见 pairable),正在看的已经在分屏里也不显示
+function withCurrentItem(tab) {
+  if (!canSplit() || !pairable(tab) || tab.active) return null;
+  const cur = tabs.find((x) => x.active);
+  if (!pairable(cur) || cur.groupId !== tab.groupId) return null;
+  return { icon: 'split', label: t('splitWithCurrent'), run: () => splitTabs(cur, tab) };
+}
+
+// 右键分屏里的一个:反转视图、取消拆分视图(菜单文字和 Chrome 自己的分屏菜单一致)
+function pairItems(tab) {
+  if (!canSplit() || !inSplit(tab)) return [];
+  return [{ icon: 'reverse', label: t('reverseViews'), run: () => reverseSplit(tab) }, splitItem([tab])];
+}
+
 // 多选时右键其中一个:对选中的这一批标签页操作(关闭可以撤销)
 function selectionMenu(e, list) {
   const n = list.length;
@@ -46,7 +97,10 @@ function selectionMenu(e, list) {
     { header: t('nTabs', { n }) },
     hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
+    scatterItem(list),
+    markdownItem(list.map((x) => ({ title: x.title, url: x.url || x.pendingUrl }))),
     '-',
+    splitItem(list),
     ...state.spaces
       .filter((s) => s.id !== state.activeSpaceId)
       .map((s) => ({
@@ -64,10 +118,11 @@ function selectionMenu(e, list) {
 }
 
 export function tabMenu(e, tab) {
+  const picked = selectedIds();
   const selected = visibleTabs()
     .map((x) => x.tab)
-    .filter((x) => x.highlighted);
-  if (selected.length > 1 && tab.highlighted) return selectionMenu(e, selected);
+    .filter((x) => picked.has(x.id));
+  if (selected.length > 1 && picked.has(tab.id)) return selectionMenu(e, selected);
   // 只算列表里看得见的:搜索过滤掉的标签页不会被关掉
   const visible = visibleTabs().map((x) => x.tab);
   const below = visible.slice(visible.findIndex((t) => t.id === tab.id) + 1);
@@ -84,9 +139,11 @@ export function tabMenu(e, tab) {
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
-    // 移动:子标签层级,以及移到别的空间
+    scatterItem([tab]),
+    // 移动:和当前标签页拆分、反转视图、取消拆分视图、放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
     '-',
-    listedParent(tab.id) != null && { icon: 'outdent', label: t('unnest'), run: () => setTabParent(tab.id, null).then(render) },
+    withCurrentItem(tab),
+    ...pairItems(tab),
     children.length > 0 && {
       icon: 'ungroup',
       label: t('releaseChildren'),
@@ -124,8 +181,10 @@ export function itemMenu(e, { item, kind, space, folder }) {
     '-',
     bind.has(item.id) && { icon: 'minus', label: t('close'), run: () => closeItemTab(item) },
     ...memoryItems(tab),
-    // 移动:收藏和固定标签之间、文件夹进出、移到别的空间
+    // 移动:和当前标签页拆分、反转视图、取消拆分视图、收藏和固定标签之间、文件夹进出、移到别的空间
     '-',
+    withCurrentItem(tab),
+    ...pairItems(tab),
     kind === 'fav'
       ? { icon: 'move', label: t('moveToPins'), title: t('moveToPinsTip'), run: () => moveItem(item.id, 'pin') }
       : { icon: 'move', label: t('moveToFavs'), run: () => moveItem(item.id, 'fav') },
@@ -167,6 +226,7 @@ export function spaceMenu(e, id) {
     id === activeSpace().id && { icon: 'folderPlus', label: t('newFolderMenu'), run: () => createFolder() },
     { icon: space?.noHistory ? 'eye' : 'eyeOff', label: space?.noHistory ? t('turnOffNoHistory') : t('turnOnNoHistory'), run: () => toggleNoHistory(id) },
     { icon: 'sleep', label: t('sleepSpace'), disabled: !spaceTabs.some(canDiscard), title: spaceTabs.some(canDiscard) ? null : t('nothingToSleep'), run: () => discardTabs(spaceTabs) },
+    space && markdownItem(spaceLinks(space), space.name),
     state.spaces.length > 1 && '-',
     state.spaces.length > 1 && { icon: 'trash', label: t('deleteSpace'), danger: true, run: () => deleteSpace(id) },
   ]);

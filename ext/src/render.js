@@ -1,16 +1,16 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
-import { $, faviconFor, h, icon, tabIcon } from './dom.js';
-import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, TRAIL_TTL, trailLeft } from './logic.js';
-import { formatDuration, t } from './i18n.js';
-import { applyCursor } from './keys.js';
-import { refreshLeaves } from './leaves.js';
-import { refreshLocate, revealPending } from './locate.js';
-import { refreshHistory } from './history.js';
-import { recentMenu, settingsMenu } from './menus.js';
-import { addSpace } from './spaces.js';
-import { applyMenuTarget, toggleMenuFrom } from './ui.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
+import { $, faviconFor, h, icon, tabIcon } from './dom.js?v=503bcbcb';
+import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, SPLIT_NONE, splitPartners, TRAIL_TTL, trailLeft } from './logic.js?v=503bcbcb';
+import { formatDuration, t } from './i18n.js?v=503bcbcb';
+import { applyCursor } from './keys.js?v=503bcbcb';
+import { refreshLeaves } from './leaves.js?v=503bcbcb';
+import { refreshLocate, revealPending } from './locate.js?v=503bcbcb';
+import { refreshHistory } from './history.js?v=503bcbcb';
+import { recentMenu, settingsMenu } from './menus.js?v=503bcbcb';
+import { addSpace } from './spaces.js?v=503bcbcb';
+import { applyMenuTarget, toggleMenuFrom } from './ui.js?v=503bcbcb';
+import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, selectedIds, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js?v=503bcbcb';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -127,8 +127,11 @@ export function refreshTrail() {
   const byId = new Map(tabs.map((t) => [t.id, t]));
   const itemOf = new Map([...bind].map(([itemId, tabId]) => [tabId, itemId]));
   const next = new Map();
-  // 最近离开、还开着、10 分钟以内的,取设置里选的个数
-  for (const x of trail.filter((x) => byId.has(x.id) && !byId.get(x.id).active && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
+  // 最近离开、还开着、10 分钟以内的,取设置里选的个数。
+  // 和当前标签页在同一个分屏里的不算:它就并排显示在眼前,不是离开了
+  const split = tabs.find((t) => t.active)?.splitViewId;
+  const onScreen = (t) => t.active || (split > SPLIT_NONE && t.splitViewId === split);
+  for (const x of trail.filter((x) => byId.has(x.id) && !onScreen(byId.get(x.id)) && now - x.at < TRAIL_TTL).slice(0, trailCount)) next.set(x.id, x.at);
   for (const [id, at] of next) {
     let s = trailShown.get(id);
     if (!s || s.at !== at) s = { at, start: trailOut.has(id) ? -Infinity : now };
@@ -265,6 +268,7 @@ export function render() {
         img,
         h('span', { class: 'pin-name' }, item.alias || item.title),
         h('span', { class: 'title' }, tab.title || tab.url),
+        sleptLabel(tab),
         keep,
         sound,
         unfold,
@@ -278,6 +282,8 @@ export function render() {
       img,
       item.alias && h('span', { class: 'alias' }, item.alias),
       h('span', { class: 'title' }, item.title),
+      // 休眠了的和下面的标签页一样在行尾标着睡了多久,和已经关掉的(同样变淡)分得开
+      tab && sleptLabel(tab),
       elsewhere,
       keep,
       sound,
@@ -329,26 +335,39 @@ export function render() {
   $('#pins-count').textContent = `· ${openPins}`;
 
   // 选中了不止一个(多选)时,当前标签页也标成选中:它本来就在多选里
-  const multi = tabs.filter((x) => x.highlighted).length > 1;
+  const picked = selectedIds();
+  const multi = picked.size > 1;
+  const shown = visibleTabs();
+  const rowEls = shown.map(({ tab, depth }) => {
+    const muted = tab.mutedInfo?.muted;
+    const cls = ['row', tab.active && 'active', multi && picked.has(tab.id) && 'selected', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
+    return h(
+      'div',
+      { class: cls, draggable: true, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
+      h('img', { class: 'icon', src: tabIcon(tab), alt: '', draggable: false }),
+      tabAlias.has(tab.id) && h('span', { class: 'alias' }, tabAlias.get(tab.id)),
+      h('span', { class: 'title' }, tab.title || tab.url || t('newTab')),
+      sleptLabel(tab),
+      keepAlive(tab, 'keep'),
+      (tab.audible || muted) && h('button', { class: 'btn' + (tab.audible && !muted ? ' playing' : ''), title: muted ? t('unmute') : t('mute'), data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
+      // 子标签多一个「移出为顶级标签页」;按钮顺序:移出、休眠、关闭,都只在鼠标移上去时出现
+      depth > 0 && h('button', { class: 'btn x', title: t('unnest'), data: { act: 'unnest' } }, icon('outdent')),
+      !isUnloaded(tab) && freeButton(),
+      h('button', { class: 'btn x', title: t('close'), data: { act: 'close' } }, icon('close'))
+    );
+  });
+  // 分屏(Chrome 的 Split View)的两个标签页在列表里总是挨着(见 logic.js 的 buildTree):合成一块浅底,
+  // 正在看的那一行照常是白卡片。搜索时只剩一个就不合
+  const partners = splitPartners(tabs);
+  const listEls = [];
+  for (let i = 0; i < rowEls.length; i++) {
+    const next = shown[i + 1];
+    if (next && partners.get(shown[i].tab.id) === next.tab.id) {
+      listEls.push(h('div', { class: 'split', style: shown[i].depth ? '--depth:1' : null }, rowEls[i], rowEls[++i]));
+    } else listEls.push(rowEls[i]);
+  }
   $('#tabs').replaceChildren(
-    ...visibleTabs().map(({ tab, depth }) => {
-      const muted = tab.mutedInfo?.muted;
-      const cls = ['row', tab.active && 'active', multi && tab.highlighted && 'selected', isUnloaded(tab) && 'discarded', tab.status === 'loading' && 'loading'].filter(Boolean).join(' ');
-      return h(
-        'div',
-        { class: cls, draggable: true, style: depth ? '--depth:1' : null, data: { kind: 'tab', id: tab.id } },
-        h('img', { class: 'icon', src: tabIcon(tab), alt: '', draggable: false }),
-        tabAlias.has(tab.id) && h('span', { class: 'alias' }, tabAlias.get(tab.id)),
-        h('span', { class: 'title' }, tab.title || tab.url || t('newTab')),
-        sleptLabel(tab),
-        keepAlive(tab, 'keep'),
-        (tab.audible || muted) && h('button', { class: 'btn' + (tab.audible && !muted ? ' playing' : ''), title: muted ? t('unmute') : t('mute'), data: { act: 'mute' } }, icon(muted ? 'muted' : 'sound')),
-        // 子标签多一个「移出为顶级标签页」;按钮顺序:移出、休眠、关闭,都只在鼠标移上去时出现
-        depth > 0 && h('button', { class: 'btn x', title: t('unnest'), data: { act: 'unnest' } }, icon('outdent')),
-        !isUnloaded(tab) && freeButton(),
-        h('button', { class: 'btn x', title: t('close'), data: { act: 'close' } }, icon('close'))
-      );
-    }),
+    ...listEls,
     // 「新标签页」跟在最后一个标签页下面,居中一个圆形小加号(带文字的话和真的新标签页那一行长得一样);搜索时不显示。
     // 整行都是靠近时显示加号的范围,但只有点到圆才开新标签页(键盘回车 detail 为 0,也算)
     ...(query ? [] : [h('button', { id: 'new-tab', class: 'row new' + (Date.now() < plusBackAt ? ' resting' : ''), title: t('newTab'), 'aria-label': t('newTab'), onclick: (e) => (e.detail === 0 || e.target.closest('.i')) && newTabBelow() }, icon('plus'))])

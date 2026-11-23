@@ -4,8 +4,9 @@
 // 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
 // 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
-import { buildLayout, groupColor, pinnedItems } from './logic.js';
-import { hasPrefix, KEY, PREFIX } from './protocol.js';
+import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js?v=503bcbcb';
+import { hasPrefix, KEY, PREFIX } from './protocol.js?v=503bcbcb';
+import { carryPair, moveUnit, moveUnits } from './splits.js?v=503bcbcb';
 
 // 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
 const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;
@@ -17,6 +18,12 @@ const isOwn = () => Date.now() < ownUntil;
 
 // tabId -> 上次同步时它所在的空间。分组和这个不一样、而记录的空间没变 = 用户把它拖进了别的分组
 const lastSpace = new Map();
+
+// 绑定到收藏/固定项的标签页
+function boundTabs(state, all) {
+  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
+  return new Set(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.bind) && itemIds.has(k.slice(2))).map(([, v]) => v));
+}
 
 // 连续多次同步都没能排好(比如浏览器不按预期移动),先停一会儿,免得来回挪个不停
 let busyRuns = 0;
@@ -47,9 +54,7 @@ async function syncWindow(windowId, state, all) {
   const foreign = (t) => t.groupId !== -1 && !groupSpace.has(t.groupId);
   const tabs = allTabs.filter((t) => !t.pinned && !foreign(t));
 
-  // 绑定到收藏/固定项的标签页
-  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
-  const bound = new Set(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.bind) && itemIds.has(k.slice(2))).map(([, v]) => v));
+  const bound = boundTabs(state, all);
   for (const t of tabs) {
     const inGroup = groupSpace.get(t.groupId);
     const cur = all[KEY.space(t.id)];
@@ -65,6 +70,16 @@ async function syncWindow(windowId, state, all) {
   }
   Object.assign(all, set);
   for (const k of remove) delete all[k];
+  // 分屏的两个标签页要在同一个空间(Chrome 只让同一个分组里的标签页分屏,分组又对应空间):
+  // 刚换了空间的那个说了算,另一个跟过去;都没换过(比如刚分屏)就跟左边那个
+  const partners = splitPartners(tabs);
+  const indexOf = (id) => tabs.find((t) => t.id === id)?.index ?? 0;
+  for (const [a, b] of partners) {
+    if (a > b || bound.has(a) || bound.has(b) || all[KEY.space(a)] === all[KEY.space(b)]) continue;
+    const moved = (id) => lastSpace.has(id) && lastSpace.get(id) !== all[KEY.space(id)];
+    const [lead, follow] = moved(a) ? [a, b] : moved(b) ? [b, a] : indexOf(a) < indexOf(b) ? [a, b] : [b, a];
+    set[KEY.space(follow)] = all[KEY.space(follow)] = all[KEY.space(lead)];
+  }
 
   const layout = buildLayout(state, all, tabs);
   const order = layout.flatMap((c) => c.ids);
@@ -85,24 +100,36 @@ async function syncWindow(windowId, state, all) {
 
   if (!settled) {
     own(2000);
-    // 先把分组不对的拿出来,再从左到右一块块放好、分好组。别人的分组会被挤到最后面,但不会被拆开
+    // 先把分组不对的拿出来,再分好组,最后从左到右一块块放好。别人的分组会被挤到最后面,但不会被拆开。
+    // 分屏的两个标签页不能直接挪(会被拆开,见 splits.js),而放进分组、整组挪动都不会拆开分屏:
+    // 所以先把每个空间的标签页都放进它的分组(Chrome 会把它们收拢到一起,分屏的也整对挪过去),再整组挪到位置,
+    // 最后在组里排顺序(分屏的一对靠挪它旁边的标签页)。一对分屏总是同一个分组,一起拿出来、一起放进去
     const wrong = layout.flatMap((c) => c.ids.filter((id) => byId.get(id).groupId !== -1 && byId.get(id).groupId !== wantGroup(c)));
     if (wrong.length) await chrome.tabs.ungroup(wrong).catch(() => {});
-    let index = nativePinned;
+    const groupOf = new Map();
     for (const c of layout) {
-      await chrome.tabs.move(c.ids, { index }).catch(() => {});
+      own(2000);
       if (wantGroup(c) === -1) {
         await chrome.tabs.ungroup(c.ids).catch(() => {});
-      } else {
-        const existing = groupOfSpace.get(c.spaceId);
-        const alive = existing != null && (await chrome.tabGroups.get(existing).catch(() => null));
-        const id = await chrome.tabs
-          .group(alive ? { tabIds: c.ids, groupId: existing } : { tabIds: c.ids, createProperties: { windowId } })
-          .catch(() => null);
-        if (id != null) {
-          groupOfSpace.set(c.spaceId, id);
-          if (all[KEY.group(id)] !== c.spaceId) set[KEY.group(id)] = c.spaceId;
-        }
+        continue;
+      }
+      const existing = groupOfSpace.get(c.spaceId);
+      const alive = existing != null && (await chrome.tabGroups.get(existing).catch(() => null));
+      const id = await chrome.tabs.group(alive ? { tabIds: c.ids, groupId: existing } : { tabIds: c.ids, createProperties: { windowId } }).catch(() => null);
+      if (id == null) continue;
+      groupOf.set(c, id);
+      groupOfSpace.set(c.spaceId, id);
+      if (all[KEY.group(id)] !== c.spaceId) set[KEY.group(id)] = c.spaceId;
+    }
+    let index = nativePinned;
+    for (const c of layout) {
+      own(2000);
+      if (groupOf.has(c)) await chrome.tabGroups.move(groupOf.get(c), { index }).catch(() => {});
+      let at = index;
+      for (const unit of moveUnits(c.ids, partners, indexOf)) {
+        own(2000);
+        // 挪不动的(一对分屏被另一对挡着)不占位置:照样往后数的话,下一个会插进那一对中间,把分屏拆开
+        if (await moveUnit(unit, at)) at += unit.length;
       }
       index += c.ids.length;
     }
@@ -127,6 +154,61 @@ async function syncWindow(windowId, state, all) {
   if (remove.length) await chrome.storage.session.remove(remove);
   for (const t of tabs) if (!bound.has(t.id)) lastSpace.set(t.id, all[KEY.space(t.id)]);
   return !settled;
+}
+
+// 「按域名整理」和它的撤销(给了 order 就按它排;不在里面的排在后面,但和里面某个已经不在了的地址一样时
+// 排在它的位置:多半是关掉又恢复的,从「最近关闭」恢复时编号会变,只能按地址认)。
+// 要和分组同步排在一个队列里、算作自己挪的:在侧边栏里一个个挪的话,中途的同步会按半成品的顺序重排,
+// 子标签挪的时候左边暂时不是父标签,还会被 userMoved 当成拖离了父标签。
+// 只动这个空间、在它自己分组里的标签页:原生固定的、别人分组里的、收藏和固定项的(以及和它们分屏的)都不动
+export async function arrangeSpace({ windowId, spaceId, order }) {
+  const [{ state }, all, strip, groups] = await Promise.all([
+    chrome.storage.local.get('state'),
+    chrome.storage.session.get(null),
+    chrome.tabs.query({ windowId }),
+    chrome.tabGroups.query({ windowId }),
+  ]);
+  const bound = boundTabs(state, all);
+  const spaceOf = tabSpaces(state, all);
+  const spaceGroups = groups.filter((g) => all[KEY.group(g.id)] === spaceId).map((g) => g.id);
+  // 这个空间还没有分组(只有新标签页)时,要排的就是没分组的那些
+  const inGroups = new Set(spaceGroups.length ? spaceGroups : [-1]);
+  const mine = strip.filter((t) => !t.pinned && !bound.has(t.id) && inGroups.has(t.groupId) && spaceOf.get(t.id) === spaceId);
+  const ids = new Set(mine.map((t) => t.id));
+  const partners = splitPartners(strip);
+  const movable = mine.filter((t) => !partners.has(t.id) || ids.has(partners.get(t.id)));
+  const parents = new Map(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.parent)).map(([k, v]) => [+k.slice(2), v]));
+  const tree = buildTree(movable, parents, partners);
+  const before = tree.map(({ tab }) => tab.id);
+
+  let target;
+  if (order) {
+    const rank = new Map(order.map(({ id }, i) => [id, i]));
+    const gone = new Map(order.flatMap(({ id, url }, i) => (ids.has(id) ? [] : [[url, i]])));
+    const rankOf = (t) => rank.get(t.id) ?? gone.get(t.url) ?? order.length;
+    // 再过一遍 buildTree:之后新开的子标签、新拼的拆分视图也要挨着
+    target = buildTree([...movable].sort((a, b) => rankOf(a) - rankOf(b)), parents, partners).map(({ tab }) => tab.id);
+  } else target = domainOrder(tree, partners);
+  if (target.join() === before.join()) return { before: null };
+
+  const indexOf = new Map(movable.map((t) => [t.id, t.index]));
+  const waiting = new Set(target); // 还没放好的
+  // 整个过程都算自己挪的:一对分屏一路挪过几百个标签页要好几秒,按时长算会过期
+  own(Infinity);
+  try {
+    // 从左往右一块块放到还没放好的最前面。位置每次现查,不能一路加下去:中途有标签页关掉、新开,
+    // 位置就都错开了,最后一个会被挪进右边空间的分组。实在挪不动的留在右边,不占位置
+    for (const unit of moveUnits(target, partners, (id) => indexOf.get(id))) {
+      const rest = (await chrome.tabs.query({ windowId })).filter((t) => waiting.has(t.id) && inGroups.has(t.groupId));
+      if (!unit.every((id) => rest.some((t) => t.id === id))) continue; // 中途关掉或挪走了
+      const to = rest[0].index;
+      const placed = rest[0].id === unit[0] || (await moveUnit(unit, to)) || (unit.length === 2 && (await carryPair(unit, to)));
+      if (placed) for (const id of unit) waiting.delete(id);
+    }
+  } finally {
+    own();
+  }
+  return { before: tree.map(({ tab }) => ({ id: tab.id, url: tab.url })) };
 }
 
 async function syncAll() {
@@ -175,8 +257,8 @@ export function startGroupSync(serial) {
   };
   resync = schedule;
   for (const ev of ['onCreated', 'onRemoved', 'onAttached', 'onDetached', 'onActivated']) chrome.tabs[ev].addListener(schedule);
-  // 网址变了也要排:只有新标签页时没建分组,打开了真正的网页就该建了
-  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info || 'url' in info) && schedule());
+  // 网址变了也要排:只有新标签页时没建分组,打开了真正的网页就该建了;分屏了或取消分屏了也要(一对要挨着排)
+  chrome.tabs.onUpdated.addListener((_, info) => ('groupId' in info || 'pinned' in info || 'url' in info || 'splitViewId' in info) && schedule());
   chrome.tabs.onMoved.addListener((tabId, info) => {
     if (!isOwn()) serial(() => userMoved(tabId, info));
     schedule();

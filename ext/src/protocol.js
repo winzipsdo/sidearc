@@ -10,10 +10,14 @@ export const PREFIX = {
   group: 'g', // g:<groupId> -> 这个标签页分组对应的空间 id
   slept: 'z', // z:<tabId> -> 这个标签页开始休眠的时间(毫秒);醒来后删掉
   seen: 'v', // v:<tabId> -> 上次离开这个标签页(或在侧边栏里把它的落叶扫干净)的时间(毫秒),落叶从这时算起
+  scattered: 'l', // l:<tabId> -> 右键「撒落叶」撒到了几片;显示时和按时间该落的片数取多的那个;点进这个标签页(当前标签页上撒的,是离开后再点回来)或扫干净时删掉
   trail: 'f', // f:<windowId> -> 足迹:{ active: 当前标签页, trail: [{ id, at }] 最近离开的几个,新的在前,at 是离开的时间(毫秒) }
 };
 export const KEY = Object.fromEntries(Object.entries(PREFIX).map(([name, prefix]) => [name, (id) => `${prefix}:${id}`]));
 export const hasPrefix = (key, prefix) => key.startsWith(prefix + ':');
+// 按 tabId 存、只属于这个标签页自己的键:标签页换了编号(比如休眠后)要挪到新编号上,关掉时要删掉。
+// 新加这类键只往这里加,后台的 onReplaced、onRemoved 都从这里取。bind、group、trail 的 id 不是 tabId,不在这里
+export const TAB_KEYS = [KEY.space, KEY.alias, KEY.parent, KEY.fresh, KEY.slept, KEY.seen, KEY.scattered];
 
 // 会话存储:侧边栏已经在恢复上次没回来的标签页了,后台别再提示(见 background.js 的 keepLastSession)
 export const LAST_TAKEN = '_lastTaken';
@@ -22,6 +26,7 @@ export const LAST_TAKEN = '_lastTaken';
 export const MSG = {
   keepTab: 'keepTab', // 侧边栏 → 后台:tabId。这个标签页是扩展自己开的(固定项、撤销、导入),不查重
   openDup: 'openDup', // 侧边栏 → 后台:{ url, windowId, active }。用户撤销了查重,照原样再开一份
+  arrange: 'arrange', // 侧边栏 → 后台:{ windowId, spaceId, order? }。按域名整理这个空间;给了 order([{ id, url }])就按它排(撤销整理)。回复 { before }:排之前的顺序(格式同 order),本来就排好了是 null
   deduped: 'deduped', // 后台 → 侧边栏:{ url, windowId, active }。刚关掉了一个地址重复的新标签页
   adopted: 'adopted', // 后台 → 侧边栏:{ windowId, tabId, itemId }。新标签页的地址和某个收藏/固定项相同,已绑定到它
 };

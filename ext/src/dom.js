@@ -27,6 +27,10 @@ const ICONS = {
   trash: svg('<path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/>'),
   outdent: svg('<path d="M7.5 4h6M7.5 8h6M7.5 12h6"/><path d="M4.5 6L2.5 8l2 2"/>'),
   ungroup: svg('<rect x="2.5" y="2.5" width="5" height="5" rx="1"/><rect x="8.5" y="8.5" width="5" height="5" rx="1"/>'),
+  // 分屏:一个窗口左右两半;取消分屏:左右两个分开的小窗口
+  split: svg('<rect x="2" y="3" width="12" height="10" rx="2"/><path d="M8 3v10"/>'),
+  unsplit: svg('<rect x="1.5" y="3.5" width="5" height="9" rx="1.5"/><rect x="9.5" y="3.5" width="5" height="9" rx="1.5"/>'),
+  reverse: svg('<rect x="2" y="3" width="12" height="10" rx="2"/><path d="M5 8h6M6.5 6.5L5 8l1.5 1.5M9.5 6.5L11 8l-1.5 1.5"/>'),
   closeBelow: svg('<path d="M3 3.5h10"/><path d="M5.5 7.5l5 5M10.5 7.5l-5 5"/>'),
   dot: svg('<circle cx="8" cy="8" r="3.5" fill="currentColor" stroke="none"/>'),
   eye: svg('<path d="M2 8s2.2-4 6-4 6 4 6 4-2.2 4-6 4-6-4-6-4z"/><circle cx="8" cy="8" r="1.8"/>'),
@@ -41,6 +45,8 @@ const ICONS = {
   external: svg('<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M12 9.5v3a1 1 0 01-1 1H3.5a1 1 0 01-1-1V5a1 1 0 011-1h3"/>'),
   reload: svg('<path d="M13 8a5 5 0 11-1.5-3.6"/><path d="M13 2.5v3h-3"/>'),
   ban: svg('<circle cx="8" cy="8" r="5"/><path d="M4.5 11.5l7-7"/>'),
+  // 一个框里写着 M 和往下的箭头,常见的 Markdown 标记
+  markdown: svg('<rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M4 10V6l2 2.2L8 6v4M11 6v4M9.5 8.5L11 10l1.5-1.5"/>'),
   trail: svg('<path d="M4 4v8M8 5.5v5M12 7v2"/>'),
   leaf: svg('<path d="M3 13c0-6 3.5-9.5 10-10 .3 6.2-3.5 10-10 10z"/><path d="M3 13l5.5-5.5"/>'),
   heart: svg('<path d="M8 13.5S2.5 10.2 2.5 6.3A2.8 2.8 0 018 4.6a2.8 2.8 0 015.5 1.7c0 3.9-5.5 7.2-5.5 7.2z"/>'),

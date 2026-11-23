@@ -85,7 +85,7 @@ body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei U
 </header>
 <main id="scroll">
 <section id="pins" class="zone list">${zone('pins')}</section>
-<div class="divider"><span></span><button class="ghost">清理</button></div>
+<div class="divider"><span></span><button class="ghost">整理</button></div>
 <section id="tabs" class="zone list">${zone('tabs')}<button id="new-tab" class="row new"><span class="i">${ICON.plus}</span></button></section>
 </main>
 <footer id="spaces">${dots}<button class="space-dot">${ICON.plus}</button><button class="space-dot recent">${ICON.recent}</button><button class="space-dot settings">${ICON.sliders}</button></footer>

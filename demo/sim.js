@@ -325,7 +325,23 @@ export class Browser {
       b.hooks.call?.('runtime.sendMessage', ctx.name, [msg]);
       const others = [...b.contexts].filter((c) => c !== ctx && c.on.get('runtime.onMessage')?.length);
       if (!others.length) throw new Error('Could not establish connection. Receiving end does not exist.');
-      for (const c of others) for (const l of c.on.get('runtime.onMessage')) c.win.setTimeout(() => l(clone(msg), { id: 'sidearc-demo' }, () => {}), 0);
+      const calls = others.flatMap((c) => c.on.get('runtime.onMessage').map((l) => [c.win, l]));
+      // 和 Chrome 一样:第一个回复就是返回值;监听器返回 true 表示稍后回复,没有人要回复就是 undefined。
+      // 用微任务送到,不用 setTimeout:不然会排在已经发出去的网页导航事件后面,
+      // 比如打开固定项时「这是扩展自己开的,不查重」到得比导航晚,刚打开就被当成重复的
+      return new Promise((resolve) => {
+        let left = calls.length;
+        let waiting = false;
+        const reply = (v) => resolve(clone(v));
+        for (const [w, l] of calls)
+          w.queueMicrotask(() => {
+            try {
+              if (l(clone(msg), { id: 'sidearc-demo' }, reply) === true) waiting = true;
+            } finally {
+              if (!--left && !waiting) resolve();
+            }
+          });
+      });
     };
     const query = (q = {}) =>
       b.tabs
@@ -422,6 +438,14 @@ export class Browser {
           return g;
         }),
         update: fn('tabGroups.update', (id, p) => b.updateGroup(id, p)),
+        // 整组挪过去,组里原来不挨着的也收拢成一串
+        move: fn('tabGroups.move', (id, { index }) => {
+          const g = b.groups.get(id);
+          if (!g) throw new Error(`No group with id: ${id}.`);
+          b.move(b.tabs.filter((t) => t.groupId === id).map((t) => t.id), index);
+          b.emit('tabGroups.onMoved', clone(g));
+          return g;
+        }),
         ...events('tabGroups', ['onCreated', 'onUpdated', 'onRemoved', 'onMoved']),
       },
       windows: {

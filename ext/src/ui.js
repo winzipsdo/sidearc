@@ -1,8 +1,8 @@
 // 提示条、撤销栈、右键菜单的外壳和对话框。
 
-import { $, h, icon } from './dom.js';
-import { t } from './i18n.js';
-import { COLORS } from './store.js';
+import { $, h, icon } from './dom.js?v=503bcbcb';
+import { t } from './i18n.js?v=503bcbcb';
+import { COLORS } from './store.js?v=503bcbcb';
 
 let toastTimer;
 // 底部提示条;给了 action 就带一个按钮(比如「撤销」)
@@ -22,9 +22,16 @@ export function pushUndo(text, run) {
   if (undoStack.length > 30) undoStack.shift();
   toast(text, t('undo'), () => undo(entry));
 }
+// 撤销和整理一个接一个做:连按两下 Ctrl/Cmd+Z 时第二下要等第一下做完,不然两下会撤销同一步、丢掉另一步;
+// 整理到一半时按的,撤销的是这次整理
+let queue = Promise.resolve();
+export const inTurn = (fn) => (queue = queue.then(fn, fn));
+export const undo = (entry) => inTurn(() => undoOne(entry));
 // entry 为空 = 按了 Ctrl/Cmd+Z:撤销最近的一步。
 // 在浏览器自己的标签栏里关掉的标签页不经过这个栈,所以先看浏览器的「最近关闭」:比栈顶更晚关掉的,先恢复它
-export async function undo(entry) {
+async function undoOne(entry) {
+  // 排队的时候已经被撤销掉了(按了快捷键又点了提示条上的按钮)
+  if (entry && !undoStack.includes(entry)) return;
   if (!entry) {
     entry = undoStack.at(-1);
     const [closed] = await chrome.sessions.getRecentlyClosed().catch(() => []);
@@ -57,16 +64,20 @@ export async function copyText(text, done) {
 export function hideMenu() {
   $('#menu').hidden = true;
   owner = null;
+  anchor = null;
   menuTargets = [];
   applyMenuTarget();
 }
 
-// 右键菜单是给谁的:菜单开着时,被右键的那一行(多选时是选中的几行)染一层主题色,和菜单里高亮的项同色。
-// 记的是选择器而不是元素:菜单开着时列表可能重画,render.js 每次重画完调用 applyMenuTarget 重新标上
+// 右键菜单是给谁的:菜单开着时,被右键的那一行(多选时是选中的几行)染一层主题色。
+// 记的是选择器而不是元素:菜单开着时列表可能重画,render.js 每次重画完调用 applyMenuTarget 重新标上。
+// at 是被右键的那一项(多选时也只是点的那一行),菜单贴着它弹出(见 showMenu)
 let menuTargets = [];
+let anchor = null;
 const targetSel = (el) => (el.dataset.space ? `[data-space="${CSS.escape(el.dataset.space)}"]` : `[data-kind="${el.dataset.kind}"][data-id="${CSS.escape(el.dataset.id)}"]`);
-export function setMenuTarget(els) {
+export function setMenuTarget(els, at = els[0]) {
   owner = null;
+  anchor = at;
   menuTargets = els.map(targetSel);
   applyMenuTarget();
 }
@@ -84,6 +95,8 @@ export function toggleMenuFrom(sel, open) {
   if (!$('#menu').hidden && owner === sel) return hideMenu();
   // 先记下来:最近关闭的菜单要等读完记录才弹出
   owner = sel;
+  // 按钮的菜单由调用方自己摆位置,不贴着右键的项
+  anchor = null;
   open();
 }
 
@@ -121,8 +134,27 @@ export function showMenu(e, items) {
   );
   menu.hidden = false;
   // 用 offsetWidth/Height:弹出动画还在缩放时,getBoundingClientRect 量到的尺寸偏小,菜单会超出侧边栏被裁掉
-  menu.style.left = Math.max(4, Math.min(e.clientX, innerWidth - menu.offsetWidth - 4)) + 'px';
-  menu.style.top = Math.max(4, Math.min(e.clientY, innerHeight - menu.offsetHeight - 4)) + 'px';
+  const w = menu.offsetWidth;
+  const ht = menu.offsetHeight;
+  const clampY = (y) => Math.max(4, Math.min(y, innerHeight - ht - 4));
+  // 左右从鼠标的位置展开,放不下往左推
+  menu.style.left = Math.max(4, Math.min(e.clientX, innerWidth - w - 4)) + 'px';
+  const a = anchor?.isConnected && anchor.getBoundingClientRect();
+  if (!a) {
+    menu.style.top = clampY(e.clientY) + 'px';
+    menu.style.transformOrigin = '';
+    return;
+  }
+  // 右键的是某一项:上下贴着它,不盖住它,这样每次都知道菜单会出现在哪。
+  // 平时挂在下面(底部的空间圆点往上弹),这边放不下就翻到另一边;两边都放不下,放在空的那边再往回推,让整个菜单露出来
+  const below = innerHeight - a.bottom - 8;
+  const above = a.top - 8;
+  const first = anchor.dataset.space ? 'up' : 'down';
+  const fits = (side) => (side === 'down' ? below : above) >= ht;
+  const other = first === 'down' ? 'up' : 'down';
+  const side = fits(first) ? first : fits(other) ? other : below >= above ? 'down' : 'up';
+  menu.style.top = clampY(side === 'down' ? a.bottom + 4 : a.top - 4 - ht) + 'px';
+  menu.style.transformOrigin = side === 'down' ? 'top left' : 'bottom left';
 }
 
 // fields: [{key,label,value}];color 非空时显示颜色选择。取消返回 null
