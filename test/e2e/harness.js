@@ -95,8 +95,8 @@ export function e2e(fn) {
       if (cond) pass++, console.log('  PASS', name);
       else fail++, console.log('  FAIL', name, detail !== undefined ? '→ ' + JSON.stringify(detail) : '');
     },
-    // 本地网页的地址
-    url: (name) => `http://127.0.0.1:${server.address().port}/${encodeURIComponent(name)}`,
+    // 本地网页的地址。host 可以换成 *.localhost(Chrome 都解析到本机),用来模拟不同的网站
+    url: (name, host = '127.0.0.1') => `http://${host}:${server.address().port}/${encodeURIComponent(name)}`,
 
     // 启动浏览器(同一个测试里再调用就是用同一个用户目录重启)并打开侧边栏。
     // extra 是额外的启动参数;wait 是启动后等多久再加载扩展(重启时要等浏览器把上次的标签页恢复出来)
@@ -163,7 +163,11 @@ export function e2e(fn) {
     .finally(async () => {
       await t.quit();
       server?.close();
-      rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+      try {
+        rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 });
+      } catch {
+        // 机器忙的时候 Chrome 退出得慢,目录还被占着:留在临时目录里,不算测试失败
+      }
       console.log(`\n${pass} passed, ${fail} failed`);
       process.exit(fail ? 1 : 0);
     });
@@ -178,9 +182,9 @@ function panelTools(b, sessionId, targetId, url) {
     sessionId,
     targetId,
     ev,
-    // 在后台打开几个本地网页(标题就是名字),等标题都出来;返回 { 名字: tabId }。windowId 不给就是侧边栏所在的窗口
-    async open(names, { windowId } = {}) {
-      await ev(`for (const u of ${JSON.stringify(names.map(url))}) await chrome.tabs.create({ url: u, active: false${windowId != null ? ', windowId: ' + windowId : ''} });`);
+    // 在后台打开几个本地网页(标题就是名字),等标题都出来;返回 { 名字: tabId }。windowId 不给就是侧边栏所在的窗口;hosts 是 { 名字: 主机名 }
+    async open(names, { windowId, hosts = {} } = {}) {
+      await ev(`for (const u of ${JSON.stringify(names.map((n) => url(n, hosts[n])))}) await chrome.tabs.create({ url: u, active: false${windowId != null ? ', windowId: ' + windowId : ''} });`);
       for (let i = 0; i < 50; i++) {
         const ids = await ev(`const all = await chrome.tabs.query({}); return Object.fromEntries(${JSON.stringify(names)}.map((n) => [n, all.find((t) => t.title === n)?.id]))`);
         // 没找到的值是 undefined,传回来时整个键就没了,所以数键的个数
@@ -202,7 +206,7 @@ function panelTools(b, sessionId, targetId, url) {
     // 在元素上点一下(button:left / right;mods:2 = Ctrl,8 = Shift)
     async clickAt(sel, button = 'left', mods = 0) {
       const r = await p.rect(sel);
-      const x = r.left + 40;
+      const x = r.left + Math.min(40, r.w / 2); // 窄的按钮点正中
       const y = r.top + r.h / 2;
       await input({ type: 'mouseMoved', x, y });
       for (const type of ['mousePressed', 'mouseReleased']) await input({ type, x, y, button, clickCount: 1, modifiers: mods });

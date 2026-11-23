@@ -4,9 +4,9 @@
 // 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
 // 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
-import { buildLayout, groupColor, pinnedItems, splitPartners } from './logic.js';
+import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js';
 import { hasPrefix, KEY, PREFIX } from './protocol.js';
-import { moveUnit, moveUnits } from './splits.js';
+import { carryPair, moveUnit, moveUnits } from './splits.js';
 
 // 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
 const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;
@@ -18,6 +18,12 @@ const isOwn = () => Date.now() < ownUntil;
 
 // tabId -> 上次同步时它所在的空间。分组和这个不一样、而记录的空间没变 = 用户把它拖进了别的分组
 const lastSpace = new Map();
+
+// 绑定到收藏/固定项的标签页
+function boundTabs(state, all) {
+  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
+  return new Set(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.bind) && itemIds.has(k.slice(2))).map(([, v]) => v));
+}
 
 // 连续多次同步都没能排好(比如浏览器不按预期移动),先停一会儿,免得来回挪个不停
 let busyRuns = 0;
@@ -48,9 +54,7 @@ async function syncWindow(windowId, state, all) {
   const foreign = (t) => t.groupId !== -1 && !groupSpace.has(t.groupId);
   const tabs = allTabs.filter((t) => !t.pinned && !foreign(t));
 
-  // 绑定到收藏/固定项的标签页
-  const itemIds = new Set([...state.favorites, ...state.spaces.flatMap(pinnedItems)].map((i) => i.id));
-  const bound = new Set(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.bind) && itemIds.has(k.slice(2))).map(([, v]) => v));
+  const bound = boundTabs(state, all);
   for (const t of tabs) {
     const inGroup = groupSpace.get(t.groupId);
     const cur = all[KEY.space(t.id)];
@@ -150,6 +154,61 @@ async function syncWindow(windowId, state, all) {
   if (remove.length) await chrome.storage.session.remove(remove);
   for (const t of tabs) if (!bound.has(t.id)) lastSpace.set(t.id, all[KEY.space(t.id)]);
   return !settled;
+}
+
+// 「按域名整理」和它的撤销(给了 order 就按它排;不在里面的排在后面,但和里面某个已经不在了的地址一样时
+// 排在它的位置:多半是关掉又恢复的,从「最近关闭」恢复时编号会变,只能按地址认)。
+// 要和分组同步排在一个队列里、算作自己挪的:在侧边栏里一个个挪的话,中途的同步会按半成品的顺序重排,
+// 子标签挪的时候左边暂时不是父标签,还会被 userMoved 当成拖离了父标签。
+// 只动这个空间、在它自己分组里的标签页:原生固定的、别人分组里的、收藏和固定项的(以及和它们分屏的)都不动
+export async function arrangeSpace({ windowId, spaceId, order }) {
+  const [{ state }, all, strip, groups] = await Promise.all([
+    chrome.storage.local.get('state'),
+    chrome.storage.session.get(null),
+    chrome.tabs.query({ windowId }),
+    chrome.tabGroups.query({ windowId }),
+  ]);
+  const bound = boundTabs(state, all);
+  const spaceOf = tabSpaces(state, all);
+  const spaceGroups = groups.filter((g) => all[KEY.group(g.id)] === spaceId).map((g) => g.id);
+  // 这个空间还没有分组(只有新标签页)时,要排的就是没分组的那些
+  const inGroups = new Set(spaceGroups.length ? spaceGroups : [-1]);
+  const mine = strip.filter((t) => !t.pinned && !bound.has(t.id) && inGroups.has(t.groupId) && spaceOf.get(t.id) === spaceId);
+  const ids = new Set(mine.map((t) => t.id));
+  const partners = splitPartners(strip);
+  const movable = mine.filter((t) => !partners.has(t.id) || ids.has(partners.get(t.id)));
+  const parents = new Map(Object.entries(all).filter(([k]) => hasPrefix(k, PREFIX.parent)).map(([k, v]) => [+k.slice(2), v]));
+  const tree = buildTree(movable, parents, partners);
+  const before = tree.map(({ tab }) => tab.id);
+
+  let target;
+  if (order) {
+    const rank = new Map(order.map(({ id }, i) => [id, i]));
+    const gone = new Map(order.flatMap(({ id, url }, i) => (ids.has(id) ? [] : [[url, i]])));
+    const rankOf = (t) => rank.get(t.id) ?? gone.get(t.url) ?? order.length;
+    // 再过一遍 buildTree:之后新开的子标签、新拼的拆分视图也要挨着
+    target = buildTree([...movable].sort((a, b) => rankOf(a) - rankOf(b)), parents, partners).map(({ tab }) => tab.id);
+  } else target = domainOrder(tree, partners);
+  if (target.join() === before.join()) return { before: null };
+
+  const indexOf = new Map(movable.map((t) => [t.id, t.index]));
+  const waiting = new Set(target); // 还没放好的
+  // 整个过程都算自己挪的:一对分屏一路挪过几百个标签页要好几秒,按时长算会过期
+  own(Infinity);
+  try {
+    // 从左往右一块块放到还没放好的最前面。位置每次现查,不能一路加下去:中途有标签页关掉、新开,
+    // 位置就都错开了,最后一个会被挪进右边空间的分组。实在挪不动的留在右边,不占位置
+    for (const unit of moveUnits(target, partners, (id) => indexOf.get(id))) {
+      const rest = (await chrome.tabs.query({ windowId })).filter((t) => waiting.has(t.id) && inGroups.has(t.groupId));
+      if (!unit.every((id) => rest.some((t) => t.id === id))) continue; // 中途关掉或挪走了
+      const to = rest[0].index;
+      const placed = rest[0].id === unit[0] || (await moveUnit(unit, to)) || (unit.length === 2 && (await carryPair(unit, to)));
+      if (placed) for (const id of unit) waiting.delete(id);
+    }
+  } finally {
+    own();
+  }
+  return { before: tree.map(({ tab }) => ({ id: tab.id, url: tab.url })) };
 }
 
 async function syncAll() {

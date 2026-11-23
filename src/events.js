@@ -15,7 +15,7 @@ import { revealTab } from './locate.js';
 import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
-import { clearTabs, closeTab, discardTabs, endSearch, submitSearch } from './tabs.js';
+import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js';
 import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
@@ -166,7 +166,7 @@ function bindMenus(scroll) {
   document.addEventListener('visibilitychange', () => document.hidden && hideMenu());
 }
 
-// 空间圆点、空间菜单按钮、新标签页、清理、Arc 文件选择
+// 空间圆点、空间菜单按钮、新标签页、按域名整理、Arc 文件选择
 function bindControls() {
   $('#spaces').addEventListener('click', (e) => {
     const dot = e.target.closest('[data-space]');
@@ -192,7 +192,8 @@ function bindControls() {
     save();
     render();
   });
-  $('#clear').addEventListener('click', clearTabs);
+  // 双击只算第一下:第二下会提示「已经排好」,把带撤销的提示条顶掉(键盘回车时 detail 是 0)
+  $('#tidy').addEventListener('click', (e) => e.detail < 2 && tidyTabs());
 }
 
 function bindSearch() {

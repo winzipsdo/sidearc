@@ -22,6 +22,23 @@ export function moveUnits(ids, partners, indexOf) {
   return units;
 }
 
+// 一对分屏要越过另一对时 moveUnit 挪不动:先拆开、两个一起挪、再拼回去(要 Chrome 155 以上)。
+// 挪不了返回 false。当前标签页不变
+export async function carryPair(pair, to) {
+  if (typeof chrome.tabs.createSplit !== 'function' || typeof chrome.tabs.unsplit !== 'function') return false;
+  const tab = await chrome.tabs.get(pair[0]).catch(() => null);
+  if (!inSplit(tab)) return false;
+  try {
+    await chrome.tabs.unsplit(tab.splitViewId);
+  } catch {
+    return false;
+  }
+  const moved = await chrome.tabs.move(pair, { index: to }).then(() => true, () => false);
+  // 没挪成也要拼回去
+  await chrome.tabs.createSplit(pair).catch(() => {});
+  return moved;
+}
+
 // 把一个单位挪到 to(挪完后它第一个标签页的位置,和 tabs.move 的 index 一样)。
 // 分屏的一对:左右的标签页一个个挪到它另一边,直到它到了 to;挡着的是另一对分屏或原生固定的标签页时挪不动,返回 false
 export async function moveUnit(unit, to) {

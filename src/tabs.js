@@ -5,8 +5,8 @@ import { t } from './i18n.js';
 import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js';
 import { KEY, MSG } from './protocol.js';
 import { markSlept, render, schedule } from './render.js';
-import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabSpace, tabs, trail, windowId } from './store.js';
-import { ask, closeSearch, pushUndo, toast } from './ui.js';
+import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabReplacedHooks, tabSpace, tabs, trail, windowId } from './store.js';
+import { ask, closeSearch, inTurn, pushUndo, toast } from './ui.js';
 
 // 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
 function shownTabIds() {
@@ -174,9 +174,41 @@ export async function moveTabToSpace(tabId, spaceId) {
   render();
 }
 
-export function clearTabs() {
-  const doomed = listedTabs().filter((t) => !t.active);
-  closeWithUndo(doomed, t('cleared', { n: doomed.length }));
+// 换过编号的标签页(休眠、撤销关闭):旧编号 -> 新编号。撤销整理时按它找到现在的标签页
+const renumbered = new Map();
+tabReplacedHooks.push((added, removed) => renumbered.set(removed, added));
+const currentId = (id) => (renumbered.has(id) ? currentId(renumbered.get(id)) : id);
+
+// 让后台重排一个空间(见 groups.js 的 arrangeSpace)。排好之前先不重画,免得看着一行行地跳
+async function arrange(spaceId, order) {
+  setRenderHeld(true);
+  try {
+    return await chrome.runtime.sendMessage({ [MSG.arrange]: { windowId, spaceId, order } });
+  } catch {
+    return null;
+  } finally {
+    setRenderHeld(false);
+    schedule();
+  }
+}
+
+// 按域名整理当前空间。连点只算一次:第二次会提示「已经排好」,把带撤销的提示条顶掉
+let tidying = false;
+export async function tidyTabs() {
+  if (tidying) return;
+  tidying = true;
+  try {
+    const spaceId = state.activeSpaceId;
+    await inTurn(async () => {
+      const res = await arrange(spaceId);
+      if (!res) toast(t('tidyFailed'));
+      else if (!res.before) toast(t('alreadyTidy'));
+      // 撤销时可能已经切到了别的空间,编号也可能换过
+      else pushUndo(t('tidied'), () => arrange(spaceId, res.before.map((x) => ({ ...x, id: currentId(x.id) }))));
+    });
+  } finally {
+    tidying = false;
+  }
 }
 
 // 关闭一个标签页;它的子标签会跟着关,所以一起记下来以便撤销
@@ -214,6 +246,7 @@ async function reopenTabs(saved, orphans, spaceId) {
     tab ??= await createTab({ url: s.url, windowId, index: s.index, active: false }).catch(() => null);
     if (!tab) continue;
     idMap.set(s.id, tab.id);
+    if (tab.id !== s.id) renumbered.set(s.id, tab.id);
     if (s.active) focus = tab.id;
   }
   // 放回原来的位置(从前往后依次归位)

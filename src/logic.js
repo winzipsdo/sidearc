@@ -17,6 +17,50 @@ export function addressOf(url) {
   return i < 0 || /^#[/!]/.test(url.slice(i)) ? url : url.slice(0, i);
 }
 
+// 「按域名整理」时一个地址算哪个站、哪个子域名:{ site, host }。
+// site 是去掉子域名的主域名(mail.google.com 和 docs.google.com 都是 google.com)。没带完整的公共后缀表,
+// 只认 .co.uk、.com.cn 这类常见的两段后缀。IP、localhost 整个算一个站,端口算在 host 里。
+// 不是网页的:chrome://、about: 这类按协议算一个站,扩展的页面各个扩展各算各的
+const SECOND_LEVEL = /^(com|co|net|org|gov|edu|ac|or|ne|go|gob)$/;
+export function domainOf(address) {
+  let url;
+  try {
+    url = new URL(address);
+  } catch {
+    return { site: '', host: '' };
+  }
+  if (!/^https?:$/.test(url.protocol)) {
+    const site = /^(chrome|edge|about):$/.test(url.protocol) ? url.protocol : `${url.protocol}//${url.host}`;
+    return { site, host: url.host };
+  }
+  const name = url.hostname.replace(/\.$/, '').replace(/^www\./, '');
+  const host = url.port ? `${name}:${url.port}` : name;
+  if (name.startsWith('[') || /^\d+(\.\d+){3}$/.test(name)) return { site: name, host };
+  const parts = name.split('.');
+  const keep = parts.at(-1).length === 2 && SECOND_LEVEL.test(parts.at(-2) ?? '') ? 3 : 2;
+  return { site: parts.slice(-keep).join('.'), host };
+}
+
+// 「按域名整理」排好以后的顺序(tabId 数组)。tree 是 buildTree 排出来的列表,partners 同它的。
+// 一个顶级标签页连同子标签是一块,拆分视图的一对也是一块(按左边那个算),整块地挪,块里面不动。
+// 同一个站的排在一起,站里面同一个子域名的再排在一起;都按第一次出现的先后排,不按字母:
+// 原来在上面的还在上面,再整理一次也不会变
+export function domainOrder(tree, partners = new Map()) {
+  const blocks = [];
+  tree.forEach(({ tab, depth }, i) => {
+    const joins = i > 0 && (depth > 0 || partners.get(tab.id) === tree[i - 1].tab.id);
+    if (joins) blocks.at(-1).ids.push(tab.id);
+    else blocks.push({ ...domainOf(tab.url || tab.pendingUrl), ids: [tab.id] });
+  });
+  const sites = new Map();
+  for (const { site, host, ids } of blocks) {
+    if (!sites.has(site)) sites.set(site, new Map());
+    const hosts = sites.get(site);
+    hosts.set(host, [...(hosts.get(host) ?? []), ...ids]);
+  }
+  return [...sites.values()].flatMap((hosts) => [...hosts.values()].flat());
+}
+
 // 「复制成 Markdown」:把标签页写成「- [标题](地址)」的列表,方便贴给 AI。
 // links: [{ title, url, depth? }],depth 是缩进几层(子标签页、文件夹里的项);只有 title 没有 url 的是文件夹那一行,写成纯文字。
 // 新标签页、空白页没内容,跳过;文件夹里一个都不剩就整个不写。heading 给了就在最前面加一行标题。返回 { text, count }(count 是写了几个链接)

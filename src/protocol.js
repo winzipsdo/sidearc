@@ -26,6 +26,7 @@ export const LAST_TAKEN = '_lastTaken';
 export const MSG = {
   keepTab: 'keepTab', // 侧边栏 → 后台:tabId。这个标签页是扩展自己开的(固定项、撤销、导入),不查重
   openDup: 'openDup', // 侧边栏 → 后台:{ url, windowId, active }。用户撤销了查重,照原样再开一份
+  arrange: 'arrange', // 侧边栏 → 后台:{ windowId, spaceId, order? }。按域名整理这个空间;给了 order([{ id, url }])就按它排(撤销整理)。回复 { before }:排之前的顺序(格式同 order),本来就排好了是 null
   deduped: 'deduped', // 后台 → 侧边栏:{ url, windowId, active }。刚关掉了一个地址重复的新标签页
   adopted: 'adopted', // 后台 → 侧边栏:{ windowId, tabId, itemId }。新标签页的地址和某个收藏/固定项相同,已绑定到它
 };

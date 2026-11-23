@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX, toMarkdown, splitPartners } from '../src/logic.js';
+import { addressOf, ANY_SPACE, isAway, isFolder, pinnedItems, pinnedLists, privateItemIds, buildLayout, buildTree, dropBefore, dropInto, canDiscard, favColumns, groupColor, isUnloaded, itemsAt, matchesQuery, tabSpaces, toUrl, sleptFor, nextTrail, trailLeft, TRAIL_TTL, leafCount, LEAF_MAX, toMarkdown, splitPartners, domainOf, domainOrder } from '../src/logic.js';
 
 test('isAway:固定地址和当前地址不同才算离开,锚点不算', () => {
   assert.equal(isAway('https://a.com/x', 'https://a.com/x'), false);
@@ -278,4 +278,39 @@ test('buildLayout:分屏的一个是收藏时,另一个也排在收藏那一块,
     { spaceId: null, ids: [2, 3] },
     { spaceId: 'a', ids: [1] },
   ]);
+});
+
+test('domainOf:主域名算一个站,子域名和端口再分', () => {
+  const site = (url) => domainOf(url).site;
+  assert.deepEqual(domainOf('https://mail.google.com/u/0'), { site: 'google.com', host: 'mail.google.com' });
+  assert.deepEqual(domainOf('https://www.github.com/a'), domainOf('http://github.com/b'));
+  assert.equal(site('https://news.bbc.co.uk/x'), 'bbc.co.uk');
+  assert.equal(site('https://www.sina.com.cn'), 'sina.com.cn');
+  assert.equal(site('https://a.b.example.de'), 'example.de');
+  assert.equal(site('https://example.com./'), 'example.com');
+  assert.deepEqual(domainOf('http://localhost:3000/'), { site: 'localhost', host: 'localhost:3000' });
+  assert.deepEqual(domainOf('http://192.168.1.20:8080/'), { site: '192.168.1.20', host: '192.168.1.20:8080' });
+  assert.notEqual(site('http://10.0.1.20/'), site('http://10.9.1.20/'));
+  assert.equal(site('http://[::1]:5173/'), '[::1]');
+  assert.equal(site('chrome://settings/'), site('chrome://history/'));
+  assert.notEqual(site('chrome-extension://aaa/p.html'), site('chrome-extension://bbb/p.html'));
+  assert.deepEqual(domainOf(''), { site: '', host: '' });
+  assert.deepEqual(domainOf(undefined), { site: '', host: '' });
+});
+
+test('domainOrder:同站、同子域名的在一起,按第一次出现的先后,再排一次不变', () => {
+  const tree = (...urls) => urls.map(([id, url]) => ({ tab: { id, url }, depth: 0 }));
+  const rows = tree([1, 'https://mail.g.com'], [2, 'https://b.com'], [3, 'https://docs.g.com'], [4, 'https://a.com'], [5, 'https://mail.g.com/2'], [6, 'https://b.com/2']);
+  const out = domainOrder(rows);
+  assert.deepEqual(out, [1, 5, 3, 2, 6, 4]);
+  assert.deepEqual(domainOrder(out.map((id) => rows.find((r) => r.tab.id === id))), out);
+  assert.deepEqual(domainOrder([]), []);
+  assert.deepEqual(domainOrder([{ tab: { id: 1, url: '', pendingUrl: 'https://a.com' }, depth: 0 }, ...tree([2, 'https://b.com'], [3, 'https://a.com/3'])]), [1, 3, 2]);
+});
+
+test('domainOrder:子标签、拆分视图的一对整块走,按打头那个的地址算', () => {
+  const row = (id, url, depth = 0) => ({ tab: { id, url }, depth });
+  const rows = [row(1, 'https://a.com'), row(2, 'https://b.com'), row(3, 'https://a.com', 1), row(4, 'https://a.com'), row(5, 'https://c.com'), row(6, 'https://b.com', 1), row(7, 'https://b.com'), row(8, 'https://a.com')];
+  const partners = new Map([[4, 5], [5, 4]]);
+  assert.deepEqual(domainOrder(rows, partners), [1, 4, 5, 6, 8, 2, 3, 7]);
 });

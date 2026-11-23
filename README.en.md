@@ -126,7 +126,7 @@ Tests use Node's built-in test runner (Node 22+), no dependencies.
 npm run e2e
 ```
 
-End-to-end tests load the extension in a real Chrome and cover what unit tests can't: restoring after a browser restart, syncing spaces with tab groups, where new tabs go and duplicate merging, closing and undo, tab id changes on sleep, and split view. Each test starts a fresh Chrome (headless unless `HEADFUL=1`); the whole run takes a few minutes. Needs Chrome installed (155+ for split view); set `CHROME` to its path if it's elsewhere. Run only some with `npm run e2e -- split`.
+End-to-end tests load the extension in a real Chrome and cover what unit tests can't: restoring after a browser restart, syncing spaces with tab groups, where new tabs go and duplicate merging, closing and undo, tidying by domain, tab id changes on sleep, and split view. Each test starts a fresh Chrome (headless unless `HEADFUL=1`); the whole run takes a few minutes. Needs Chrome installed (155+ for split view); set `CHROME` to its path if it's elsewhere. Run only some with `npm run e2e -- split`.
  `npm run screenshots` regenerates the store screenshots and promo tiles in Chinese and English (needs Chrome installed).
 
 See [CHANGELOG.md](CHANGELOG.md) for changes.

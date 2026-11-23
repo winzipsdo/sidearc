@@ -2,7 +2,7 @@
 
 import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js';
 import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX, TAB_KEYS } from './src/protocol.js';
-import { startGroupSync } from './src/groups.js';
+import { arrangeSpace, startGroupSync } from './src/groups.js';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);
@@ -319,7 +319,11 @@ chrome.webNavigation.onCommitted.addListener((nav) => serial(() => dedupe(nav, n
 chrome.webNavigation.onHistoryStateUpdated.addListener((nav) => serial(() => dedupe(nav, true)));
 
 // 侧边栏的请求:keepTab 不查重这个标签页;openDup 撤销了查重,照原样再开一份
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+  if (msg?.[MSG.arrange]) {
+    serial(() => arrangeSpace(msg[MSG.arrange])).then(reply, (e) => (console.error(e), reply(null)));
+    return true; // 排完了才回复
+  }
   if (msg?.[MSG.keepTab] != null) keep(msg[MSG.keepTab]);
   if (msg?.[MSG.openDup]) {
     const { url, windowId, active } = msg[MSG.openDup];
