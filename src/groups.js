@@ -124,8 +124,8 @@ async function syncWindow(windowId, state, all) {
       let at = index;
       for (const unit of moveUnits(c.ids, partners, indexOf)) {
         own(2000);
-        await moveUnit(unit, at);
-        at += unit.length;
+        // 挪不动的(一对分屏被另一对挡着)不占位置:照样往后数的话,下一个会插进那一对中间,把分屏拆开
+        if (await moveUnit(unit, at)) at += unit.length;
       }
       index += c.ids.length;
     }
