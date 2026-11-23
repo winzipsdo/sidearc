@@ -153,26 +153,28 @@ body:not(.settled) #scroll { scrollbar-color: transparent transparent; }
 
 /* 收藏夹 */
 .grid {
-  /* --cols 由 layoutFavs() 按数量和宽度算出，磁贴均分每一行，不留空列 */
+  /* --cols 由 layoutFavs() 按数量和宽度算出:每行尽量一样多。磁贴都一样宽,排不满的最后一行靠左,和上面的列对齐 */
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
   border-radius: 11px;
+  /* 磁贴开没开着底色都一样(开着的和没开的深浅混在一起像棋盘格),没开的只把图标调淡,见下面的 .tile:not(.open) */
+  --tile: var(--card-soft);
+  --tile-hover: color-mix(in srgb, var(--card-soft), var(--card) 45%);
 }
 .tile {
   position: relative;
-  flex: 1 0 calc((100% - (var(--cols, 1) - 1) * 7px) / var(--cols, 1) - 0.1px);
+  flex: 0 0 calc((100% - (var(--cols, 1) - 1) * 7px) / var(--cols, 1) - 0.1px);
   height: 36px;
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: var(--fill);
+  background: var(--tile);
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.tile:hover { background: var(--fill-hover); }
+.tile:hover { background: var(--tile-hover); }
 .tile:active { transform: scale(0.95); }
-.tile.open { background: var(--card-soft); }
 .tile.active { background: var(--card); box-shadow: var(--shadow); }
 /* 开着的收藏:鼠标移上去时右上角的小关闭按钮,出现时盖住发声的小喇叭 */
 .tile .tile-close {
@@ -257,15 +259,15 @@ body:not(.settled) #scroll { scrollbar-color: transparent transparent; }
 .tile .tile-elsewhere svg { width: 11px; height: 11px; }
 /* 点了开在别的窗口里的项:不闪按下的底色,换成「跳出去」的动效(见 render.js 的 markJump):
    整项往右冲一下再弹回,小窗口标记往右滑、变成主题色再回来 */
-/* 按下时保持悬停的样子(行是 --fill、磁贴是 --fill-hover),磁贴也不缩 */
+/* 按下时保持悬停的样子(行是 --fill、磁贴是 --tile-hover),磁贴也不缩 */
 .row.elsewhere-item:active { background: var(--fill); }
-.tile.elsewhere-item:active { background: var(--fill-hover); transform: none; }
+.tile.elsewhere-item:active { background: var(--tile-hover); transform: none; }
 .jumping { animation: jump-out 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) var(--jump-delay, 0s) both; }
 /* 跳的时候和跳完、鼠标还没动之前(hold-hover),样子定在点下去时的悬停状态:
    往右冲时鼠标会一会儿在上面一会儿不在,焦点跳去别的窗口后本窗口的悬停也可能没了,底色和悬停按钮就会闪、
    按钮让出位置时小窗口标记还会跳。鼠标一动就交回给浏览器自己判断(见 render.js 的 markJump) */
 #pins .row:is(.jumping, .hold-hover) { background: var(--fill); }
-#favs .tile:is(.jumping, .hold-hover) { background: var(--fill-hover); }
+#favs .tile:is(.jumping, .hold-hover) { background: var(--tile-hover); }
 .row:is(.jumping, .hold-hover) .x, .tile:is(.jumping, .hold-hover) .tile-close { display: grid; }
 .tile:is(.jumping, .hold-hover) .tile-sound { display: none; }
 .jumping :is(.elsewhere, .tile-elsewhere) { animation: jump-mark 0.5s ease-out var(--jump-delay, 0s) both; }
@@ -282,7 +284,8 @@ body:not(.settled) #scroll { scrollbar-color: transparent transparent; }
 }
 .row .keep svg { width: 12px; height: 12px; }
 .tile .icon { width: 20px; height: 20px; border-radius: 5px; }
-.tile:not(.open) .icon { opacity: 0.85; }
+/* 没开着的收藏:底色和开着的一样,只有图标变淡,和固定标签列表里没开的行一样 */
+.tile:not(.open) .icon { opacity: 0.6; filter: saturate(0.6); }
 
 .hint {
   flex: 1 0 100%;
@@ -453,7 +456,7 @@ body:has(#menu[data-from='space']:not([hidden])) #space-menu { background: var(-
 .keep-hover { transition: none !important; }
 .row.keep-hover:not(.active, .selected) { background: var(--fill); }
 .row.selected.keep-hover { background: color-mix(in srgb, var(--card) 75%, transparent); }
-.tile.keep-hover:not(.active) { background: var(--fill-hover); }
+.tile.keep-hover:not(.active) { background: var(--tile-hover); }
 .row.keep-hover .x { display: grid; }
 .row.active { background: var(--card); box-shadow: var(--shadow); }
 /* 多选(Cmd/Ctrl+点击)选中的标签页:半透明的卡片,加一圈主题色细边 */

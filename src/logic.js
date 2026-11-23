@@ -132,7 +132,7 @@ export function matchesQuery(query, texts) {
   return !q || texts.some((t) => (t || '').toLowerCase().includes(q));
 }
 
-// 收藏夹每行放几个:先算一行最多放几个,再把磁贴平均摊到各行,避免右侧留白
+// 收藏夹每行放几个:先算一行最多放几个,再把磁贴平均摊到各行,最后一行尽量排满(比如 6 个排成 3+3 而不是 5+1)
 export function favColumns(count, width, { min = 54, gap = 7 } = {}) {
   const max = Math.max(1, Math.floor((width + gap) / (min + gap)));
   const rows = Math.ceil(count / max);
