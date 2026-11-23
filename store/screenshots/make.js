@@ -2,17 +2,19 @@
 //   中文 → store/screenshot-*.jpg、store/promo-small-440x280.jpg
 //   英文 → store/en/ 下同名文件
 // 侧边栏部分直接套用 sidepanel.css,界面改了重新运行即可:npm run screenshots。
-// 侧边栏自带的文字(搜索框、清理、新标签页)取自 src/i18n.js,跟着截图的语言
-// 需要本机装有 Chrome(路径可用环境变量 CHROME 指定);macOS 上用自带的 sips 转成高质量 JPEG。
+// 侧边栏自带的文字(搜索框、整理)取自 src/i18n.js,跟着截图的语言
+// 需要本机装有 Chrome(路径可用环境变量 CHROME 指定);macOS 上用自带的 sips、Windows 上用自带的 PowerShell 转成高质量 JPEG。
 
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { BRAND_ICONS } from './brand-icons.js';
 import { setLangPref, t as ui } from '../../src/i18n.js';
 
-const ROOT = new URL('../../', import.meta.url).pathname;
+// 不能用 URL 的 pathname:Windows 上是 /C:/…,和别的路径一拼就成了 C:\C:\…
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const CHROME =
   process.env.CHROME ??
   [
@@ -21,6 +23,11 @@ const CHROME =
     '/usr/bin/google-chrome',
   ].find(existsSync);
 if (!CHROME) throw new Error('找不到 Chrome,请用环境变量 CHROME 指定路径');
+
+// Windows 上按 2 倍出图再缩小:按原尺寸出的中文小字笔画粗细不匀,发毛
+const SCALE = process.platform === 'win32' ? 2 : 1;
+// 大标题的粗细:Windows 的系统字体到 800 会换成 Segoe UI Black,和 macOS 上出的图差得远,用 700
+const HEAVY = process.platform === 'win32' ? 700 : 800;
 
 const OUT = mkdtempSync(join(tmpdir(), 'sidearc-shots-'));
 copyFileSync(join(ROOT, 'sidepanel.css'), join(OUT, 'sidepanel.css'));
@@ -152,14 +159,13 @@ function panel(t, active, dark, folder) {
     row('H', 'Hacker News', { cls: 'discarded' });
   const dots = SPACE_COLORS.map((s, i) => `<button class="space-dot${i === active ? ' on' : ''}"><i style="color:${s.color}"></i></button>`).join('');
   return `<!doctype html><html style="--accent:${color};color-scheme:${dark ? 'dark' : 'light'}"><head><meta charset="utf-8">
-<link rel="stylesheet" href="sidepanel.css">${dark ? `<style>${darkVars}</style>` : ''}</head><body>
+<link rel="stylesheet" href="sidepanel.css"><style>#scroll{scrollbar-width:none}</style>${dark ? `<style>${darkVars}</style>` : ''}</head><body class="shown settled"><!-- 这两个 class 平时由脚本在淡入时加上,没有的话整个侧边栏是透明的 -->
 <header><label class="search">${SEARCH}<input id="search" placeholder="${ui('searchPlaceholder')}"></label>
 <section id="favs" class="zone grid" style="--cols:5">${favs}</section>
 <div class="space-head"><span id="space-name">${esc(t.spaces[active])}</span><button class="ghost">${MORE}</button></div></header>
 <main id="scroll"><section id="pins" class="zone list">${pins}</section>
-<div class="divider"><span></span><button class="ghost">${ui('clear')}</button></div>
-<button class="row new">${PLUS}<span class="title">${ui('newTab')}</span></button>
-<section id="tabs" class="zone list">${tabs}</section></main>
+<div class="divider"><span></span><button class="ghost">${ui('tidy')}</button></div>
+<section id="tabs" class="zone list">${tabs}<button class="row new">${PLUS}</button></section></main>
 <footer id="spaces">${dots}<button class="space-dot">${PLUS}</button></footer></body></html>`;
 }
 
@@ -186,14 +192,39 @@ function strip(t, active, dark, folder) {
   return out + '<div class="newtab">+</div>';
 }
 
-// 把 OUT 里的一个 HTML 截成 JPEG:先出 PNG 再用 sips 转(画质好);没有 sips(非 macOS)就直接让 Chrome 出 JPEG
+// PNG 转成高质量 JPEG(sips 的 90 和 Windows 的 96 差不多;Chrome 自己出的 JPEG 压得太狠,文字边上发糊)
+function toJpeg(png, file, [w, h]) {
+  if (process.platform === 'darwin') return execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '90', png, '--out', file], { stdio: 'ignore' });
+  if (process.platform !== 'win32') throw new Error('没有自带的转换工具');
+  // 路径走环境变量,不用管里面的空格和引号
+  const script = [
+    "$ErrorActionPreference = 'Stop'",
+    'Add-Type -AssemblyName System.Drawing',
+    '$img = [System.Drawing.Image]::FromFile($env:SHOT_PNG)',
+    "$codec = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }",
+    '$opts = New-Object System.Drawing.Imaging.EncoderParameters 1',
+    '$opts.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), ([long]96)',
+    `$out = New-Object System.Drawing.Bitmap ${w}, ${h}, ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)`,
+    '$g = [System.Drawing.Graphics]::FromImage($out)',
+    '$g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic',
+    '$g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality',
+    '$attr = New-Object System.Drawing.Imaging.ImageAttributes',
+    '$attr.SetWrapMode([System.Drawing.Drawing2D.WrapMode]::TileFlipXY)', // 不然最外一圈会掺进透明,发暗
+    `$g.DrawImage($img, (New-Object System.Drawing.Rectangle 0, 0, ${w}, ${h}), 0, 0, $img.Width, $img.Height, [System.Drawing.GraphicsUnit]::Pixel, $attr)`,
+    '$out.Save($env:SHOT_JPG, $codec, $opts)',
+  ].join('; ');
+  execFileSync('powershell', ['-NoProfile', '-Command', script], { stdio: 'ignore', env: { ...process.env, SHOT_PNG: png, SHOT_JPG: file } });
+}
+
+// 把 OUT 里的一个 HTML 截成 JPEG:先出 PNG 再转(画质好);转不了(比如 Linux)就直接让 Chrome 出 JPEG
 function capture(html, file, [w, h]) {
   const png = join(OUT, html.replace(/\.html$/, '.png'));
-  const flags = ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1', `--window-size=${w},${h}`];
-  const shoot = (to) => execFileSync(CHROME, [...flags, `--screenshot=${to}`, 'file://' + join(OUT, html)], { stdio: 'ignore' });
+  // 用单独的用户目录:Windows 上正开着的 Chrome 会接走这次启动,截不出图,也不该碰用户自己的资料
+  const flags = ['--headless=new', `--user-data-dir=${join(OUT, 'profile')}`, '--no-first-run', '--disable-gpu', '--hide-scrollbars', `--window-size=${w},${h}`];
+  const shoot = (to, scale = 1) => execFileSync(CHROME, [...flags, `--force-device-scale-factor=${scale}`, `--screenshot=${to}`, pathToFileURL(join(OUT, html)).href], { stdio: 'ignore' });
   try {
-    shoot(png);
-    execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '90', png, '--out', file], { stdio: 'ignore' });
+    shoot(png, SCALE);
+    toJpeg(png, file, [w, h]);
   } catch {
     shoot(file);
   }
@@ -213,7 +244,7 @@ function page(t, { file, active, dark, folder }, { title, sub, bullets }) {
 *{box-sizing:border-box;margin:0} body{width:1280px;height:800px;overflow:hidden;background:${c.bg};font-family:${t.font};color:${c.fg};-webkit-font-smoothing:antialiased}
 .copy{position:absolute;left:64px;top:50%;transform:translateY(-50%);width:410px}
 .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:20px;margin-bottom:28px} .brand img{width:40px;height:40px}
-h1{font-size:46px;line-height:1.22;font-weight:800;letter-spacing:.5px} .sub{margin:16px 0 26px;font-size:18px;line-height:1.65;color:${c.fg2}}
+h1{font-size:46px;line-height:1.22;font-weight:${HEAVY};letter-spacing:.5px} .sub{margin:16px 0 26px;font-size:18px;line-height:1.65;color:${c.fg2}}
 ul{list-style:none;padding:0;font-size:17px;line-height:1.5} li{position:relative;padding-left:20px;margin:9px 0}
 li::before{content:"";position:absolute;left:0;top:7px;width:10px;height:10px;border-radius:50%;background:${color};box-shadow:0 0 0 3px color-mix(in srgb,${color} 25%,transparent)}
 .win{position:absolute;left:516px;top:62px;width:700px;height:676px;border-radius:14px;overflow:hidden;background:${c.win};box-shadow:0 0 0 1px ${c.line},0 30px 70px rgba(0,0,0,${c.shadow})}
@@ -251,7 +282,7 @@ function promo(t) {
 background:linear-gradient(135deg,#6b7cff 0%,#a06be0 50%,#e5687a 100%);font-family:${t.font};color:#fff;-webkit-font-smoothing:antialiased}
 .mark{margin-top:32px;width:112px;height:112px;border-radius:24px;background:rgba(255,255,255,.18);display:flex;gap:7px;padding:17px 15px}
 .mark i{border-radius:6px;background:#fff} .mark i:first-child{width:18px} .mark i:last-child{flex:1;background:rgba(255,255,255,.62)}
-h1{margin-top:22px;font-family:system-ui,-apple-system,sans-serif;font-size:40px;font-weight:800;letter-spacing:.5px} p{margin-top:12px;font-size:15px;opacity:.88}
+h1{margin-top:22px;font-family:system-ui,-apple-system,sans-serif;font-size:40px;font-weight:${HEAVY};letter-spacing:.5px} p{margin-top:12px;font-size:15px;opacity:.88}
 </style></head><body><div class="mark"><i></i><i></i></div><h1>Sidearc</h1><p>${esc(t.promo)}</p></body></html>`
   );
   capture(n, join(ROOT, t.dir, 'promo-small-440x280.jpg'), [440, 280]);
