@@ -22,9 +22,16 @@ export function pushUndo(text, run) {
   if (undoStack.length > 30) undoStack.shift();
   toast(text, t('undo'), () => undo(entry));
 }
+// 撤销和整理一个接一个做:连按两下 Ctrl/Cmd+Z 时第二下要等第一下做完,不然两下会撤销同一步、丢掉另一步;
+// 整理到一半时按的,撤销的是这次整理
+let queue = Promise.resolve();
+export const inTurn = (fn) => (queue = queue.then(fn, fn));
+export const undo = (entry) => inTurn(() => undoOne(entry));
 // entry 为空 = 按了 Ctrl/Cmd+Z:撤销最近的一步。
 // 在浏览器自己的标签栏里关掉的标签页不经过这个栈,所以先看浏览器的「最近关闭」:比栈顶更晚关掉的,先恢复它
-export async function undo(entry) {
+async function undoOne(entry) {
+  // 排队的时候已经被撤销掉了(按了快捷键又点了提示条上的按钮)
+  if (entry && !undoStack.includes(entry)) return;
   if (!entry) {
     entry = undoStack.at(-1);
     const [closed] = await chrome.sessions.getRecentlyClosed().catch(() => []);
