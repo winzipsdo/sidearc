@@ -1,12 +1,12 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItemToSpace, removeItem, savePageAsItem, syncItemToTab } from './items.js';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js';
 import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js';
 import { canScatter, scatterLeaves } from './leaves.js';
 import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js';
 import { render } from './render.js';
 import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js';
-import { activeSpace, bind, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js';
 import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js';
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, t } from './i18n.js';
@@ -193,9 +193,41 @@ export function itemMenu(e, { item, kind, space, folder }) {
       ? state.spaces.filter((s) => s.id !== space.id).map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveItemToSpace(item.id, s.id).then(() => switchSpace(s.id, bind.get(item.id))) }))
       : []),
     // 字比较多,放在这一组最后
-    kind === 'pin' && { icon: 'folderPlus', label: t('newFolderWithItem'), run: () => createFolder(item.id) },
+    kind === 'pin' && { icon: 'folderPlus', label: t('newFolderWithItem'), run: () => createFolder([item.id]) },
     '-',
     { icon: kind === 'fav' ? 'trash' : 'unpin', label: kind === 'fav' ? t('removeFromFavs') : t('unpin'), danger: true, run: () => removeItem(item.id, false) },
+  ]);
+}
+
+// 固定标签多选时右键其中一个:对选中的这几个操作(ids 按显示的顺序)。移到别的空间、取消固定可以撤销
+export function pinSelectionMenu(e, ids) {
+  const hits = ids.map(findItem).filter(Boolean);
+  const n = hits.length;
+  const tabOf = (item) => tabs.find((x) => x.id === bind.get(item.id));
+  const open = hits.map(({ item }) => tabOf(item)).filter(Boolean);
+  const inFolder = hits.filter((hit) => hit.folder);
+  showMenu(e, [
+    { header: t('nPins', { n }) },
+    { icon: 'sleep', label: t('sleep'), disabled: open.every(isUnloaded), title: open.every(isUnloaded) ? t('nothingToSleep') : null, run: () => discardTabs(open, { withActive: true }) },
+    markdownItem(hits.map(({ item }) => ({ title: tabOf(item)?.title || item.title, url: tabOf(item)?.url || item.url }))),
+    '-',
+    { icon: 'move', label: t('moveToFavs'), run: () => moveItems(ids, 'fav') },
+    // 一个个挪到各自文件夹的后面:倒着挪,同一个文件夹里的几个出来后还是原来的先后
+    inFolder.length > 0 && {
+      icon: 'outdent',
+      label: t('moveOutOfFolder'),
+      run: async () => {
+        for (const hit of inFolder.reverse()) await moveToFolder(hit.item.id, null);
+      },
+    },
+    ...state.spaces
+      .filter((s) => s.id !== state.activeSpaceId)
+      .map((s) => ({ icon: 'dot', color: s.color, label: t('moveToSpace', { name: s.name }), run: () => moveItemsToSpace(ids, s.id).then(() => switchSpace(s.id)) })),
+    { icon: 'folderPlus', label: t('newFolderWithItem'), run: () => createFolder(ids) },
+    '-',
+    // 只关它们的标签页,固定标签还在;一个都没开着时置灰
+    { icon: 'minus', label: t('close'), disabled: !open.length, title: open.length ? null : t('nothingToClose'), run: () => hits.forEach(({ item }) => closeItemTab(item)) },
+    { icon: 'unpin', label: t('unpin'), danger: true, run: () => removeItems(ids, false) },
   ]);
 }
 

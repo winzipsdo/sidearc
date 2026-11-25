@@ -1,7 +1,7 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
 import { t } from './i18n.js';
-import { addressOf, isAway, pinnedItems, toUrl } from './logic.js';
+import { addressOf, isAway, isFolder, pinnedItems, toUrl } from './logic.js';
 import { MSG } from './protocol.js';
 import { render, schedule } from './render.js';
 import {
@@ -145,75 +145,150 @@ export async function addItemFromTab(tab, zone) {
   render();
 }
 
-// 把固定标签移到另一个空间的固定区,放在最后。开着的标签页跟着一起过去(它属于固定标签所在的空间)
-export async function moveItemToSpace(id, spaceId) {
-  const hit = findItem(id);
-  const target = state.spaces.find((s) => s.id === spaceId);
-  if (!hit || hit.kind !== 'pin' || !target) return;
-  const from = { spaceId: hit.space.id, folderId: hit.folder?.id, index: hit.list.indexOf(hit.item) };
-  const item = takeItem(id);
-  target.pinned.push(item);
-  // 会话里记的空间也改过去,免得以后取消固定时标签页回到原来的空间
-  const tabId = bind.get(id);
-  if (tabId != null) await setTabSpace(tabId, spaceId);
+// 一项(或固定区顶层的一个文件夹)现在放在哪:收藏夹,或者哪个空间的固定区、哪个文件夹里,以及第几个。撤销挪动时按它放回去
+function placeOf(id) {
+  const fav = state.favorites.findIndex((x) => x.id === id);
+  if (fav >= 0) return { id, fav: true, index: fav };
+  for (const space of state.spaces) {
+    const top = space.pinned.findIndex((x) => x.id === id);
+    if (top >= 0) return { id, spaceId: space.id, folderId: null, index: top };
+    for (const f of space.pinned.filter(isFolder)) {
+      const i = f.items.findIndex((x) => x.id === id);
+      if (i >= 0) return { id, spaceId: space.id, folderId: f.id, index: i };
+    }
+  }
+  return null;
+}
+export const placesOf = (ids) => ids.map(placeOf).filter(Boolean);
+
+// 按 placesOf 记下的位置放回去:先全部取出来,再按原来的位置从前往后插,同一个数组里的几项也能各回各位。
+// 原来的文件夹没了就放到那个空间的固定区顶层;空间也没了的不动。gone 是已经不在任何地方的项(撤销取消固定时):id -> 项
+export function putBack(places, gone = new Map()) {
+  const dest = (p, obj) => {
+    if (p.fav) return state.favorites;
+    const space = state.spaces.find((s) => s.id === p.spaceId);
+    return space && ((p.folderId && !isFolder(obj) && space.pinned.find((f) => f.id === p.folderId)?.items) || space.pinned);
+  };
+  const moving = places
+    .map((p) => {
+      const obj = findItem(p.id)?.item ?? findFolder(p.id) ?? gone.get(p.id);
+      return obj && dest(p, obj) && { p, obj: takeItem(p.id) ?? gone.get(p.id) };
+    })
+    .filter((x) => x?.obj);
+  for (const { p, obj } of moving.sort((a, b) => a.p.index - b.p.index)) {
+    const arr = dest(p, obj);
+    arr.splice(Math.min(p.index, arr.length), 0, obj);
+  }
+}
+const findFolder = (id) => state.spaces.flatMap((s) => s.pinned).find((x) => isFolder(x) && x.id === id);
+
+// 挪动项或文件夹(只改它们在哪个数组、第几个),可以撤销。change 做实际的挪动,做完存盘重画;撤销时放回原处
+export async function moveWithUndo(ids, text, change) {
+  const places = placesOf(ids);
+  if ((await change()) === false) return;
   await save();
   render();
-  pushUndo(t('movedToSpace', { title: item.alias || item.title, name: target.name }), async () => {
-    // 放回原来的空间和位置(原来在文件夹里就放回文件夹;文件夹没了就放顶层)
-    const space = state.spaces.find((s) => s.id === from.spaceId);
-    const arr = space?.pinned.find((f) => f.id === from.folderId)?.items ?? space?.pinned;
-    const back = arr && takeItem(id);
-    if (!back) return;
-    arr.splice(Math.min(from.index, arr.length), 0, back);
-    if (tabId != null) await setTabSpace(tabId, from.spaceId);
+  pushUndo(text, async () => {
+    putBack(places);
     await save();
     render();
   });
 }
 
-export async function moveItem(id, zone) {
-  const item = takeItem(id);
-  if (!item) return;
-  (zone === 'fav' ? state.favorites : activeSpace().pinned).push(item);
-  await save();
-  render();
+// 挪动 ids 这几项时提示条上的话:一项写名字,多项写个数
+export function movedText(ids) {
+  if (ids.length > 1) return t('movedN', { n: ids.length });
+  const x = findItem(ids[0])?.item ?? findFolder(ids[0]);
+  return t('movedItem', { title: x?.alias || x?.title || x?.name || '' });
 }
 
-export async function removeItem(id, openIfClosed) {
-  const hit = findItem(id);
-  if (!hit) return;
-  const { item, kind } = hit;
-  const spaceId = hit.space?.id;
-  const folderId = hit.folder?.id;
-  const index = hit.list.indexOf(item);
-  takeItem(id);
-  let tabId = bind.get(id);
-  if (tabId != null) {
-    await unbind(id);
-    await setTabSpace(tabId, state.activeSpaceId);
-    await setTabAlias(tabId, item.alias);
-  } else if (openIfClosed) {
-    tabId = (await createTab({ url: item.url, windowId, active: false })).id;
+// 把固定标签移到另一个空间的固定区,放在最后,可以撤销。开着的标签页跟着一起过去(它属于固定标签所在的空间)
+export async function moveItemsToSpace(ids, spaceId) {
+  const target = state.spaces.find((s) => s.id === spaceId);
+  const hits = ids.map(findItem).filter((hit) => hit?.kind === 'pin' && hit.space.id !== spaceId);
+  if (!target || !hits.length) return;
+  const places = placesOf(hits.map((hit) => hit.item.id));
+  const from = new Map(hits.map((hit) => [hit.item.id, hit.space.id]));
+  for (const { item } of hits) {
+    target.pinned.push(takeItem(item.id));
+    // 会话里记的空间也改过去,免得以后取消固定时标签页回到原来的空间
+    const tabId = bind.get(item.id);
+    if (tabId != null) await setTabSpace(tabId, spaceId);
   }
   await save();
   render();
-
-  // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
-  pushUndo(t(kind === 'fav' ? 'removedFromFavs' : 'unpinned', { title: item.alias || item.title }), async () => {
-    // 原来在文件夹里就放回文件夹;文件夹已经没了就放到固定区顶层
-    const space = state.spaces.find((s) => s.id === spaceId);
-    const arr = kind === 'fav' ? state.favorites : (space?.pinned.find((f) => f.id === folderId)?.items ?? space?.pinned);
-    if (!arr || findItem(id)) return;
-    arr.splice(Math.min(index, arr.length), 0, item);
-    const tab = tabId != null && (await chrome.tabs.get(tabId).catch(() => null));
-    if (tab) {
-      await detachTab(tab.id);
-      await setBind(id, tab.id);
+  const [{ item }] = hits;
+  const text = hits.length > 1 ? t('movedNToSpace', { n: hits.length, name: target.name }) : t('movedToSpace', { title: item.alias || item.title, name: target.name });
+  pushUndo(text, async () => {
+    // 放回原来的空间和位置(原来在文件夹里就放回文件夹;文件夹没了就放顶层)
+    putBack(places);
+    for (const [id, sid] of from) {
+      const tabId = bind.get(id);
+      if (tabId != null && findItem(id)?.space?.id === sid) await setTabSpace(tabId, sid);
     }
     await save();
     render();
   });
 }
+export const moveItemToSpace = (id, spaceId) => moveItemsToSpace([id], spaceId);
+
+// 收藏和固定标签之间挪(放在最后)
+export async function moveItems(ids, zone) {
+  const list = zone === 'fav' ? state.favorites : activeSpace().pinned;
+  for (const id of ids) {
+    const item = takeItem(id);
+    if (item) list.push(item);
+  }
+  await save();
+  render();
+}
+export const moveItem = (id, zone) => moveItems([id], zone);
+
+// 把项取下来,不留撤销:开着的标签页解绑,回到 spaceId 空间(默认当前空间)的列表里,带上别名;
+// openIfClosed:没开着的也打开(拖到列表里时)。返回 [{ item, kind, tabId }]
+export async function detachItems(ids, openIfClosed, spaceId = state.activeSpaceId) {
+  const gone = [];
+  for (const id of ids) {
+    const hit = findItem(id);
+    if (!hit) continue;
+    takeItem(id);
+    let tabId = bind.get(id);
+    if (tabId != null) {
+      await unbind(id);
+      await setTabSpace(tabId, spaceId);
+      await setTabAlias(tabId, hit.item.alias);
+    } else if (openIfClosed) {
+      tabId = (await createTab({ url: hit.item.url, windowId, active: false })).id;
+    }
+    gone.push({ item: hit.item, kind: hit.kind, tabId });
+  }
+  await save();
+  render();
+  return gone;
+}
+
+// 取消固定 / 从收藏夹移除,可以撤销
+export async function removeItems(ids, openIfClosed) {
+  const places = placesOf(ids);
+  const gone = await detachItems(ids, openIfClosed);
+  if (!gone.length) return;
+  const [{ item, kind }] = gone;
+  const text = gone.length > 1 ? t('unpinnedN', { n: gone.length }) : t(kind === 'fav' ? 'removedFromFavs' : 'unpinned', { title: item.alias || item.title });
+  // 可能是误操作:放回原来的位置,标签页还在的话重新绑上
+  pushUndo(text, async () => {
+    putBack(places, new Map(gone.map((g) => [g.item.id, g.item])));
+    for (const { item, tabId } of gone) {
+      const tab = tabId != null && (await chrome.tabs.get(tabId).catch(() => null));
+      if (tab && findItem(item.id)) {
+        await detachTab(tab.id);
+        await setBind(item.id, tab.id);
+      }
+    }
+    await save();
+    render();
+  });
+}
+export const removeItem = (id, openIfClosed) => removeItems([id], openIfClosed);
 
 export async function editItem(id) {
   const item = findItem(id)?.item;

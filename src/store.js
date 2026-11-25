@@ -38,6 +38,8 @@ export const setQuery = (text) => (query = text);
 export const setDragging = (d) => (dragging = d);
 export const setRenderPending = (pending) => (renderPending = pending);
 export const setRenderHeld = (held) => (renderHeld = held);
+// 固定标签的多选(Cmd/Ctrl+点击、Shift+点击):项的 id。固定标签很多没开着,用不了浏览器的标签页高亮,所以单独记在侧边栏里
+export const pinPicked = new Set();
 // 鼠标正按着:这时重画会把按下的那一行换成新元素,松开时就不算点在同一个元素上,点击会丢(切标签页后连着点很容易碰上)
 export let pressing = false;
 export const setPressing = (v) => (pressing = v);

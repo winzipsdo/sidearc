@@ -10,7 +10,7 @@ import { refreshHistory } from './history.js';
 import { recentMenu, settingsMenu } from './menus.js';
 import { addSpace } from './spaces.js';
 import { applyMenuTarget, toggleMenuFrom } from './ui.js';
-import { activeSpace, bind, dragging, matches, pressing, query, refreshTabs, renderHeld, selectedIds, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, bind, dragging, pinPicked, matches, pressing, query, refreshTabs, renderHeld, selectedIds, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));
@@ -226,6 +226,9 @@ export function render() {
   setRenderPending(false);
   const hovered = hoveredKey();
   const space = activeSpace();
+  // 固定标签的多选只留当前空间里还在的(取消固定了、移走了、换了空间的不算)
+  const pinIds = new Set(pinnedItems(space).map((i) => i.id));
+  for (const id of pinPicked) if (!pinIds.has(id)) pinPicked.delete(id);
   const tabById = new Map(tabs.map((t) => [t.id, t]));
   document.documentElement.style.setProperty('--accent', space.color);
   $('#space-name').textContent = space.name;
@@ -235,7 +238,7 @@ export function render() {
     const open = bind.has(item.id);
     const tab = tabById.get(bind.get(item.id));
     // 休眠了的(包括重启后还没加载的)和下面的标签页一样变淡
-    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active', tab && isUnloaded(tab) && 'discarded'].filter(Boolean).join(' ');
+    const cls = [kind === 'fav' ? 'tile' : 'row', open && 'open', tab?.active && 'active', kind === 'pin' && pinPicked.has(item.id) && 'selected', tab && isUnloaded(tab) && 'discarded'].filter(Boolean).join(' ');
     const img = h('img', { class: 'icon', src: tab ? tabIcon(tab) : faviconFor(item.url), alt: '', draggable: false });
     const tip = item.alias ? `${item.alias} · ${item.title}` : item.title;
     // 绑定的标签页正在发声或已静音:收藏在图标右上角显示小喇叭,固定标签在行右侧显示喇叭按钮,点了切换静音

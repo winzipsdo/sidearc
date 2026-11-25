@@ -4,7 +4,7 @@ import { $, FALLBACK_ICON } from './dom.js';
 import { bindDrag } from './drag.js';
 import { bindKeys } from './keys.js';
 import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js';
-import { folderMenu, itemMenu, spaceMenu, tabMenu } from './menus.js';
+import { folderMenu, itemMenu, pinSelectionMenu, spaceMenu, tabMenu } from './menus.js';
 import { moveToFolder, toggleFolder } from './folders.js';
 import { applyStaticText, setLangPref, t } from './i18n.js';
 import { splitPartners } from './logic.js';
@@ -14,7 +14,7 @@ import { bindLeaves, refreshLeaves } from './leaves.js';
 import { revealTab } from './locate.js';
 import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
-import { activeSpace, applySession, bind, findItem, followSpace, normalize, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pinPicked, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
 import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js';
 import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
@@ -33,11 +33,42 @@ function selectRange(tab) {
   chrome.tabs.highlight({ windowId, tabs: [anchor, ...range].map((x) => x.index) }).catch(() => {});
 }
 
-// 取消多选:只留当前标签页(和它分屏的那个 Chrome 不让取消高亮,本来也不算选中,跳过)
+// 取消多选:只留当前标签页(和它分屏的那个 Chrome 不让取消高亮,本来也不算选中,跳过);固定标签的多选也清掉
 function clearSelection() {
+  clearPinPicks();
+  clearTabSelection();
+}
+function clearTabSelection() {
   const active = tabs.find((t) => t.active);
   const partner = active && splitPartners(tabs).get(active.id);
   for (const tab of tabs) if (tab.highlighted && !tab.active && tab.id !== partner) chrome.tabs.update(tab.id, { highlighted: false }).catch(() => {});
+}
+
+// 固定标签的多选(和标签页的多选互不相干,选了一边就清掉另一边):起点是上一次普通点击或 Cmd/Ctrl+点击的固定标签
+let pinAnchor = null;
+function clearPinPicks() {
+  if (!pinPicked.size) return;
+  pinPicked.clear();
+  render();
+}
+// 固定区里看得见的固定标签,按显示的顺序(收起的文件夹里的不算)
+const shownPins = () => [...document.querySelectorAll('#pins [data-kind="pin"]')].map((el) => el.dataset.id);
+// Cmd/Ctrl+点击:加入或移出多选;Shift+点击:从起点连选到这一项,其他的取消。没有起点就从正在看的那个固定标签算
+function pickPin(id, range) {
+  if (range) {
+    const list = shownPins();
+    const current = list.find((x) => bind.get(x) === tabs.find((t) => t.active)?.id);
+    const anchor = list.includes(pinAnchor) ? pinAnchor : (current ?? id);
+    const [a, b] = [list.indexOf(anchor), list.indexOf(id)].sort((x, y) => x - y);
+    pinPicked.clear();
+    for (const x of list.slice(a, b + 1)) pinPicked.add(x);
+  } else {
+    pinAnchor = id;
+    if (pinPicked.has(id)) pinPicked.delete(id);
+    else pinPicked.add(id);
+  }
+  clearTabSelection();
+  render();
 }
 
 // 列表里的行和磁贴:点击、中键
@@ -80,13 +111,18 @@ function bindRows(root) {
       else if (act === 'discard') discardTabs([tab], { withActive: true });
       else if (act === 'unnest') setTabParent(tab.id, null).then(render);
       else if (act === 'mute') chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted });
-      else if (e.shiftKey) selectRange(tab);
+      else if (e.shiftKey) {
+        clearPinPicks();
+        selectRange(tab);
+      }
       // Cmd/Ctrl+点击:加入或移出多选,和顶部标签栏一样用浏览器的高亮(当前标签页总是选中的)
       else if (e.metaKey || e.ctrlKey) {
+        clearPinPicks();
         anchorId = tab.id;
         chrome.tabs.update(tab.id, { highlighted: !tab.highlighted }).catch(() => {});
       } else {
         anchorId = tab.id;
+        clearPinPicks();
         chrome.tabs.update(tab.id, { active: true });
         endSearch();
       }
@@ -99,7 +135,10 @@ function bindRows(root) {
       else if (act === 'back') backToItem(item);
       else if (act === 'unpin') removeItem(item.id, false);
       else if (act === 'unfold') moveToFolder(item.id, null);
+      else if (el.dataset.kind === 'pin' && (e.shiftKey || e.metaKey || e.ctrlKey)) pickPin(item.id, e.shiftKey);
       else {
+        pinAnchor = el.dataset.kind === 'pin' ? item.id : null;
+        clearPinPicks();
         // 开在别的窗口里:先播一下「跳出去」的动效,告诉你它去了另一个窗口
         if (el.classList.contains('elsewhere-item')) markJump(item.id, e);
         openItem(item);
@@ -146,7 +185,12 @@ function bindMenus(scroll) {
       tabMenu(e, tab);
     } else {
       const hit = findItem(el.dataset.id);
-      if (hit) setMenuTarget([el]), itemMenu(e, hit);
+      if (!hit) return;
+      // 右键的是固定标签多选里的一项:菜单作用于选中的全部
+      const picked = el.dataset.kind === 'pin' && pinPicked.has(hit.item.id) ? [...document.querySelectorAll('#pins .row.selected[data-kind="pin"]')] : [];
+      if (picked.length > 1) return setMenuTarget(picked, el), pinSelectionMenu(e, picked.map((x) => x.dataset.id));
+      setMenuTarget([el]);
+      itemMenu(e, hit);
     }
   });
   // 点在菜单外面就关;打开它的那个按钮除外,由按钮自己切换开关(见 ui.js 的 toggleMenuFrom)

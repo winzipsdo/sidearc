@@ -19,17 +19,21 @@ export function findFolder(id) {
 }
 
 // 新建文件夹;给了 itemId 就把那个固定项移进去
-export async function createFolder(itemId) {
+// itemIds:新建后移进去的固定标签(多选时是几个,按给的顺序)
+export async function createFolder(itemIds = []) {
   const out = await ask(t('newFolderTitle'), [{ key: 'name', label: t('name'), value: '' }]);
   if (!out) return;
   const folder = { id: uid(), folder: true, name: out.name, open: true, items: [] };
   const space = activeSpace();
-  const hit = itemId && findItem(itemId);
-  // 放在被移入的那一项原来的位置,否则放在固定区最后
-  const at = hit && hit.list === space.pinned ? space.pinned.indexOf(hit.item) : space.pinned.length;
-  const item = itemId && takeItem(itemId);
-  if (item) folder.items.push(item);
-  space.pinned.splice(at, 0, folder);
+  // 放在第一个移入的项原来的位置(它在文件夹里就放在那个文件夹的位置),否则放在固定区最后
+  const hit = itemIds.length && findItem(itemIds[0]);
+  const first = hit && (hit.list === space.pinned ? hit.item : hit.folder);
+  const after = first && space.pinned.slice(space.pinned.indexOf(first)).find((x) => !itemIds.includes(x.id));
+  for (const id of itemIds) {
+    const item = findItem(id)?.space === space && takeItem(id);
+    if (item) folder.items.push(item);
+  }
+  space.pinned.splice(after ? space.pinned.indexOf(after) : space.pinned.length, 0, folder);
   await save();
   render();
 }
