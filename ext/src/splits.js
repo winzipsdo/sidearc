@@ -3,7 +3,7 @@
 // 两个一起放进或拿出分组(tabs.group / tabs.ungroup)、挪它旁边的标签页都不会。
 // 所以一对分屏要换位置时不动它们,而是把挡在中间的标签页一个个挪到另一边
 
-import { SPLIT_NONE } from './logic.js?v=503bcbcb';
+import { SPLIT_NONE } from './logic.js?v=6d9a844f';
 
 const inSplit = (tab) => tab?.splitViewId > SPLIT_NONE;
 

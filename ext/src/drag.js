@@ -1,15 +1,15 @@
-// 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。
+// 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。收藏、固定标签(可以多选)和文件夹的拖动都可以撤销。
 
-import { itemFromTab, removeItem } from './items.js?v=503bcbcb';
-import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js?v=503bcbcb';
-import { moveUnit, moveUnits } from './splits.js?v=503bcbcb';
-import { render, schedule } from './render.js?v=503bcbcb';
-import { h, icon } from './dom.js?v=503bcbcb';
-import { t } from './i18n.js?v=503bcbcb';
-import { activeSpace, dragging, findItem, listedParent, listedTabs, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabs, takeItem, visibleTabs } from './store.js?v=503bcbcb';
-import { switchSpace } from './spaces.js?v=503bcbcb';
-import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js?v=503bcbcb';
-import { hideMenu } from './ui.js?v=503bcbcb';
+import { detachItems, itemFromTab, movedText, moveWithUndo, placesOf, removeItems } from './items.js?v=6d9a844f';
+import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js?v=6d9a844f';
+import { moveUnit, moveUnits } from './splits.js?v=6d9a844f';
+import { render, schedule } from './render.js?v=6d9a844f';
+import { h, icon } from './dom.js?v=6d9a844f';
+import { t } from './i18n.js?v=6d9a844f';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, pinPicked, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabParent, tabs, takeItem, visibleTabs } from './store.js?v=6d9a844f';
+import { switchSpace } from './spaces.js?v=6d9a844f';
+import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js?v=6d9a844f';
+import { hideMenu, pushUndo } from './ui.js?v=6d9a844f';
 
 function clearMarks() {
   for (const el of document.querySelectorAll('.split-hint')) el.remove();
@@ -154,8 +154,56 @@ async function nestTab(tabIds, targetId) {
   await moveGroup(moving, { after });
 }
 
-// d 是被拖的东西({ kind, id }),zone 是落下的区域(tab / fav / pin)
+// 把 added 这几项放到落点:收藏夹或当前空间的固定区里 refId 之前(没有就放到最后);intoId 是文件夹时放进去,排在最后
+function place(added, zone, refId, intoId) {
+  let arr = zone === 'fav' ? state.favorites : activeSpace().pinned;
+  if (zone === 'pin') {
+    const pinned = activeSpace().pinned;
+    const into = intoId && pinned.find((x) => isFolder(x) && x.id === intoId);
+    if (into) {
+      into.items.push(...added);
+      into.open = true;
+      return;
+    }
+    // 参照是文件夹里的项:放进那个文件夹,排在它前面
+    arr = (refId && pinned.find((f) => isFolder(f) && f.items.some((x) => x.id === refId))?.items) || pinned;
+  }
+  const i = refId ? arr.findIndex((x) => x.id === refId) : -1;
+  arr.splice(i < 0 ? arr.length : i, 0, ...added);
+}
+
+// 把列表里的标签页拖进收藏夹或固定区:按顺序变成多项。可以撤销:撤销时标签页回到列表里原来的空间,父子关系也恢复
+async function dropTabsAsItems(tabIds, zone, refId, intoId) {
+  const spaceId = state.activeSpaceId;
+  // 变成项时它们会脱离父标签、放开子标签(见 items.js 的 detachTab),先记下来
+  const links = [...tabParent].filter(([child, parent]) => tabIds.includes(child) || tabIds.includes(parent));
+  const added = [];
+  for (const id of tabIds) {
+    const tab = tabs.find((x) => x.id === id);
+    const item = tab && (await itemFromTab(tab));
+    if (item) added.push(item);
+  }
+  if (!added.length) return;
+  place(added, zone, refId, intoId);
+  await save();
+  render();
+  const where = t(zone === 'fav' ? 'whereFavs' : 'wherePins');
+  const text = added.length > 1 ? t('addedN', { n: added.length, where }) : t('saved', { title: added[0].title, where });
+  pushUndo(text, async () => {
+    await detachItems(
+      added.map((x) => x.id),
+      false,
+      spaceId
+    );
+    for (const [child, parent] of links) await setTabParent(child, parent);
+    render();
+  });
+}
+
+// d 是被拖的东西({ kind, id, ids? }),zone 是落下的区域(tab / fav / pin)。
+// 收藏、固定标签和文件夹的拖动都可以撤销(拖到下面列表里 = 取消固定)
 async function performDrop(d, zone, refId, intoId) {
+  const ids = d.ids ?? [d.id];
   // 文件夹只能在固定区里挪位置
   if (d.kind === 'folder') {
     if (zone !== 'pin' || refId === d.id) return;
@@ -164,48 +212,31 @@ async function performDrop(d, zone, refId, intoId) {
     if (!folder) return;
     // 参照是文件夹里的项时,放到那个文件夹前面
     const ref = refId && (pinned.find((x) => x.id === refId) ?? findItem(refId)?.folder);
-    pinned.splice(pinned.indexOf(folder), 1);
-    const i = ref ? pinned.indexOf(ref) : -1;
-    pinned.splice(i < 0 ? pinned.length : i, 0, folder);
-    await save();
-    return render();
+    const from = pinned.indexOf(folder);
+    const to = ref ? pinned.indexOf(ref) : pinned.length;
+    // 放回原处(它后面那个之前):没动
+    if (to === from || to === from + 1) return;
+    return moveWithUndo([d.id], movedText([d.id]), () => {
+      pinned.splice(from, 1);
+      pinned.splice(ref ? pinned.indexOf(ref) : pinned.length, 0, folder);
+    });
   }
   if (zone === 'tab') {
-    const ids = (d.ids ?? [d.id]).map(Number);
-    if (d.kind === 'tab') return intoId != null ? nestTab(ids, +intoId) : dropTab(ids, refId == null ? null : +refId);
-    return removeItem(d.id, true);
-  }
-  // 多选的标签页按顺序变成多项,一起放进去
-  let added;
-  if (d.kind === 'tab') {
-    added = [];
-    for (const id of d.ids ?? [d.id]) {
-      const tab = tabs.find((x) => x.id === +id);
-      const item = tab && (await itemFromTab(tab));
-      if (item) added.push(item);
+    if (d.kind === 'tab') {
+      const tabIds = ids.map(Number);
+      return intoId != null ? nestTab(tabIds, +intoId) : dropTab(tabIds, refId == null ? null : +refId);
     }
-  } else {
-    added = [takeItem(d.id)].filter(Boolean);
+    return removeItems(ids, true);
   }
-  if (!added.length) return;
-  let arr = zone === 'fav' ? state.favorites : activeSpace().pinned;
-  if (zone === 'pin') {
-    const pinned = activeSpace().pinned;
-    const into = intoId && pinned.find((x) => isFolder(x) && x.id === intoId);
-    if (into) {
-      // 拖到文件夹上:放进去,排在最后
-      into.items.push(...added);
-      into.open = true;
-      await save();
-      return render();
-    }
-    // 参照是文件夹里的项:放进那个文件夹,排在它前面
-    arr = (refId && pinned.find((f) => isFolder(f) && f.items.some((x) => x.id === refId))?.items) || pinned;
-  }
-  const i = refId ? arr.findIndex((x) => x.id === refId) : -1;
-  arr.splice(i < 0 ? arr.length : i, 0, ...added);
-  await save();
-  render();
+  if (d.kind === 'tab') return dropTabsAsItems(ids.map(Number), zone, refId, intoId);
+  // 收藏、固定标签(多选时按顺序一起)挪到新位置
+  const before = placesOf(ids);
+  return moveWithUndo(ids, movedText(ids), () => {
+    place(ids.map(takeItem).filter(Boolean), zone, refId, intoId);
+    // 放下后位置和原来一样(比如放回自己后面那一项之前):没动,不用提示
+    const after = placesOf(ids);
+    if (JSON.stringify(after) === JSON.stringify(before)) return false;
+  });
 }
 
 // 落点所在的区域。拖固定项时,固定区下面的分隔线(「整理」那一行)也算固定区的末尾:
@@ -221,15 +252,21 @@ export function bindDrag() {
     if (!el) return;
     hideMenu();
     // 拖的是多选里的一个:选中的标签页一起拖(和顶部标签栏一样,选中 = 浏览器里高亮的标签页)
+    // 固定标签也一样:拖的是多选里的一项,选中的固定标签按显示的顺序一起拖
     const picked = selectedIds();
-    const selected = el.dataset.kind === 'tab' ? visibleTabs().filter((x) => picked.has(x.tab.id)).map((x) => String(x.tab.id)) : [];
+    const selected =
+      el.dataset.kind === 'tab'
+        ? visibleTabs().filter((x) => picked.has(x.tab.id)).map((x) => String(x.tab.id))
+        : el.dataset.kind === 'pin'
+          ? [...document.querySelectorAll('#pins [data-kind="pin"]')].map((x) => x.dataset.id).filter((id) => pinPicked.has(id))
+          : [];
     const multi = selected.length > 1 && selected.includes(el.dataset.id);
     setDragging({ kind: el.dataset.kind, id: el.dataset.id, ids: multi ? selected : undefined });
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', el.title || '');
     if (multi) {
       // 拖拽的影子换成「N 个标签页」的小标签;它要在页面上才能截图,截完就删
-      const ghost = h('div', { class: 'drag-ghost' }, t('nTabs', { n: selected.length }));
+      const ghost = h('div', { class: 'drag-ghost' }, t(el.dataset.kind === 'pin' ? 'nPins' : 'nTabs', { n: selected.length }));
       document.body.append(ghost);
       e.dataTransfer.setDragImage(ghost, 14, 14);
       setTimeout(() => ghost.remove());

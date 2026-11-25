@@ -4,9 +4,9 @@
 // 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
 // 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
-import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js?v=503bcbcb';
-import { hasPrefix, KEY, PREFIX } from './protocol.js?v=503bcbcb';
-import { carryPair, moveUnit, moveUnits } from './splits.js?v=503bcbcb';
+import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js?v=6d9a844f';
+import { hasPrefix, KEY, PREFIX } from './protocol.js?v=6d9a844f';
+import { carryPair, moveUnit, moveUnits } from './splits.js?v=6d9a844f';
 
 // 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
 const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;

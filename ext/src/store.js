@@ -1,9 +1,9 @@
 // 侧边栏的全部状态,以及只读写状态、不碰界面的函数。
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
-import { t } from './i18n.js?v=503bcbcb';
-import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js?v=503bcbcb';
-import { KEY, PREFIX } from './protocol.js?v=503bcbcb';
+import { t } from './i18n.js?v=6d9a844f';
+import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js?v=6d9a844f';
+import { KEY, PREFIX } from './protocol.js?v=6d9a844f';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
 export const uid = () => crypto.randomUUID().slice(0, 8);
@@ -38,6 +38,8 @@ export const setQuery = (text) => (query = text);
 export const setDragging = (d) => (dragging = d);
 export const setRenderPending = (pending) => (renderPending = pending);
 export const setRenderHeld = (held) => (renderHeld = held);
+// 固定标签的多选(Cmd/Ctrl+点击、Shift+点击):项的 id。固定标签很多没开着,用不了浏览器的标签页高亮,所以单独记在侧边栏里
+export const pinPicked = new Set();
 // 鼠标正按着:这时重画会把按下的那一行换成新元素,松开时就不算点在同一个元素上,点击会丢(切标签页后连着点很容易碰上)
 export let pressing = false;
 export const setPressing = (v) => (pressing = v);

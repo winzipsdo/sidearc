@@ -1,14 +1,14 @@
 // 固定标签里的文件夹:{ id, folder: true, name, open, noHistory?, items: [项] }。
 // 文件夹只放在空间的固定区顶层,里面只放固定项,不再嵌套。
 
-import { t } from './i18n.js?v=503bcbcb';
-import { isFolder } from './logic.js?v=503bcbcb';
-import { render } from './render.js?v=503bcbcb';
-import { closeItemTab, detachTab } from './items.js?v=503bcbcb';
-import { h } from './dom.js?v=503bcbcb';
-import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js?v=503bcbcb';
-import { createTab, returnBeforeClose } from './tabs.js?v=503bcbcb';
-import { ask, pushUndo, toast } from './ui.js?v=503bcbcb';
+import { t } from './i18n.js?v=6d9a844f';
+import { isFolder } from './logic.js?v=6d9a844f';
+import { render } from './render.js?v=6d9a844f';
+import { closeItemTab, detachTab } from './items.js?v=6d9a844f';
+import { h } from './dom.js?v=6d9a844f';
+import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js?v=6d9a844f';
+import { createTab, returnBeforeClose } from './tabs.js?v=6d9a844f';
+import { ask, pushUndo, toast } from './ui.js?v=6d9a844f';
 
 export function findFolder(id) {
   for (const space of state.spaces) {
@@ -19,17 +19,21 @@ export function findFolder(id) {
 }
 
 // 新建文件夹;给了 itemId 就把那个固定项移进去
-export async function createFolder(itemId) {
+// itemIds:新建后移进去的固定标签(多选时是几个,按给的顺序)
+export async function createFolder(itemIds = []) {
   const out = await ask(t('newFolderTitle'), [{ key: 'name', label: t('name'), value: '' }]);
   if (!out) return;
   const folder = { id: uid(), folder: true, name: out.name, open: true, items: [] };
   const space = activeSpace();
-  const hit = itemId && findItem(itemId);
-  // 放在被移入的那一项原来的位置,否则放在固定区最后
-  const at = hit && hit.list === space.pinned ? space.pinned.indexOf(hit.item) : space.pinned.length;
-  const item = itemId && takeItem(itemId);
-  if (item) folder.items.push(item);
-  space.pinned.splice(at, 0, folder);
+  // 放在第一个移入的项原来的位置(它在文件夹里就放在那个文件夹的位置),否则放在固定区最后
+  const hit = itemIds.length && findItem(itemIds[0]);
+  const first = hit && (hit.list === space.pinned ? hit.item : hit.folder);
+  const after = first && space.pinned.slice(space.pinned.indexOf(first)).find((x) => !itemIds.includes(x.id));
+  for (const id of itemIds) {
+    const item = findItem(id)?.space === space && takeItem(id);
+    if (item) folder.items.push(item);
+  }
+  space.pinned.splice(after ? space.pinned.indexOf(after) : space.pinned.length, 0, folder);
   await save();
   render();
 }

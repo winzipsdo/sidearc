@@ -1,6 +1,6 @@
 // 不碰浏览器和页面的纯逻辑,可以直接用 node --test 测。
 
-import { hasPrefix, PREFIX } from './protocol.js?v=503bcbcb';
+import { hasPrefix, PREFIX } from './protocol.js?v=6d9a844f';
 
 // 搜索栏里输入的文字如果是网址,补全成能打开的地址;否则返回 null(当作搜索词)
 export function toUrl(text) {
@@ -132,7 +132,7 @@ export function matchesQuery(query, texts) {
   return !q || texts.some((t) => (t || '').toLowerCase().includes(q));
 }
 
-// 收藏夹每行放几个:先算一行最多放几个,再把磁贴平均摊到各行,避免右侧留白
+// 收藏夹每行放几个:先算一行最多放几个,再把磁贴平均摊到各行,最后一行尽量排满(比如 6 个排成 3+3 而不是 5+1)
 export function favColumns(count, width, { min = 54, gap = 7 } = {}) {
   const max = Math.max(1, Math.floor((width + gap) / (min + gap)));
   const rows = Math.ceil(count / max);

@@ -1,6 +1,6 @@
 // 主页的脚本:切换中英文、在线试用和任务清单、滚动淡入、视频的播放按钮、复制命令。
 
-import { mountDemo } from './demo/demo.js?v=c10d4b04';
+import { mountDemo } from './demo/demo.js?v=388a2a55';
 
 const root = document.documentElement;
 const store = {

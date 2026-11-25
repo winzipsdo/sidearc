@@ -6,8 +6,8 @@
 // 列表会整体重画,canvas 和每片叶子的状态都记在这里,重画后挪到新的行上,不会重新落一遍。
 // 只有在动(飘落、被拨开、飞走)的时候才逐帧画,静止时不占资源
 
-import { LEAF_MAX, leafCount } from './logic.js?v=503bcbcb';
-import { leafHours, setTabScattered, setTabSeen, tabReplacedHooks, tabScattered, tabSeen, tabs } from './store.js?v=503bcbcb';
+import { LEAF_MAX, leafCount } from './logic.js?v=6d9a844f';
+import { leafHours, setTabScattered, setTabSeen, tabReplacedHooks, tabScattered, tabSeen, tabs } from './store.js?v=6d9a844f';
 
 const ROW_H = 36;
 const GONE_MS = 600; // 飞走的叶子多久淡完
