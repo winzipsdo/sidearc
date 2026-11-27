@@ -79,7 +79,7 @@
 .sb [data-color="orange"] { --g: var(--g-orange); }
 
 :where(.sb button) { font: inherit; color: inherit; border: 0; background: none; padding: 0; cursor: pointer; }
-.sb-window { display: flex; flex-direction: column; height: 680px; border-radius: 14px; overflow: hidden; background: var(--w-bg); box-shadow: 0 0 0 1px var(--w-line), 0 30px 80px rgba(40, 30, 100, 0.22); }
+.sb-window { display: flex; flex-direction: column; height: 680px; border-radius: 14px; overflow: hidden; background: var(--w-bg); box-shadow: 0 0 0 1px var(--w-line), 0 30px 80px rgba(var(--shadow, 60, 40, 20), 0.2); }
 
 /* 顶部标签栏 */
 .sb-strip { flex: none; display: flex; align-items: flex-end; height: 42px; padding: 0 8px 0 76px; background: var(--w-bar); position: relative; }

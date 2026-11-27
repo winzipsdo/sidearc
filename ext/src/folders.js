@@ -1,14 +1,14 @@
 // 固定标签里的文件夹:{ id, folder: true, name, open, noHistory?, items: [项] }。
 // 文件夹只放在空间的固定区顶层,里面只放固定项,不再嵌套。
 
-import { t } from './i18n.js?v=8d31379d';
-import { isFolder } from './logic.js?v=8d31379d';
-import { render } from './render.js?v=8d31379d';
-import { closeItemTab, detachTab } from './items.js?v=8d31379d';
-import { h } from './dom.js?v=8d31379d';
-import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js?v=8d31379d';
-import { createTab, returnBeforeClose } from './tabs.js?v=8d31379d';
-import { ask, pushUndo, toast } from './ui.js?v=8d31379d';
+import { t } from './i18n.js?v=7f47949b';
+import { isFolder } from './logic.js?v=7f47949b';
+import { render } from './render.js?v=7f47949b';
+import { closeItemTab, detachTab } from './items.js?v=7f47949b';
+import { h } from './dom.js?v=7f47949b';
+import { activeSpace, bind, findItem, save, setBind, setPressing, setRenderHeld, setTabAlias, setTabSpace, state, tabs, takeItem, uid, unbind, windowId } from './store.js?v=7f47949b';
+import { createTab, returnBeforeClose } from './tabs.js?v=7f47949b';
+import { ask, pushUndo, toast } from './ui.js?v=7f47949b';
 
 export function findFolder(id) {
   for (const space of state.spaces) {

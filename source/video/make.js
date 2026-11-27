@@ -92,7 +92,7 @@ while (!(await evaluate('window.sceneReady === true').catch(() => false))) {
   if (Date.now() > deadline) throw new Error('画面加载超时:' + (await evaluate('String(window.sceneError)').catch(() => '')));
   await new Promise((r) => setTimeout(r, 100));
 }
-const { duration, clicks, poster, cues } = await evaluate('({ duration: DURATION, clicks: CLICKS, poster: POSTER, cues: window.CUES })');
+const { duration, clicks, poster, cues } = await evaluate('({ duration: DURATION, clicks: CLICKS, poster: window.POSTER, cues: window.CUES })'); // 短片没有 POSTER
 
 // 背景音乐(含点击音效)先写成临时 wav,和画面一起交给 ffmpeg
 const work = mkdtempSync(join(tmpdir(), 'sweeping-monk-audio-'));

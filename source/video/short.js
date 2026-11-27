@@ -3,7 +3,7 @@
 // 时间线工具和落叶和介绍视频共用(engine.js),侧边栏的行、标签页的内容也共用(content.js)。地址后加 ?play 可以实时预览。
 
 import { iconFor } from '../../demo/web.js';
-import { GITHUB_MARK, ICON, P, U, row, stab } from './content.js';
+import { GITHUB_MARK, ICON, P, SPACES, U, row, stab } from './content.js';
 import { EASE, build, cls, leafPile, pile, playAll, seek, set, setFrameDoc, setLeafResolution, tw } from './engine.js';
 
 // 关键时刻都落在拍子上
@@ -48,11 +48,12 @@ const ROWS = [
 ];
 function panelHtml() {
   const favs = ['gmail', 'github', 'youtube', 'figmaFav', 'spotify'].map((k, i) => `<div class="tile${i === 0 ? ' open' : ''}"><img class="icon" src="${iconFor(U[k])}" alt=""></div>`).join('');
-  const dots = ['#6b7cff', '#4fae6e', '#f0913f'].map((c, i) => `<button class="space-dot${i === 0 ? ' on' : ''}"><i style="color:${c}"></i></button>`).join('');
+  const dots = SPACES.map(({ color: c }, i) => `<button class="space-dot${i === 0 ? ' on' : ''}"><i style="color:${c}"></i></button>`).join('');
   return `<!doctype html><html lang="zh-CN" style="color-scheme:light"><head><meta charset="utf-8">
 <link rel="stylesheet" href="../../ext/sidepanel.css">
 <style>
-@property --accent { syntax: '<color>'; inherits: true; initial-value: #6b7cff; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: ${SPACES[0].color}; }
+:root { --accent: ${SPACES[0].color}; }
 body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei UI", system-ui, sans-serif; }
 #scroll { overflow: hidden; scrollbar-gutter: auto; }
 .row { transition: background 0.2s, box-shadow 0.2s; }
@@ -78,10 +79,10 @@ const CROWD_N = 40;
 const CROWD_FROM = 7; // 一开始就有几个
 function stripHtml() {
   const crowd = Array.from({ length: CROWD_N }, (_, i) => stab('c' + i, CROWD[(i * 7) % CROWD.length], { active: i === 2 })).join('');
-  const mine = ROWS.map(([, key]) => stab('', key, { color: 'blue', active: key === 'docs' })).join('');
+  const mine = ROWS.map(([, key]) => stab('', key, { color: SPACES[0].group, active: key === 'docs' })).join('');
   const sync =
-    `<button class="sb-chip" data-color="blue">个人</button><div class="v-group">${mine}</div>` +
-    `<button class="sb-chip collapsed" data-color="green">工作</button><button class="sb-chip collapsed" data-color="orange">学习</button>` +
+    `<button class="sb-chip" data-color="${SPACES[0].group}">个人</button><div class="v-group">${mine}</div>` +
+    `<button class="sb-chip collapsed" data-color="${SPACES[1].group}">工作</button><button class="sb-chip collapsed" data-color="${SPACES[2].group}">学习</button>` +
     `<button class="sb-btn sb-new">${ICON.plus}</button>`;
   return `<div class="sb-lights"><i></i><i></i><i></i></div><div class="sb-tabs" id="crowd">${crowd}</div><div class="sb-tabs" id="sync">${sync}</div>`;
 }
@@ -148,7 +149,7 @@ function scenes() {
   // 按键:弹出来,PRESS 这一拍按下去
   const keys = $('#keys');
   tw(keys, 2.55, 0.35, { opacity: [0, 1], transform: ['translateY(18px) scale(.8)', 'none'] }, EASE.spring);
-  for (const k of keys.querySelectorAll('kbd')) tw(k, PRESS - 0.05, 0.25, { transform: ['none', 'translateY(5px)', 'none'], boxShadow: ['0 0 0 1px rgba(0,0,0,.08), 0 6px 0 rgba(0,0,0,.14), 0 18px 40px rgba(40,30,100,.22)', '0 0 0 1px rgba(0,0,0,.08), 0 1px 0 rgba(0,0,0,.14), 0 8px 20px rgba(40,30,100,.18)', '0 0 0 1px rgba(0,0,0,.08), 0 6px 0 rgba(0,0,0,.14), 0 18px 40px rgba(40,30,100,.22)'] }, EASE.linear);
+  for (const k of keys.querySelectorAll('kbd')) tw(k, PRESS - 0.05, 0.25, { transform: ['none', 'translateY(5px)', 'none'], boxShadow: ['0 0 0 1px rgba(60,40,20,.14), 0 6px 0 rgba(60,40,20,.2), 0 18px 40px rgba(60,40,20,.2)', '0 0 0 1px rgba(60,40,20,.14), 0 1px 0 rgba(60,40,20,.2), 0 8px 20px rgba(60,40,20,.16)', '0 0 0 1px rgba(60,40,20,.14), 0 6px 0 rgba(60,40,20,.2), 0 18px 40px rgba(60,40,20,.2)'] }, EASE.linear);
   CLICKS.push(PRESS - 0.03);
   tw(keys, PRESS + 0.25, 0.3, { opacity: [1, 0], transform: ['none', 'scale(1.15)'] }, EASE.in);
 

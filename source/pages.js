@@ -66,14 +66,14 @@ const TEXT = {
   zh: {
     name: '扫地僧',
     alt: ['Sweeping Monk', 'Sidearc'],
-    app: 'Arc 风格的 Chrome 垂直标签页侧边栏:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。',
+    app: 'Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。',
     video: '扫地僧介绍视频',
     videoText: '一分钟看懂扫地僧:侧边栏和顶部标签栏双向同步、空间、子标签、固定标签回家、足迹与休眠、键盘操作和落叶。',
   },
   en: {
     name: 'Sweeping Monk',
     alt: ['扫地僧', 'Sidearc'],
-    app: "Arc-style vertical tabs for Chrome: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source, no network requests, data stays on your machine.",
+    app: "Arc-style vertical tabs for Chrome, each tab in its place: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source, no network requests, data stays on your machine.",
     video: 'Sweeping Monk intro video',
     videoText: 'Sweeping Monk in a minute: two-way sync with the tab strip, spaces, child tabs, pinned tabs going home, footprints and sleep, keyboard navigation and fallen leaves.',
   },

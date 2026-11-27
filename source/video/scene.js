@@ -57,7 +57,8 @@ function panelHtml() {
   return `<!doctype html><html lang="zh-CN" style="color-scheme:light"><head><meta charset="utf-8">
 <link rel="stylesheet" href="../../ext/sidepanel.css">
 <style>
-@property --accent { syntax: '<color>'; inherits: true; initial-value: #6b7cff; }
+@property --accent { syntax: '<color>'; inherits: true; initial-value: ${SPACES[0].color}; }
+:root { --accent: ${SPACES[0].color}; }
 body { font-family: Inter, "PingFang SC", "Noto Sans CJK SC", "Microsoft YaHei UI", system-ui, sans-serif; }
 /* 1.9 起列表一直给滚动条留位置(scrollbar-gutter: stable),视频里没有滚动条,不留 */
 #scroll { overflow: hidden; scrollbar-gutter: auto; }
@@ -340,7 +341,7 @@ function scenes() {
   };
   const tap = (cap, t) => {
     CLICKS.push(t);
-    tw(cap, t, 0.25, { transform: ['none', 'translateY(3px)', 'none'], backgroundColor: ['#fff', '#e8eaff', '#fff'] }, EASE.linear);
+    tw(cap, t, 0.25, { transform: ['none', 'translateY(3px)', 'none'], backgroundColor: ['#fcfaf4', '#f1e2cc', '#fcfaf4'] }, EASE.linear);
   };
   kb(q('#t-lofi'), 44.8);
   [45.5, 46.2].forEach((t, i) => {
@@ -556,13 +557,14 @@ function pointer() {
 
 async function setup() {
   $('#win').innerHTML = windowHtml();
+  // 图标颜色和主页一样,只取墨色和落叶、泥土的颜色:赭、松、枫、苔、墨、茶
   const CARDS = [
-    ['#6b7cff', ICON.back, '什么都能撤销', 'Ctrl/⌘+Z 一步步撤销', 'Undo everything, step by step'],
-    ['#e5687a', ICON.copy, '相同网址只开一份', '已经开着的,直接切过去', 'No duplicate tabs'],
-    ['#2f9bd6', ICON.select, '多选一起操作', 'Ctrl/⌘ 多选、Shift 连选', 'Multi-select, drag them together'],
-    ['#4fae6e', ICON.recent, '恢复上次的标签页', '空间、层级、别名都在', 'Bring back last session, as it was'],
-    ['#8a63d2', ICON.folder, '折叠固定标签', '点空间名,只留正在看的', 'Fold pinned tabs away'],
-    ['#f0913f', ICON.theme, '中文 / English · 深浅色', '跟随浏览器和系统', 'Follows your language and theme'],
+    ['#9a5a34', ICON.back, '什么都能撤销', 'Ctrl/⌘+Z 一步步撤销', 'Undo everything, step by step'],
+    ['#5f7358', ICON.copy, '相同网址只开一份', '已经开着的,直接切过去', 'No duplicate tabs'],
+    ['#b5652f', ICON.select, '多选一起操作', 'Ctrl/⌘ 多选、Shift 连选', 'Multi-select, drag them together'],
+    ['#7d6a2a', ICON.recent, '恢复上次的标签页', '空间、层级、别名都在', 'Bring back last session, as it was'],
+    ['#4a3f36', ICON.folder, '折叠固定标签', '点空间名,只留正在看的', 'Fold pinned tabs away'],
+    ['#a8743c', ICON.theme, '中文 / English · 深浅色', '跟随浏览器和系统', 'Follows your language and theme'],
   ];
   $('#cards').innerHTML = CARDS.map(
     ([c, icon, t, zh, en]) => `<div class="card" style="--c:${c}"><span class="ic">${icon}</span><div><b>${t}</b><p>${zh}</p><p class="en">${en}</p></div></div>`

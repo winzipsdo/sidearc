@@ -1,51 +1,100 @@
-/* 主页的样式:大标题、少文字、留白,区块在白、浅灰、黑之间交替;按钮是圆角胶囊,次要的入口是带 › 的文字链接。
-   颜色都在下面的变量里,深色模式只换变量;.dark 区块不管浅色深色模式都是黑底 */
+/* 主页的样式「宣纸水墨」:宣纸做底、墨色写字,区块在宣纸、深一层的纸(.alt)、暖墨(.dark)之间交替;
+   唯一的强调色是赭石(按钮、链接、进度),小标题是落叶色,赞助的心是印章朱红。大标题用宋体(系统有就用,
+   没有就退回无衬线;不加载网络字体),正文是无衬线。按钮是圆角胶囊,次要的入口是带 › 的文字链接。
+   颜色都在下面的变量里,深色模式只换变量(两处深色的变量要保持一样);.dark 区块不管浅色深色模式都是暖墨底。
+   文字对比度都过 WCAG AA:正文、小字、链接、按钮 ≥4.5:1,图标和大号步骤数字 ≥3:1 */
 :root {
   color-scheme: light dark;
-  --bg: #ffffff;
-  --bg-alt: #f5f5f7;
-  --tile: #ffffff;
-  --fg: #1d1d1f;
-  --fg-2: #6e6e73;
-  --fg-3: #707075;
-  --line: #d2d2d7;
-  --link: #0066cc;
-  --btn: #0071e3;
-  --btn-hover: #0077ed;
-  --accent: #6b7cff;
-  --grad: linear-gradient(100deg, #6b7cff 10%, #a874c8 50%, #e5687a 90%);
-  --nav: rgba(251, 251, 253, 0.8);
-  --code: rgba(0, 0, 0, 0.05);
+  /* 纸、墨、赭石 */
+  --bg: #f8f4ec;          /* 宣纸 */
+  --bg-alt: #efe8dc;      /* 深一层的纸 */
+  --tile: #fdfbf6;        /* 纸上的卡片:比底色亮一点 */
+  --fg: #221f1c;          /* 墨 */
+  --fg-2: #5b5248;        /* 淡墨 */
+  --fg-3: #6b6156;        /* 更淡的墨(小字) */
+  --line: #d8cdb9;
+  --link: #8f4f26;        /* 赭石,深一档,小字链接也够对比 */
+  --btn: #9a5a34;         /* 赭石按钮 */
+  --btn-hover: #844a29;
+  --btn-fg: #fffaf2;
+  --accent: #c98a3a;      /* 落叶 */
+  --eyebrow: #955824;     /* 小标题:枯叶色 */
+  --seal: #b2463a;        /* 印章朱红,只点缀 */
+  --num: #a8743c;         /* 安装步骤的大号数字:茶色 */
+  --grad: linear-gradient(100deg, #221f1c 0%, #4a3326 38%, #8f4f26 72%, #b5652f 100%);  /* 墨到赭石,像一笔写下来墨色渐干 */
+  --nav: #f8f4ec;         /* 导航和进度条:浅色下不透明。半透明的话盖到暖墨区块上会透出一层灰 */
+  --code: rgba(74, 51, 38, 0.07);
+  --shadow: 60, 40, 20;   /* 暖色阴影的 RGB */
+  /* 纸纹:很淡的纤维噪点 */
+  --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .25 0 0 0 0 .15 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* 九个小功能的图标色(index.html 里的 --c):只取落叶、草木、泥土的颜色,卡片上都 ≥3:1 */
+  --ochre: #9a5a34;       /* 赭 */
+  --pine: #5f7358;        /* 松 */
+  --ink: #3d3731;         /* 墨 */
+  --moss: #7d6a2a;        /* 苔 */
+  --chestnut: #74503a;    /* 栗 */
+  --maple: #b2463a;       /* 丹枫 */
+  --bamboo: #66753a;      /* 竹 */
+  --tea: #a8743c;         /* 茶 */
+  --rust: #b5652f;        /* 枫 */
+  --serif: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "Source Han Serif SC", "Source Han Serif CN", "Songti TC", Georgia, "Times New Roman",
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", serif;
+  --serif-en: Georgia, "Times New Roman", "Songti SC", "Noto Serif SC", "Source Han Serif SC", serif;
   --radius-sm: 18px;
 }
-/* 深色:跟随系统,或者右上角按钮选了深色(<html data-theme>,见 main.js);选了浅色时不跟系统 */
+/* 深色:跟随系统,或者右上角按钮选了深色(<html data-theme>,见 main.js);选了浅色时不跟系统。
+   下面两块要保持一样 */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #000000;
-    --bg-alt: #161617;
-    --tile: #242426;
-    --fg: #f5f5f7;
-    --fg-2: #a1a1a6;
-    --fg-3: #86868b;
-    --line: #424245;
-    --link: #2997ff;
-    --nav: rgba(22, 22, 23, 0.8);
-    --code: rgba(255, 255, 255, 0.08);
+    --bg: #1a1815;
+    --bg-alt: #211e1a;
+    --tile: #2b2722;
+    --fg: #efe8dc;
+    --fg-2: #b6ac9d;
+    --fg-3: #9c9284;
+    --line: #403a33;
+    --link: #e0a560;
+    --btn: #d6a057;
+    --btn-hover: #e2b06a;
+    --btn-fg: #1f1912;
+    --accent: #d2a24a;
+    --eyebrow: #d2a24a;
+    --seal: #d8705f;
+    --num: #d2a24a;
+    --grad: linear-gradient(100deg, #efe8dc 0%, #e6cfa8 40%, #dba365 75%, #cf8a48 100%);
+    --nav: rgba(26, 24, 21, 0.93);
+    --code: rgba(239, 232, 220, 0.08);
+    --shadow: 0, 0, 0;
+    --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --ochre: #d99a62; --pine: #9db592; --ink: #d3c9ba; --moss: #c4b06a; --chestnut: #c99c7c;
+    --maple: #e38475; --bamboo: #adba7a; --tea: #d4a46c; --rust: #e08d58;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #000000;
-  --bg-alt: #161617;
-  --tile: #242426;
-  --fg: #f5f5f7;
-  --fg-2: #a1a1a6;
-  --fg-3: #86868b;
-  --line: #424245;
-  --link: #2997ff;
-  --nav: rgba(22, 22, 23, 0.8);
-  --code: rgba(255, 255, 255, 0.08);
+  --bg: #1a1815;
+  --bg-alt: #211e1a;
+  --tile: #2b2722;
+  --fg: #efe8dc;
+  --fg-2: #b6ac9d;
+  --fg-3: #9c9284;
+  --line: #403a33;
+  --link: #e0a560;
+  --btn: #d6a057;
+  --btn-hover: #e2b06a;
+  --btn-fg: #1f1912;
+  --accent: #d2a24a;
+  --eyebrow: #d2a24a;
+  --seal: #d8705f;
+  --num: #d2a24a;
+  --grad: linear-gradient(100deg, #efe8dc 0%, #e6cfa8 40%, #dba365 75%, #cf8a48 100%);
+  --nav: rgba(26, 24, 21, 0.93);
+  --code: rgba(239, 232, 220, 0.08);
+  --shadow: 0, 0, 0;
+  --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --ochre: #d99a62; --pine: #9db592; --ink: #d3c9ba; --moss: #c4b06a; --chestnut: #c99c7c;
+  --maple: #e38475; --bamboo: #adba7a; --tea: #d4a46c; --rust: #e08d58;
 }
 :root[data-theme="light"] { color-scheme: light; }
 
@@ -65,6 +114,7 @@ body {
   overflow-x: hidden;
 }
 :root[data-lang="zh"] body { letter-spacing: 0; line-height: 1.6; }
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); }
 img, video { display: block; max-width: 100%; height: auto; }
 a { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -87,23 +137,32 @@ kbd {
 .wrap { width: min(980px, 100% - 44px); margin: 0 auto; }
 .wrap.wide { width: min(1380px, 100% - 44px); }
 
-/* 区块:默认白底,.alt 浅灰,.dark 黑底白字 */
+/* 区块:默认宣纸,.alt 深一层的纸,.dark 暖墨底(不是纯黑)。每个区块铺一层纸纹(--paper,颜色跟着各自的变量) */
 section, .feature { padding: 104px 0; }
-.alt { background: var(--bg-alt); }
+main > section, .foot { background-image: var(--paper); }
+.alt { background-color: var(--bg-alt); }
 .dark {
-  --bg: #000000;
-  --bg-alt: #000000;
-  --tile: #1d1d1f;
-  --fg: #f5f5f7;
-  --fg-2: #a1a1a6;
-  --fg-3: #86868b;
-  --line: #424245;
-  --link: #2997ff;
-  --code: rgba(255, 255, 255, 0.08);
-  background: #000;
+  --bg: #171512;
+  --bg-alt: #171512;
+  --tile: #25211d;
+  --fg: #efe8dc;
+  --fg-2: #b6ac9d;
+  --fg-3: #9c9284;
+  --line: #403a33;
+  --link: #e0a560;
+  --btn: #d6a057;
+  --btn-hover: #e2b06a;
+  --btn-fg: #1f1912;
+  --eyebrow: #d2a24a;
+  --code: rgba(239, 232, 220, 0.08);
+  --grad: linear-gradient(100deg, #efe8dc 0%, #e6cfa8 40%, #dba365 75%, #cf8a48 100%);
+  --paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .95 0 0 0 0 .85 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* 顶上一团很淡的琥珀色,像夜里一盏灯 */
+  background-color: var(--bg);
+  background-image: radial-gradient(ellipse 80% 55% at 50% 0%, rgba(201, 138, 58, 0.08), transparent 70%), var(--paper);
   color: var(--fg);
 }
-/* 深色模式下白色区块也是黑底:首屏和黑底的影片之间画一道细线隔开 */
+/* 深色模式下宣纸区块也是暗的:首屏和暖墨的影片之间画一道细线隔开 */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #video { box-shadow: inset 0 1px 0 var(--line); } }
 :root[data-theme="dark"] #video { box-shadow: inset 0 1px 0 var(--line); }
 
@@ -116,32 +175,34 @@ section, .feature { padding: 104px 0; }
 
 /* 区块标题:居中的大字、一两句话、一个文字链接 */
 .sec-head { max-width: 760px; margin: 0 auto; text-align: center; }
-.sec-head h2 { font-size: clamp(34px, 5.6vw, 56px); line-height: 1.07; font-weight: 600; letter-spacing: -0.005em; text-wrap: balance; }
-:root[data-lang="zh"] .sec-head h2 { line-height: 1.18; letter-spacing: 0.01em; }
+/* 大标题用宋体,稍细、字距放开一点,像题字;英文用 Georgia 一类的衬线,不加粗 */
+.sec-head h2 { font-family: var(--serif); font-size: clamp(34px, 5.6vw, 56px); line-height: 1.07; font-weight: 600; letter-spacing: -0.005em; text-wrap: balance; }
+:root[data-lang="zh"] .sec-head h2 { line-height: 1.28; letter-spacing: 0.05em; }
+:root[data-lang="en"] .sec-head h2 { font-family: var(--serif-en); font-weight: 400; letter-spacing: -0.01em; }
 .sec-head > p:not(.eyebrow) { margin-top: 18px; color: var(--fg-2); font-size: clamp(17px, 2vw, 21px); line-height: 1.45; text-wrap: balance; }
-.eyebrow { margin-bottom: 10px; color: var(--fg-2); font-size: clamp(17px, 2vw, 21px); font-weight: 600; }
-.eyebrow.leaf { color: #d39b52; }
+.eyebrow { margin-bottom: 10px; color: var(--eyebrow); font-size: clamp(17px, 2vw, 21px); font-weight: 600; }
 .sub { margin-top: 28px; color: var(--fg-3); font-size: 14px; text-align: center; text-wrap: pretty; }
 
 /* 文字链接(带 ›)和胶囊按钮 */
 .text-link { display: inline-flex; align-items: baseline; gap: 4px; margin-top: 18px; padding: 0; border: 0; background: none; color: var(--link); font-size: clamp(17px, 1.8vw, 19px); cursor: pointer; }
-.text-link:hover { text-decoration: underline; }
+.text-link:hover { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link) 50%, transparent); text-underline-offset: 3px; }
 .chev { display: inline-block; font-size: 1.15em; line-height: 1; transform: translateY(0.02em); }
-.pill-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 120px; height: 44px; padding: 0 22px; border-radius: 980px; background: var(--btn); color: #fff; font-size: 17px; font-weight: 400; transition: background 0.2s; }
+.pill-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 120px; height: 44px; padding: 0 22px; border-radius: 980px; background: var(--btn); color: var(--btn-fg); font-size: 17px; font-weight: 400; transition: background 0.2s; }
 .pill-btn:hover { background: var(--btn-hover); text-decoration: none; }
 .pill-btn.ghost { background: transparent; box-shadow: inset 0 0 0 1px var(--link); color: var(--link); }
-.pill-btn.ghost:hover { background: var(--btn); color: #fff; }
+.pill-btn.ghost:hover { background: var(--btn); color: var(--btn-fg); }
 
-/* 顶部导航:细细一条,半透明 */
-.nav { position: sticky; top: 0; z-index: 10; background: var(--nav); backdrop-filter: saturate(1.8) blur(20px); -webkit-backdrop-filter: saturate(1.8) blur(20px); }
+/* 顶部导航:细细一条纸色,浅色下不透明(盖在暖墨区块上也不发灰;0.95 的透明度都会透出灰来),底下一道淡淡的线 */
+.nav { position: sticky; top: 0; z-index: 10; background: var(--nav); box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 70%, transparent); backdrop-filter: saturate(1.8) blur(20px); -webkit-backdrop-filter: saturate(1.8) blur(20px); }
 .nav-in { display: flex; align-items: center; gap: 8px; width: min(1024px, 100% - 44px); height: 48px; margin: 0 auto; }
-.brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-weight: 600; font-size: 17px; }
+.brand { display: flex; align-items: center; gap: 8px; color: var(--fg); font-family: var(--serif); font-weight: 600; font-size: 17px; letter-spacing: 0.08em; }
+:root[data-lang="en"] .brand { font-family: var(--serif-en); font-weight: 400; letter-spacing: 0; }
 .brand:hover { text-decoration: none; }
 .links { display: flex; flex: 1; justify-content: center; gap: 4px; }
-.links a { padding: 4px 12px; color: var(--fg); font-size: 13px; opacity: 0.8; }
+.links a { padding: 4px 12px; color: var(--fg); font-size: 13px; opacity: 0.86; }
 .links a:hover { opacity: 1; text-decoration: none; }
 .nav-end { display: flex; align-items: center; gap: 2px; }
-.lang, .gh, .theme { display: grid; place-items: center; height: 32px; padding: 0 10px; border-radius: 8px; color: var(--fg); font-size: 13px; font-weight: 500; opacity: 0.8; }
+.lang, .gh, .theme { display: grid; place-items: center; height: 32px; padding: 0 10px; border-radius: 8px; color: var(--fg); font-size: 13px; font-weight: 500; opacity: 0.86; }
 .theme { border: 0; background: none; cursor: pointer; }
 .theme .moon, :root[data-theme-now="dark"] .theme .sun { display: none; }
 :root[data-theme-now="dark"] .theme .moon { display: block; }
@@ -154,11 +215,15 @@ section, .feature { padding: 104px 0; }
 .lang-hint button:hover { color: var(--fg); }
 
 /* 首屏:一行大标题、一句话,下面直接就是在线试用,进来就能上手 */
-.hero { padding: 40px 0 72px; }
+/* 顶上一团很淡的暖色,像宣纸上洇开的一点赭石 */
+.hero { padding: 40px 0 72px; background-image: radial-gradient(ellipse 70% 55% at 50% -10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%), var(--paper); }
 .hero-head { margin-bottom: 32px; text-align: center; }
-.hero h1 { font-size: clamp(34px, 5.2vw, 64px); line-height: 1.1; font-weight: 600; letter-spacing: -0.015em; text-wrap: balance; }
-:root[data-lang="zh"] .hero h1 { letter-spacing: 0.02em; }
+.hero h1 { font-family: var(--serif); font-size: clamp(34px, 5.2vw, 64px); line-height: 1.1; font-weight: 600; letter-spacing: -0.015em; text-wrap: balance; }
+:root[data-lang="zh"] .hero h1 { letter-spacing: 0.06em; }
+:root[data-lang="en"] .hero h1 { font-family: var(--serif-en); font-weight: 400; letter-spacing: -0.01em; }
 .grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* 中文的渐变那半句不从中间断开(手机上断成「更懂你的 / 侧边栏标签管理」) */
+:root[data-lang="zh"] .hero h1 .grad { white-space: nowrap; }
 .lead { max-width: 880px; margin: 14px auto 0; color: var(--fg-2); font-size: clamp(17px, 1.8vw, 21px); line-height: 1.4; text-wrap: balance; }
 
 /* 在线试用:左边是假的浏览器窗口(样式见 demo/demo.css),右边是任务清单 */
@@ -172,7 +237,7 @@ section, .feature { padding: 104px 0; }
   .q-list { flex: 1; min-height: 0; margin: 0 -8px; padding: 0 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
   .q-done, .q-reset { flex: none; }
 }
-.quests { padding: 22px 20px 18px; border-radius: var(--radius-sm); background: var(--tile); }
+.quests { padding: 22px 20px 18px; border-radius: var(--radius-sm); background: var(--tile); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 55%, transparent); }
 .q-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 17px; }
 .q-head b { font-weight: 600; }
 .q-count { color: var(--fg-3); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
@@ -181,12 +246,12 @@ section, .feature { padding: 104px 0; }
 .q-list { margin: 0; padding: 0; list-style: none; }
 .q-item { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 2px 10px; padding: 9px 8px; border-radius: 12px; transition: background 0.2s; }
 .q-item.flash { animation: q-flash 1.4s ease-out; }
-@keyframes q-flash { 0%, 40% { background: color-mix(in srgb, var(--btn) 14%, transparent); } }
+@keyframes q-flash { 0%, 40% { background: color-mix(in srgb, var(--accent) 20%, transparent); } }
 .q-check { grid-row: span 2; width: 22px; height: 22px; margin-top: 1px; display: grid; place-items: center; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--line); color: transparent; transition: background 0.25s, box-shadow 0.25s, color 0.25s; }
 .q-check svg { width: 13px; height: 13px; }
 .q-item b { font-size: 14.5px; font-weight: 600; line-height: 1.4; }
 .q-item p { color: var(--fg-2); font-size: 13px; line-height: 1.5; }
-.q-item.done .q-check { background: #30d158; box-shadow: none; color: #fff; animation: q-pop 0.4s cubic-bezier(.34, 1.56, .64, 1); }
+.q-item.done .q-check { background: var(--btn); box-shadow: none; color: var(--btn-fg); animation: q-pop 0.4s cubic-bezier(.34, 1.56, .64, 1); }
 .q-item.done b { color: var(--fg-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--fg-3) 60%, transparent); }
 @keyframes q-pop { from { transform: scale(0.4); } }
 .q-done { margin: 10px 8px 0; padding: 10px 12px; border-radius: 12px; background: var(--bg-alt); font-size: 14px; font-weight: 500; }
@@ -194,32 +259,34 @@ section, .feature { padding: 104px 0; }
 .q-reset { display: inline-flex; align-items: center; gap: 6px; margin: 10px 8px 0; padding: 6px 2px; border: 0; background: none; color: var(--link); font-size: 14px; cursor: pointer; }
 .q-reset:hover { text-decoration: underline; }
 
-/* 影片:黑底,大画面 */
+/* 影片:暖墨底,大画面 */
 .video .sec-head { margin-bottom: 56px; }
-.player { position: relative; max-width: 1080px; margin: 0 auto; border-radius: var(--radius-sm); overflow: hidden; background: #1d1d1f; aspect-ratio: 16 / 9; }
+.player { position: relative; max-width: 1080px; margin: 0 auto; border-radius: var(--radius-sm); overflow: hidden; background: #25211d; aspect-ratio: 16 / 9; }
 .player video { width: 100%; height: 100%; object-fit: cover; }
 .play { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; border: 0; background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.35)); color: #fff; cursor: pointer; }
 .play[hidden] { display: none; }
-.play .circle { display: grid; place-items: center; width: 78px; height: 78px; padding-left: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.92); color: #1d1d1f; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35); transition: transform 0.25s; }
+.play .circle { display: grid; place-items: center; width: 78px; height: 78px; padding-left: 4px; border-radius: 50%; background: rgba(253, 251, 246, 0.94); color: #221f1c; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35); transition: transform 0.25s; }
 .play:hover .circle { transform: scale(1.06); }
-.play .label { padding: 6px 14px; border-radius: 980px; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 15px; font-weight: 500; }
+.play .label { padding: 6px 14px; border-radius: 980px; background: rgba(23, 21, 18, 0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 15px; font-weight: 500; }
 
 /* 三个主打功能:标题在上,画面在下,大圆角 */
 .feature .shot { max-width: 920px; margin: 56px auto 0; }
 .feature .shot.narrow { max-width: 680px; }
 .shot :is(img, video) { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); background: var(--bg-alt); }
-.feature:not(.alt):not(.dark) .shot :is(img, video) { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 30px 60px rgba(0, 0, 0, 0.1); }
-.feature.dark .shot :is(img, video) { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
+.feature:not(.alt):not(.dark) .shot :is(img, video) { box-shadow: 0 0 0 1px rgba(var(--shadow), 0.06), 0 30px 60px rgba(var(--shadow), 0.12); }
+.feature.dark .shot :is(img, video) { box-shadow: 0 0 0 1px rgba(239, 232, 220, 0.08), 0 30px 70px rgba(0, 0, 0, 0.35); }
 
 /* 还有很多:一格一个功能 */
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 56px; }
-.item { display: flex; flex-direction: column; align-items: flex-start; padding: 30px 28px 26px; border-radius: var(--radius-sm); background: var(--tile); }
+/* 卡片:纸上再垫一张纸,细细的描边代替纯白块 */
+.item { display: flex; flex-direction: column; align-items: flex-start; padding: 30px 28px 26px; border-radius: var(--radius-sm); background: var(--tile); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 55%, transparent); }
 .item .ic { display: grid; place-items: center; width: 44px; height: 44px; color: var(--c); }
 .item .ic svg { width: 36px; height: 36px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.item h3 { margin-top: 18px; font-size: 21px; font-weight: 600; line-height: 1.25; }
+.item h3 { margin-top: 18px; font-family: var(--serif); font-size: 21px; font-weight: 600; line-height: 1.25; }
+:root[data-lang="en"] :is(.item h3, .steps h3) { font-family: inherit; }
 .item p { margin-top: 6px; color: var(--fg-2); font-size: 15px; line-height: 1.5; }
 .item .try-btn { margin-top: auto; padding: 14px 0 0; border: 0; background: none; color: var(--link); font-size: 15px; cursor: pointer; }
-.item .try-btn:hover { text-decoration: underline; }
+.item .try-btn:hover { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--link) 50%, transparent); text-underline-offset: 3px; }
 .more .sub { max-width: 760px; margin-left: auto; margin-right: auto; font-size: 15px; line-height: 1.6; }
 
 /* 隐私:一句说明,两个链接并排,点第一个在下面展开权限列表 */
@@ -236,19 +303,19 @@ section, .feature { padding: 104px 0; }
 
 /* 安装:三步上下排成三行:左边步骤号,中间标题和说明,右边是命令框或快捷键 */
 .steps { display: grid; gap: 12px; max-width: 980px; margin: 56px auto 0; padding: 0; list-style: none; counter-reset: step; }
-.steps li { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 480px); grid-template-rows: auto auto; column-gap: 28px; align-items: center; padding: 26px 30px; border-radius: var(--radius-sm); background: var(--tile); counter-increment: step; }
-.steps li::before { content: counter(step); grid-row: 1 / 3; color: var(--fg-3); font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
-.steps h3 { grid-column: 2; align-self: end; font-size: 21px; font-weight: 600; }
+.steps li { display: grid; grid-template-columns: 44px minmax(0, 1fr) minmax(0, 480px); grid-template-rows: auto auto; column-gap: 28px; align-items: center; padding: 26px 30px; border-radius: var(--radius-sm); background: var(--tile); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 55%, transparent); counter-increment: step; }
+.steps li::before { content: counter(step); grid-row: 1 / 3; color: var(--num); font-family: var(--serif); font-size: 40px; font-weight: 400; line-height: 1; font-variant-numeric: tabular-nums; }
+.steps h3 { grid-column: 2; align-self: end; font-family: var(--serif); font-size: 21px; font-weight: 600; }
 .steps p { grid-column: 2; align-self: start; margin-top: 6px; color: var(--fg-2); font-size: 15px; line-height: 1.5; }
 .steps .code, .steps .keys { grid-column: 3; grid-row: 1 / 3; }
 .code { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 14px; border-radius: 12px; background: var(--bg-alt); }
 .code code { flex: 1; min-width: 0; padding: 0; overflow-x: auto; background: none; white-space: nowrap; font-size: 12.5px; scrollbar-width: none; }
-.copy { flex: none; height: 30px; padding: 0 14px; border: 0; border-radius: 980px; background: var(--btn); color: #fff; font-size: 13px; font-weight: 500; cursor: pointer; }
+.copy { flex: none; height: 30px; padding: 0 14px; border: 0; border-radius: 980px; background: var(--btn); color: var(--btn-fg); font-size: 13px; font-weight: 500; cursor: pointer; }
 .copy:hover { background: var(--btn-hover); }
 .keys { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 14px; color: var(--fg-3); font-size: 14px; }
 .keys kbd { justify-self: start; }
 .tips { display: grid; gap: 12px; margin: 40px auto 0; }
-.tip { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-radius: var(--radius-sm); background: var(--tile); color: var(--fg-2); font-size: 15px; line-height: 1.6; }
+.tip { display: flex; gap: 14px; align-items: flex-start; padding: 20px 22px; border-radius: var(--radius-sm); background: var(--tile); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line) 55%, transparent); color: var(--fg-2); font-size: 15px; line-height: 1.6; }
 .tip svg { flex: none; margin-top: 3px; color: var(--fg); }
 .tip p { min-width: 0; overflow-wrap: anywhere; }
 .tip b { color: var(--fg); font-weight: 600; }
@@ -263,16 +330,17 @@ td:first-child { color: var(--fg); }
 .shortcuts .sub { margin-top: 24px; }
 .install .steps + .sub { margin-top: 20px; }
 
-/* 页脚:浅灰底、小字 */
-.foot { padding: 20px 0 28px; background: var(--bg-alt); color: var(--fg-3); font-size: 12px; line-height: 1.5; }
+/* 页脚:深一层的纸、小字,版本号用等宽字 */
+.foot { padding: 20px 0 28px; background-color: var(--bg-alt); color: var(--fg-3); font-size: 12px; line-height: 1.5; }
 .foot-note { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 .foot-in { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; padding-top: 14px; }
 .foot .brand { font-size: 13px; gap: 6px; }
-.foot .ver { color: var(--fg-3); font-weight: 400; font-variant-numeric: tabular-nums; }
+.foot .ver { color: var(--fg-3); font: 400 11.5px/1.5 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
 .foot nav a { color: var(--fg-2); }
-/* 赞助:和 GitHub 的 Sponsor 按钮一样用粉色的心 */
-.foot nav a.sponsor span[aria-hidden] { color: #db61a2; }
+.foot nav a:hover { color: var(--link); }
+/* 赞助:心是印章朱红 */
+.foot nav a.sponsor span[aria-hidden] { color: var(--seal); }
 
 /* 滚动到时淡入上浮(main.js 给 <html> 加上 .reveal-on 才生效,没有脚本时直接显示) */
 @media (prefers-reduced-motion: no-preference) {
@@ -284,11 +352,13 @@ td:first-child { color: var(--fg); }
    滚动停下时吸附到最近的一页;下一页从下面滑上来盖住上一页(区块是 sticky 的,一个叠一个)。
    比一屏高的区块,main.js 把它的 top 设成负数,先滚到底再被下一页盖住 */
 .slides { scroll-snap-type: y mandatory; scroll-padding-top: 48px; }
-.slides .slide { position: sticky; top: 48px; min-height: calc(100svh - 48px); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 -24px 48px rgba(0, 0, 0, 0.12); }
+.slides .slide { position: sticky; top: 48px; min-height: calc(100svh - 48px); display: flex; flex-direction: column; justify-content: center; box-shadow: 0 -20px 40px -20px rgba(var(--shadow), 0.16); }
+/* 阴影只往上投:负扩展 20px 加上上移 20px 正好抵掉 40px 的模糊,不会伸到页面下边。到最后所有 sticky 的页共用一条下边,
+   阴影要是伸下来就会叠在一起,在页脚上方压出一条灰带 */
 /* 吸附点:不放在 sticky 的区块上(停住时位置不动,会一直吸回去),而是 main.js 在每页的起点(太高的页再加一个底边)放的隐形标记 */
 .snap-mark { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; scroll-snap-align: start; }
 .snap-mark.end { scroll-snap-align: end; }
-.slides .slide:not(.alt):not(.dark) { background: var(--bg); }
+.slides .slide:not(.alt):not(.dark) { background-color: var(--bg); }
 .slides main > .slide:first-child { box-shadow: none; }
 .slides .slide > .wrap { width: min(980px, 100% - 44px); }
 .slides .slide > .wrap.wide { width: min(1380px, 100% - 140px); }
@@ -296,7 +366,7 @@ td:first-child { color: var(--fg); }
 main { position: relative; }
 
 /* 右边的进度条:一条细轨道,随滚动填满;每页一个点,当前页的点拉长;鼠标移上去显示页名,点了跳过去 */
-.pager { position: fixed; z-index: 11; right: max(16px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); padding: 12px 8px; border-radius: 980px; background: var(--nav); backdrop-filter: saturate(1.8) blur(20px); -webkit-backdrop-filter: saturate(1.8) blur(20px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 60%, transparent), 0 8px 24px rgba(0, 0, 0, 0.08); }
+.pager { position: fixed; z-index: 11; right: max(16px, env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%); padding: 12px 8px; border-radius: 980px; background: var(--nav); backdrop-filter: saturate(1.8) blur(20px); -webkit-backdrop-filter: saturate(1.8) blur(20px); box-shadow: 0 0 0 1px color-mix(in srgb, var(--line) 70%, transparent), 0 8px 24px rgba(var(--shadow), 0.08); }
 .pager[hidden] { display: none; }
 .pager-track { position: absolute; left: 50%; top: 18px; bottom: 18px; width: 2px; margin-left: -1px; border-radius: 1px; background: color-mix(in srgb, var(--fg-3) 30%, transparent); overflow: hidden; }
 .pager-fill { position: absolute; left: 0; top: 0; width: 100%; height: 0; background: var(--btn); border-radius: 1px; }

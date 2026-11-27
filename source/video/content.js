@@ -69,9 +69,10 @@ export const TITLE = { tg: 'chrome.tabGroups | API | Chrome for Developers', mv3
 export const title = (key) => TITLE[key] ?? P(key).title;
 export const short = (key) => title(key).split(/ [–|-] /)[0];
 export const SPACES = [
-  { name: '个人', color: '#6b7cff', group: 'blue' },
+  // 和在线试用(demo/web.js)一样:个人用金黄(落叶色),学习用灰色(墨),都是插件自带的空间颜色
+  { name: '个人', color: '#d9a927', group: 'yellow' },
   { name: '工作', color: '#4fae6e', group: 'green' },
-  { name: '学习', color: '#f0913f', group: 'orange' },
+  { name: '学习', color: '#8a8f98', group: 'grey' },
 ];
 
 // 侧边栏里的行,结构和插件的 render.js 一样

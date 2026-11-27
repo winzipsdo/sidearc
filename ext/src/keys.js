@@ -2,11 +2,11 @@
 // 选中框的样子参考 Switch:蓝青色的粗边框来回呼吸,移到新的项上轻轻一弹;往走不过去的方向按,选中的项朝那边晃一下。
 // 鼠标一动就收起选中框;重画后按 kind + id 找回原来的项,找不到(比如刚关掉)就落在同一位置附近的项上。
 
-import { $ } from './dom.js?v=8d31379d';
-import { t } from './i18n.js?v=8d31379d';
-import { selectedIds, visibleTabs } from './store.js?v=8d31379d';
-import { closeWithUndo } from './tabs.js?v=8d31379d';
-import { hideMenu, openSearch } from './ui.js?v=8d31379d';
+import { $ } from './dom.js?v=7f47949b';
+import { t } from './i18n.js?v=7f47949b';
+import { selectedIds, visibleTabs } from './store.js?v=7f47949b';
+import { closeWithUndo } from './tabs.js?v=7f47949b';
+import { hideMenu, openSearch } from './ui.js?v=7f47949b';
 
 let cursor = null; // { kind, id, index }
 

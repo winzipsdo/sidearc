@@ -1,22 +1,22 @@
 // 把页面和浏览器的事件接到各个操作上。拖拽的事件在 drag.js。
 
-import { $, FALLBACK_ICON } from './dom.js?v=8d31379d';
-import { bindDrag } from './drag.js?v=8d31379d';
-import { bindKeys } from './keys.js?v=8d31379d';
-import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js?v=8d31379d';
-import { folderMenu, itemMenu, pinSelectionMenu, spaceMenu, tabMenu } from './menus.js?v=8d31379d';
-import { moveToFolder, toggleFolder } from './folders.js?v=8d31379d';
-import { applyStaticText, setLangPref, t } from './i18n.js?v=8d31379d';
-import { splitPartners } from './logic.js?v=8d31379d';
-import { MSG } from './protocol.js?v=8d31379d';
-import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js?v=8d31379d';
-import { bindLeaves, refreshLeaves } from './leaves.js?v=8d31379d';
-import { revealTab } from './locate.js?v=8d31379d';
-import { deleteHistory, expandHistory } from './history.js?v=8d31379d';
-import { switchSpace } from './spaces.js?v=8d31379d';
-import { activeSpace, applySession, bind, findItem, followSpace, normalize, pinPicked, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js?v=8d31379d';
-import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js?v=8d31379d';
-import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js?v=8d31379d';
+import { $, FALLBACK_ICON } from './dom.js?v=7f47949b';
+import { bindDrag } from './drag.js?v=7f47949b';
+import { bindKeys } from './keys.js?v=7f47949b';
+import { backToItem, closeItemTab, openItem, removeItem, toggleItemMute } from './items.js?v=7f47949b';
+import { folderMenu, itemMenu, pinSelectionMenu, spaceMenu, tabMenu } from './menus.js?v=7f47949b';
+import { moveToFolder, toggleFolder } from './folders.js?v=7f47949b';
+import { applyStaticText, setLangPref, t } from './i18n.js?v=7f47949b';
+import { splitPartners } from './logic.js?v=7f47949b';
+import { MSG } from './protocol.js?v=7f47949b';
+import { layoutFavs, markJump, refreshSleptLabels, refreshTrail, render, renderSoon, schedule, updateScrollFades } from './render.js?v=7f47949b';
+import { bindLeaves, refreshLeaves } from './leaves.js?v=7f47949b';
+import { revealTab } from './locate.js?v=7f47949b';
+import { deleteHistory, expandHistory } from './history.js?v=7f47949b';
+import { switchSpace } from './spaces.js?v=7f47949b';
+import { activeSpace, applySession, bind, findItem, followSpace, normalize, pinPicked, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js?v=7f47949b';
+import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js?v=7f47949b';
+import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js?v=7f47949b';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
 

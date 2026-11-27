@@ -1,12 +1,12 @@
 // 对标签页的操作:打开、关闭、撤销关闭、别名、移到别的空间、搜索栏回车。
 
-import { $ } from './dom.js?v=8d31379d';
-import { t } from './i18n.js?v=8d31379d';
-import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js?v=8d31379d';
-import { KEY, MSG } from './protocol.js?v=8d31379d';
-import { markSlept, render, schedule } from './render.js?v=8d31379d';
-import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabReplacedHooks, tabSpace, tabs, trail, windowId } from './store.js?v=8d31379d';
-import { ask, closeSearch, inTurn, pushUndo, toast } from './ui.js?v=8d31379d';
+import { $ } from './dom.js?v=7f47949b';
+import { t } from './i18n.js?v=7f47949b';
+import { canDiscard, isUnloaded, SPLIT_NONE, toUrl } from './logic.js?v=7f47949b';
+import { KEY, MSG } from './protocol.js?v=7f47949b';
+import { markSlept, render, schedule } from './render.js?v=7f47949b';
+import { bind, itemByTab, listedParent, listedTabs, query, replaceTabId, setQuery, setRenderHeld, setTabAlias, setTabParent, state, subtreeIds, tabAlias, tabParent, tabReplacedHooks, tabSpace, tabs, trail, windowId } from './store.js?v=7f47949b';
+import { ask, closeSearch, inTurn, pushUndo, toast } from './ui.js?v=7f47949b';
 
 // 侧边栏里显示着的标签页(收藏、固定标签、标签页列表),按界面上的顺序
 function shownTabIds() {

@@ -2,10 +2,10 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=01887822';
-import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=8cc95184';
-import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=8d31379d';
-import { KEY, MSG } from '../ext/src/protocol.js?v=8d31379d';
+import { Browser } from './sim.js?v=0b138950';
+import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=5549f2d0';
+import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=7f47949b';
+import { KEY, MSG } from '../ext/src/protocol.js?v=7f47949b';
 
 const TEXT = {
   zh: { back: '后退', forward: '前进', reload: '重新加载', newTab: '新建标签页', close: '关闭', toggle: '打开/关闭侧边栏', search: '搜索或输入网址', play: '播放', pause: '暂停', newTabHint: '点一个快捷方式。已经开着的网站不会再开一份:会直接切过去。', muted: '已静音' },
@@ -26,7 +26,7 @@ const ICON = {
 const svg = (name, size = 14) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 // 地址按这个脚本的位置算:中文页在根目录、英文页在 en/ 下,两边都能用
-const LOGO = new URL('../assets/logo.svg?v=852405be', import.meta.url).href;
+const LOGO = new URL('../assets/logo.svg?v=cde65277', import.meta.url).href;
 
 // 打开试用时的样子:按 web.js 的设定开好标签页、写好存储,再按侧边栏的顺序排好、分好组
 function setup(b, lang) {
@@ -331,7 +331,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=302c8df6', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=4ec370b7', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sweeping Monk';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=8c60d20c', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=acddb333', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;
