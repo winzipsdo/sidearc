@@ -76,7 +76,10 @@ body {
   letter-spacing: 0.02em;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* 页面不能横着滑:飞出去的叶子之类超出屏幕的东西直接裁掉(clip 不影响左栏的 sticky) */
+  overflow-x: clip;
 }
+@supports not (overflow-x: clip) { body { overflow-x: hidden; } }
 /* 生成的页面里只剩一种语言;直接打开源文件预览时,藏起另一种 */
 :root[data-lang="zh"] [data-l="en"], :root[data-lang="en"] [data-l="zh"] { display: none; }
 :root[data-lang="en"] body { letter-spacing: 0; line-height: 1.65; }

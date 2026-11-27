@@ -238,6 +238,8 @@ LEAVES.forEach(([x, r, c], i) => {
     leaf.style.setProperty('--gy', `${-(40 + Math.random() * 60)}px`);
     leaf.style.setProperty('--gr', `${dir * (160 + Math.random() * 200)}deg`);
     leaf.classList.add('gone');
+    // 飞走后从页面里拿掉:它虽然透明了,位置还在,飞出屏幕右边时会把页面撑宽,手机上就能横着滑
+    setTimeout(() => leaf.remove(), 1400);
   });
   fallen.append(leaf);
 });
