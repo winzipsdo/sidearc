@@ -19,7 +19,7 @@ export const tabParent = new Map();
 export const tabSlept = new Map();
 // 上次离开(或扫干净落叶)的时间:tabId -> 毫秒。没有记录的(装扩展之前就开着的)用 Chrome 的 lastAccessed
 export const tabSeen = new Map();
-// 右键撒上去的落叶片数:tabId -> 片数
+// 撒上去的落叶片数(长按一行撒的,见 leaves.js 的 bindShake):tabId -> 片数
 export const tabScattered = new Map();
 // 按 tabId 记的那几张表(都在 protocol.js 的 TAB_KEYS 里):标签页换编号时跟着挪,见 replaceTabId
 export const TAB_MAPS = { [PREFIX.space]: tabSpace, [PREFIX.alias]: tabAlias, [PREFIX.parent]: tabParent, [PREFIX.slept]: tabSlept, [PREFIX.seen]: tabSeen, [PREFIX.scattered]: tabScattered };

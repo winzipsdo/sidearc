@@ -197,7 +197,8 @@ function strip(t, active, dark, folder) {
 // PNG 转成高质量 JPEG(sips 的 90 和 Windows 的 96 差不多;Chrome 自己出的 JPEG 压得太狠,文字边上发糊)
 function toJpeg(png, file, [w, h]) {
   if (process.platform === 'darwin') return execFileSync('sips', ['-s', 'format', 'jpeg', '-s', 'formatOptions', '90', png, '--out', file], { stdio: 'ignore' });
-  if (process.platform !== 'win32') throw new Error('没有自带的转换工具');
+  // Linux 上没有自带的转换工具,装了 ffmpeg 就用它(-q:v 2 大约相当于质量 95)
+  if (process.platform !== 'win32') return execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', png, '-q:v', '2', file], { stdio: 'ignore' });
   // 路径走环境变量,不用管里面的空格和引号
   const script = [
     "$ErrorActionPreference = 'Stop'",
@@ -238,8 +239,8 @@ function page(t, { file, active, dark, folder }, { title, sub, bullets }) {
   writeFileSync(join(OUT, `panel-${n}.html`), panel(t, active, dark, folder));
   const { color } = SPACE_COLORS[active];
   const c = dark
-    ? { bg: 'linear-gradient(135deg,#1c1c22,#24212a 60%,#2a2027)', fg: '#f3f3f7', fg2: '#a9a9b5', win: '#232327', bar: '#2b2b30', line: 'rgba(255,255,255,.08)', ph: '#333338', tab: '#3a3a40', tabFg: '#e8e8ee', toolbar: '#2f2f35', lights: '#55555c', chipFg: '#202124', shadow: '.45' }
-    : { bg: 'linear-gradient(135deg,#eef0ff,#f4f2fb 55%,#f7eef3)', fg: '#1d1d24', fg2: '#5f6170', win: '#fff', bar: '#f1f1f4', line: 'rgba(0,0,0,.08)', ph: '#ececef', tab: '#fff', tabFg: '#2a2a30', toolbar: '#fff', lights: '#d7d7dc', chipFg: '#fff', shadow: '.16' };
+    ? { bg: 'linear-gradient(135deg,#1a1815,#211e1a 60%,#26201a)', fg: '#efe8dc', fg2: '#b6ac9d', win: '#232327', bar: '#2b2b30', line: 'rgba(255,255,255,.08)', ph: '#333338', tab: '#3a3a40', tabFg: '#e8e8ee', toolbar: '#2f2f35', lights: '#55555c', chipFg: '#202124', shadow: '.45' }
+    : { bg: 'linear-gradient(135deg,#f8f4ec,#f3ecdf 55%,#efe8dc)', fg: '#221f1c', fg2: '#5b5248', win: '#fff', bar: '#f1f1f4', line: 'rgba(0,0,0,.08)', ph: '#ececef', tab: '#fff', tabFg: '#2a2a30', toolbar: '#fff', lights: '#d7d7dc', chipFg: '#fff', shadow: '.16' };
   writeFileSync(
     join(OUT, `shot-${n}.html`),
     `<!doctype html><html><head><meta charset="utf-8"><style>
@@ -274,18 +275,17 @@ li::before{content:"";position:absolute;left:0;top:7px;width:10px;height:10px;bo
   capture(`shot-${n}.html`, join(ROOT, t.dir, `screenshot-${file}.jpg`), [1280, 800]);
 }
 
-// 小宣传图(440×280):渐变底,半透明方块里是白色的侧边栏图形,下面是名字和一句副标题
+// 小宣传图(440×280):宣纸色底,中间是图标,下面是名字和一句副标题
 function promo(t) {
   const n = `promo-${t.dir.replace(/\W/g, '-')}.html`;
   writeFileSync(
     join(OUT, n),
     `<!doctype html><html><head><meta charset="utf-8"><style>
 *{margin:0;box-sizing:border-box} body{width:440px;height:280px;overflow:hidden;display:flex;flex-direction:column;align-items:center;
-background:linear-gradient(135deg,#6b7cff 0%,#a06be0 50%,#e5687a 100%);font-family:${t.font};color:#fff;-webkit-font-smoothing:antialiased}
-.mark{margin-top:32px;width:112px;height:112px;border-radius:24px;background:rgba(255,255,255,.18);display:flex;gap:7px;padding:17px 15px}
-.mark i{border-radius:6px;background:#fff} .mark i:first-child{width:18px} .mark i:last-child{flex:1;background:rgba(255,255,255,.62)}
+background:linear-gradient(160deg,#f8f4ec 0%,#efe8dc 100%);font-family:${t.font};color:#221f1c;-webkit-font-smoothing:antialiased}
+.mark{margin-top:32px;width:112px;height:112px;border-radius:25px;box-shadow:0 10px 28px rgba(90,60,30,.22)}
 h1{margin-top:22px;font-family:system-ui,-apple-system,sans-serif;font-size:40px;font-weight:${HEAVY};letter-spacing:.5px} p{margin-top:12px;font-size:15px;opacity:.88}
-</style></head><body><div class="mark"><i></i><i></i></div><h1>${t.name}</h1><p>${esc(t.promo)}</p></body></html>`
+</style></head><body><img class="mark" src="logo.png"><h1>${t.name}</h1><p>${esc(t.promo)}</p></body></html>`
   );
   capture(n, join(ROOT, t.dir, 'promo-small-440x280.jpg'), [440, 280]);
 }
