@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | English | [Website and live demo](https://winzipsdo.github.io/sweeping-monk/en/)
 
-[![Latest release](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?color=6b7cff)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?color=9a5a34)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-c98a3a)](LICENSE)
 
 **Sweep the tabs, settle the mind.** Arc-style vertical tabs for Chrome: stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.
 
