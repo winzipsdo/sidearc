@@ -88,7 +88,7 @@ const SPACE_COLORS = [
 const TEXT = {
   zh: {
     lang: 'zh',
-    name: '扫地僧',
+    name: '赭',
     dir: 'store',
     font: '"PingFang SC",system-ui,sans-serif',
     spaces: ['个人', '工作', '学习', '生活'],

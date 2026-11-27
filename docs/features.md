@@ -1,4 +1,4 @@
-# 扫地僧功能详解
+# 「赭」功能详解
 
 简体中文 | [English](features.en.md) | [返回 README](../README.md)
 

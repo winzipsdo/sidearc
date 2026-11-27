@@ -8,7 +8,7 @@
 
 > Too many tabs, a cluttered mind. Sweeping Monk gives every tab its place. Tabs you leave alone for days gather fallen leaves; one sweep, and the floor is clear.
 >
-> Chinese name: 扫地僧. Formerly Sidearc, renamed in November 2026.
+> Chinese name: 赭 (zhě, ochre: the colour of the seal in the icon). Formerly Sidearc, renamed in November 2026.
 
 ![Vertical tabs, favorites and pinned tabs](store/en/screenshot-1-tabs.jpg)
 

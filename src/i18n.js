@@ -110,7 +110,7 @@ const MESSAGES = {
     language: '语言 / Language',
     langAuto: '跟随浏览器',
     footprints: '足迹',
-    sponsor: '支持扫地僧',
+    sponsor: '支持「赭」',
     footprintsTip: '最近离开的几个标签页旁边显示一道竖条,10 分钟内慢慢缩短、变淡直到消失。点第几根就显示几个,点最左边的 ⊘ 就不显示',
     footprintsOff: '不显示',
     historyHead: '历史记录',
