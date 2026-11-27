@@ -4,7 +4,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?color=9a5a34)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-c98a3a)](LICENSE)
 
-**Sweep the tabs, settle the mind.** Arc-style vertical tabs for Chrome: stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.
+**Sweep the tabs, settle the mind.** Arc-style vertical tabs for Chrome: stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, your data stays local.
 
 > Too many tabs, a cluttered mind. Sweeping Monk gives every tab its place. Tabs you leave alone for days gather fallen leaves; one sweep, and the floor is clear.
 >
@@ -95,7 +95,7 @@ The sidebar shortcut can be changed at `chrome://extensions/shortcuts`.
 
 ## Permissions and privacy
 
-Sweeping Monk collects and uploads nothing; the code makes no network requests. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall. See the [privacy policy](PRIVACY.md).
+Sweeping Monk collects and uploads nothing. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall. The only time it goes online is when you switch the font to JinKai in settings: it downloads the font file once from the homepage. See the [privacy policy](PRIVACY.md).
 
 | Permission | Used for |
 | --- | --- |

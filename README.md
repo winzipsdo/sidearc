@@ -4,7 +4,7 @@
 
 [![最新版本](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?label=%E7%89%88%E6%9C%AC&color=9a5a34)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![无依赖](https://img.shields.io/badge/%E4%BE%9D%E8%B5%96-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-c98a3a)](LICENSE)
 
-**扫地,也扫心地。** Arc 风格的 Chrome 侧边标签栏:标签页竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。纯原生 JS/CSS,不联网,数据只在本机。
+**扫地,也扫心地。** Arc 风格的 Chrome 侧边标签栏:标签页竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。纯原生 JS/CSS,数据只在本机。
 
 > 标签页开多了,心也跟着乱。「赭」让它们各安其位;久不去看的,自会落上几片叶子,随手一扫,地净,心也净。
 >
@@ -98,7 +98,7 @@ Chrome 的侧边栏默认在右侧。想让它像 Arc 一样在左边,打开 `ch
 
 ## 权限与隐私
 
-「赭」不收集、不上传任何数据,代码里没有网络请求。空间、收藏夹、固定标签、别名都保存在浏览器本地,卸载扩展即删除。完整说明见[隐私政策](PRIVACY.md)。
+「赭」不收集、不上传任何数据。空间、收藏夹、固定标签、别名都保存在浏览器本地,卸载扩展即删除。只有你在设置里把字体换成「今楷」时,它才会联网一次,从主页下载字体文件。完整说明见[隐私政策](PRIVACY.md)。
 
 | 权限 | 用来做什么 |
 | --- | --- |

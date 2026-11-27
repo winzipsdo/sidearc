@@ -1,10 +1,10 @@
 # 赭 Sweeping Monk 隐私政策 / Privacy Policy
 
-最后更新 / Last updated: 2026-10-13
+最后更新 / Last updated: 2026-11-28
 
 ## 中文
 
-「赭」不收集、不上传、不出售任何用户数据。扩展里没有任何网络请求代码,也不包含统计或第三方脚本。
+「赭」不收集、不上传、不出售任何用户数据,也不包含统计或第三方脚本。
 
 为了实现功能,「赭」会在**你的浏览器本地**读取和保存以下信息:
 
@@ -18,11 +18,13 @@
 
 网站图标由 Chrome 自身提供或直接从对应网站加载,与你正常浏览该网站时相同。
 
+扩展只有一处会联网,而且要你自己点:在设置里把字体换成「今楷」时,它从项目主页(`winzipsdo.github.io`,由 GitHub Pages 托管)下载一次字体文件,存在浏览器本地,之后不再联网。这次请求不带你的任何数据;和访问任何网站一样,GitHub 会看到你的 IP 地址。不换字体就没有任何网络请求。
+
 如有问题,请在 https://github.com/winzipsdo/sweeping-monk/issues 提交。
 
 ## English
 
-Sweeping Monk does not collect, transmit or sell any user data. The extension contains no network request code, no analytics and no third-party scripts.
+Sweeping Monk does not collect, transmit or sell any user data, and contains no analytics or third-party scripts.
 
 To provide its features, Sweeping Monk reads and stores the following **locally in your browser**:
 
@@ -35,5 +37,7 @@ To provide its features, Sweeping Monk reads and stores the following **locally 
 All of this stays on your device and is never sent to the developer or any third party. Uninstalling the extension deletes it.
 
 Favicons are provided by Chrome itself or loaded directly from the corresponding website, the same as when you browse that site.
+
+The extension goes online in exactly one case, and only when you ask: if you switch the font to JinKai in settings, it downloads the font file once from the project homepage (`winzipsdo.github.io`, hosted on GitHub Pages) and keeps it in the browser; nothing is fetched after that. The request carries none of your data; as with any website, GitHub sees your IP address. If you never change the font, the extension makes no network requests.
 
 For questions, open an issue at https://github.com/winzipsdo/sweeping-monk/issues.
