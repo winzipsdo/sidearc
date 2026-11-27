@@ -2,13 +2,13 @@
 // (见 background.js 的 keepLastSession),这里在顶部给一条提示,点「恢复」照原样打开回来。
 // 不自动恢复:用户在 Chrome 里选了别的启动方式,多半就是不想要旧标签页。提示关掉后「最近关闭」菜单里还能恢复
 
-import { $, h, icon } from './dom.js?v=6d9a844f';
-import { t } from './i18n.js?v=6d9a844f';
-import { LAST_TAKEN } from './protocol.js?v=6d9a844f';
-import { render, schedule } from './render.js?v=6d9a844f';
-import { bind, findItem, replaceTabId, setBind, setRenderHeld, setTabAlias, setTabParent, setTabSpace, state, windowId } from './store.js?v=6d9a844f';
-import { createTab } from './tabs.js?v=6d9a844f';
-import { toast } from './ui.js?v=6d9a844f';
+import { $, h, icon } from './dom.js?v=8d31379d';
+import { t } from './i18n.js?v=8d31379d';
+import { LAST_TAKEN } from './protocol.js?v=8d31379d';
+import { render, schedule } from './render.js?v=8d31379d';
+import { bind, findItem, replaceTabId, setBind, setRenderHeld, setTabAlias, setTabParent, setTabSpace, state, windowId } from './store.js?v=8d31379d';
+import { createTab } from './tabs.js?v=8d31379d';
+import { toast } from './ui.js?v=8d31379d';
 
 let last = null;
 

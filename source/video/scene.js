@@ -132,7 +132,7 @@ function windowHtml() {
       <button class="sb-btn sb-ext" id="ext"><img src="../../assets/logo.svg" alt=""></button>
     </div>
     <div class="sb-main">
-      <div class="sb-side" id="side"><iframe id="panel" title="Sidearc"></iframe></div>
+      <div class="sb-side" id="side"><iframe id="panel" title="Sweeping Monk"></iframe></div>
       <div class="sb-page">${PAGES.map(pageHtml).join('')}</div>
     </div>
   </div>`;

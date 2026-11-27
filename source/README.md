@@ -1,6 +1,6 @@
 # 主页、在线试用和介绍视频
 
-这个分支(`gh-pages`)就是 https://winzipsdo.github.io/sidearc/ 发布出去的内容,所有东西都直接在这里改,`main` 上不放主页相关的文件。
+这个分支(`gh-pages`)就是 https://winzipsdo.github.io/sweeping-monk/ 发布出去的内容,所有东西都直接在这里改,`main` 上不放主页相关的文件。
 
 | 位置 | 是什么 | 怎么来的 |
 | --- | --- | --- |
@@ -28,9 +28,9 @@
 在 `main` 的检出目录旁边开一个这个分支的工作目录(不要在同一个目录里来回切分支,两个分支的文件完全不同):
 
 ```bash
-git worktree add ../sidearc-pages gh-pages
-cd ../sidearc-pages
-node source/build.js ../sidearc     # 参数是 main 的检出目录
+git worktree add ../sweeping-monk-pages gh-pages
+cd ../sweeping-monk-pages
+node source/build.js ../sweeping-monk     # 参数是 main 的检出目录
 git add -A && git commit -m "Site: update the extension to <版本号>" && git push
 ```
 
@@ -49,11 +49,11 @@ node source/pages.js
 - 中文页和英文页是两个网址,互相用 hreflang 标明;右上角的语言按钮是到另一个页面的链接,选择会被记住,下次直接打开那种语言。浏览器语言和页面不一样时,顶部提示有另一种语言的版本,但不自动跳转,免得爬虫收录不到中文页。
 - 结构化数据(JSON-LD):`SoftwareApplication`(版本号取自 `ext/version.json`)和介绍视频的 `VideoObject`(时长从 MP4 读,上传时间是它最近一次提交的时间),都由 `source/pages.js` 生成。
 - `ext/` 的两个页面和 `source/video/scene.html` 带 `noindex`,不会被当成空页面收录。
-- 主页在 `winzipsdo.github.io` 的子目录里,根目录的 `robots.txt` 不归这个仓库管,`sitemap.xml`(https://winzipsdo.github.io/sidearc/sitemap.xml)要在 Google Search Console 里手动提交一次。
+- 主页在 `winzipsdo.github.io` 的子目录里,根目录的 `robots.txt` 不归这个仓库管,`sitemap.xml`(https://winzipsdo.github.io/sweeping-monk/sitemap.xml)要在 Google Search Console 里手动提交一次。
 
 ## README 里的动图
 
-`main` 的 README 开头的三张动图(双向同步、空间、落叶)放在这个分支的 `assets/readme/<zh|en>/`,README 用 `https://winzipsdo.github.io/sidearc/assets/readme/...` 引用,`main` 上不放大文件。同一次录制还会生成同名的 `.mp4`、`.webm`(2 倍分辨率)和封面 `.webp`,主页的功能介绍用的是这些视频,比 GIF 清楚。它们是在在线试用里(插件本身的代码)用脚本操作一遍录下来的,界面改了重新录:
+`main` 的 README 开头的三张动图(双向同步、空间、落叶)放在这个分支的 `assets/readme/<zh|en>/`,README 用 `https://winzipsdo.github.io/sweeping-monk/assets/readme/...` 引用,`main` 上不放大文件。同一次录制还会生成同名的 `.mp4`、`.webm`(2 倍分辨率)和封面 `.webp`,主页的功能介绍用的是这些视频,比 GIF 清楚。它们是在在线试用里(插件本身的代码)用脚本操作一遍录下来的,界面改了重新录:
 
 ```bash
 NODE_PATH=$(npm root -g) node source/readme/record.js          # 全部
@@ -82,7 +82,7 @@ node source/video/make.js
 
 ### 竖屏短片
 
-给抖音这类平台的短片,十几秒,一屏一句大字:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sidearc。
+给抖音这类平台的短片,十几秒,一屏一句大字:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sweeping Monk。
 
 ```bash
 node source/video/make.js short

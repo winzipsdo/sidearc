@@ -1,12 +1,12 @@
 // 后台:让顶部标签栏和侧边栏保持一致。每个空间在每个窗口里对应一个标签页分组,
 // 当前空间的分组展开、其他空间的折叠;收藏的标签页不进分组,放在最左边。
 // 顺序以侧边栏为准(见 logic.js 的 buildLayout);在顶部标签栏里拖进别的分组 = 移到那个空间。
-// 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归 Sidearc 管:
+// 不是空间的分组(用户自己建的、别的扩展建的,比如 Claude 的分组)不归扫地僧管:
 // 里面的标签页不拆分组、不改折叠,整组放在空间分组的最后面;侧边栏里照常显示在它们原来的空间里。
 
-import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js?v=6d9a844f';
-import { hasPrefix, KEY, PREFIX } from './protocol.js?v=6d9a844f';
-import { carryPair, moveUnit, moveUnits } from './splits.js?v=6d9a844f';
+import { buildLayout, buildTree, domainOrder, groupColor, pinnedItems, splitPartners, tabSpaces } from './logic.js?v=8d31379d';
+import { hasPrefix, KEY, PREFIX } from './protocol.js?v=8d31379d';
+import { carryPair, moveUnit, moveUnits } from './splits.js?v=8d31379d';
 
 // 新标签页(Chrome 自己的,和一些替换了新标签页的扩展用的地址)
 const NEW_TAB = /^(chrome|edge):\/\/(newtab|new-tab-page)|^chrome-search:\/\/local-ntp/i;
@@ -219,7 +219,7 @@ async function syncAll() {
   for (const w of await chrome.windows.getAll({ windowTypes: ['normal'] })) moved = (await syncWindow(w.id, state, all)) || moved;
   busyRuns = moved ? busyRuns + 1 : 0;
   if (busyRuns >= 5) {
-    console.warn('Sidearc: 标签页分组多次没能排好,暂停 10 秒');
+    console.warn('Sweeping Monk: 标签页分组多次没能排好,暂停 10 秒');
     pausedUntil = Date.now() + 10000;
     busyRuns = 0;
     // 比如一下恢复几十个标签页:一个个建出来、休眠时又一个个换编号,很容易连着几次没排好。

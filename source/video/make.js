@@ -44,7 +44,7 @@ const server = createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 
 // 启动无头 Chrome,通过 DevTools 协议控制(Node 自带 WebSocket,不需要装别的包)
-const profile = mkdtempSync(join(tmpdir(), 'sidearc-video-'));
+const profile = mkdtempSync(join(tmpdir(), 'sweeping-monk-video-'));
 const flags = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--hide-scrollbars', '--mute-audio', '--force-color-profile=srgb'];
 if (process.getuid?.() === 0) flags.push('--no-sandbox');
 const chrome = spawn(CHROME, [...flags, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
@@ -95,7 +95,7 @@ while (!(await evaluate('window.sceneReady === true').catch(() => false))) {
 const { duration, clicks, poster, cues } = await evaluate('({ duration: DURATION, clicks: CLICKS, poster: POSTER, cues: window.CUES })');
 
 // 背景音乐(含点击音效)先写成临时 wav,和画面一起交给 ffmpeg
-const work = mkdtempSync(join(tmpdir(), 'sidearc-audio-'));
+const work = mkdtempSync(join(tmpdir(), 'sweeping-monk-audio-'));
 const wav = join(work, 'music.wav');
 writeFileSync(wav, SHORT ? renderShortMusic(duration, cues) : renderMusic(duration, clicks));
 

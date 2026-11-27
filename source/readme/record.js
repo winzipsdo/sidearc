@@ -2,7 +2,7 @@
 //   assets/readme/<zh|en>/sync.gif    双向同步:侧边栏里拖,顶部标签栏跟着变;顶部拖,侧边栏跟着变
 //   assets/readme/<zh|en>/spaces.gif  空间:点顶部折叠的分组、底部圆点切换,侧边栏换颜色
 //   assets/readme/<zh|en>/leaves.gif  落叶:鼠标左右扫几下,落满叶子的一行扫干净(只截侧边栏里的列表,放大了看)
-// README 用 https://winzipsdo.github.io/sidearc/assets/readme/... 引用这些图,main 上不放大文件。
+// README 用 https://winzipsdo.github.io/sweeping-monk/assets/readme/... 引用这些图,main 上不放大文件。
 // 同名的 .mp4、.webm 是给主页用的:按 2 倍分辨率录,比 GIF 清楚得多(GIF 只有 256 色,还得缩小了才不太大)。
 // 需要 Playwright 和 ffmpeg。在 gh-pages 的工作目录里运行(Playwright 装在全局时让 require 找得到它):
 //   NODE_PATH=$(npm root -g) node source/readme/record.js
@@ -41,7 +41,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROME || un
 async function record(lang, name, script, { crop, width = GIF_W } = {}) {
   if (ONLY.length && !ONLY.includes(name)) return;
   const k = 2;
-  const dir = mkdtempSync(join(tmpdir(), 'sidearc-readme-'));
+  const dir = mkdtempSync(join(tmpdir(), 'sweeping-monk-readme-'));
   const ctx = await browser.newContext({ viewport: { width: W * k, height: H * k }, locale: lang === 'zh' ? 'zh-CN' : 'en-US', colorScheme: 'light' });
   const page = await ctx.newPage();
   // 录屏:用 Chrome 自己的 screencast(按实际像素出图,带时间戳),每一帧存成文件,最后按时间戳拼起来

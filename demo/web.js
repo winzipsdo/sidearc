@@ -65,16 +65,16 @@ const PAGES = {
     text: L('三封未读:周会改到周四、机票确认单、开源项目的新 Issue。', 'Three unread: the weekly sync moved to Thursday, a flight confirmation, and a new issue on the open-source project.'),
     links: [
       { label: L('机票确认单 – 东京', 'Flight confirmation – Tokyo'), url: 'https://docs.google.com/document/d/tokyo-trip', newTab: true },
-      { label: L('新 Issue:支持更多语言', 'New issue: more languages'), url: 'https://github.com/winzipsdo/sidearc/issues/42', newTab: true },
+      { label: L('新 Issue:支持更多语言', 'New issue: more languages'), url: 'https://github.com/winzipsdo/sweeping-monk/issues/42', newTab: true },
     ],
   },
-  'https://github.com/winzipsdo/sidearc': {
-    title: L('winzipsdo/sidearc: Arc 风格的 Chrome 侧边标签栏', 'winzipsdo/sidearc: Arc-style vertical tabs for Chrome'),
+  'https://github.com/winzipsdo/sweeping-monk': {
+    title: L('winzipsdo/sweeping-monk: Arc 风格的 Chrome 侧边标签栏', 'winzipsdo/sweeping-monk: Arc-style vertical tabs for Chrome'),
     text: L('Arc 风格的 Chrome 侧边标签栏:子标签、空间、固定标签和收藏夹,和顶部标签栏保持同步。', 'Arc-style vertical tabs for Chrome: child tabs, spaces, pinned tabs and favorites, synced with the tab strip.'),
     links: [
-      { label: L('Pull requests', 'Pull requests'), url: 'https://github.com/winzipsdo/sidearc/pulls' },
-      { label: L('Releases', 'Releases'), url: 'https://github.com/winzipsdo/sidearc/releases', newTab: true },
-      { label: L('CHANGELOG.md', 'CHANGELOG.md'), url: 'https://github.com/winzipsdo/sidearc/blob/main/CHANGELOG.md', newTab: true },
+      { label: L('Pull requests', 'Pull requests'), url: 'https://github.com/winzipsdo/sweeping-monk/pulls' },
+      { label: L('Releases', 'Releases'), url: 'https://github.com/winzipsdo/sweeping-monk/releases', newTab: true },
+      { label: L('CHANGELOG.md', 'CHANGELOG.md'), url: 'https://github.com/winzipsdo/sweeping-monk/blob/main/CHANGELOG.md', newTab: true },
     ],
   },
   'https://www.youtube.com/': {
@@ -91,23 +91,23 @@ const PAGES = {
     links: [{ label: L('首页改版 v3', 'Homepage redesign v3'), url: 'https://www.figma.com/design/home-v3', newTab: true }],
   },
   'https://open.spotify.com/': { title: L('Spotify – 网页播放器', 'Spotify – Web Player'), media: true },
-  'https://www.notion.so/sidearc/project-plan': {
+  'https://www.notion.so/sweeping-monk/project-plan': {
     title: L('Notion – 项目规划', 'Notion – Project plan'),
     text: L('这是一个固定标签。点下面的链接在本页跳转,侧边栏这一行会显示你现在在哪,右边的 ↩ 一键回到固定的地址。', 'This is a pinned tab. Follow a link below and its row shows where you went; the ↩ on the right takes you back home.'),
     links: [
-      { label: L('本周笔记', 'Weekly notes'), url: 'https://www.notion.so/sidearc/weekly-notes' },
-      { label: L('发布计划', 'Release plan'), url: 'https://www.notion.so/sidearc/release-plan' },
+      { label: L('本周笔记', 'Weekly notes'), url: 'https://www.notion.so/sweeping-monk/weekly-notes' },
+      { label: L('发布计划', 'Release plan'), url: 'https://www.notion.so/sweeping-monk/release-plan' },
     ],
   },
-  'https://www.notion.so/sidearc/weekly-notes': {
+  'https://www.notion.so/sweeping-monk/weekly-notes': {
     title: L('Notion – 本周笔记', 'Notion – Weekly notes'),
     text: L('看看侧边栏:固定的「规划」这一行现在显示的是本周笔记,点右边的 ↩ 回到项目规划。', 'Look at the sidebar: the pinned “Plan” row now shows Weekly notes. Click ↩ on the right to go back.'),
-    links: [{ label: L('发布计划', 'Release plan'), url: 'https://www.notion.so/sidearc/release-plan' }],
+    links: [{ label: L('发布计划', 'Release plan'), url: 'https://www.notion.so/sweeping-monk/release-plan' }],
   },
-  'https://www.notion.so/sidearc/release-plan': {
+  'https://www.notion.so/sweeping-monk/release-plan': {
     title: L('Notion – 发布计划', 'Notion – Release plan'),
     text: L('固定标签记得它的「家」:跑远了也能一键回去。', 'Pinned tabs remember home: wander off, come back with one click.'),
-    links: [{ label: L('本周笔记', 'Weekly notes'), url: 'https://www.notion.so/sidearc/weekly-notes' }],
+    links: [{ label: L('本周笔记', 'Weekly notes'), url: 'https://www.notion.so/sweeping-monk/weekly-notes' }],
   },
   'https://docs.google.com/document/d/tokyo-trip': {
     title: L('东京五日游行程表 – Google 文档', 'Tokyo 5-day itinerary – Google Docs'),
@@ -131,22 +131,22 @@ const PAGES = {
   'https://news.ycombinator.com/': {
     title: L('Hacker News', 'Hacker News'),
     links: [
-      { label: L('Show HN: Sidearc – Arc 风格的 Chrome 侧边标签栏', 'Show HN: Sidearc – Arc-style vertical tabs for Chrome'), url: 'https://github.com/winzipsdo/sidearc', newTab: true },
+      { label: L('Show HN: Sweeping Monk – Arc 风格的 Chrome 侧边标签栏', 'Show HN: Sweeping Monk – Arc-style vertical tabs for Chrome'), url: 'https://github.com/winzipsdo/sweeping-monk', newTab: true },
       { label: L('为什么我们总开着 80 个标签页', 'Why we all keep 80 tabs open'), url: 'https://tabs.blog/80-tabs', newTab: true },
       { label: L('浏览器的「节省内存」是怎么工作的', 'How browser memory saver works'), url: 'https://chromium.dev/memory-saver', newTab: true },
     ],
   },
-  'https://linear.app/sidearc/my-issues': {
+  'https://linear.app/sweeping-monk/my-issues': {
     title: L('我的任务 › Linear', 'My issues › Linear'),
-    links: [{ label: L('SID-128 拖拽同步到顶部标签栏', 'SID-128 Sync drags to the tab strip'), url: 'https://linear.app/sidearc/issue/SID-128', newTab: true }],
+    links: [{ label: L('SID-128 拖拽同步到顶部标签栏', 'SID-128 Sync drags to the tab strip'), url: 'https://linear.app/sweeping-monk/issue/SID-128', newTab: true }],
   },
   'https://calendar.google.com/': { title: L('Google 日历', 'Google Calendar') },
   'https://www.figma.com/design/home-v3': { title: L('首页改版 v3 – Figma', 'Homepage redesign v3 – Figma') },
-  'https://github.com/winzipsdo/sidearc/pulls': {
-    title: L('Pull requests · winzipsdo/sidearc', 'Pull requests · winzipsdo/sidearc'),
-    links: [{ label: L('构建 #128', 'Build #128'), url: 'https://github.com/winzipsdo/sidearc/actions/runs/128', newTab: true }],
+  'https://github.com/winzipsdo/sweeping-monk/pulls': {
+    title: L('Pull requests · winzipsdo/sweeping-monk', 'Pull requests · winzipsdo/sweeping-monk'),
+    links: [{ label: L('构建 #128', 'Build #128'), url: 'https://github.com/winzipsdo/sweeping-monk/actions/runs/128', newTab: true }],
   },
-  'https://github.com/winzipsdo/sidearc/actions/runs/128': { title: L('构建 #128 · winzipsdo/sidearc', 'Build #128 · winzipsdo/sidearc') },
+  'https://github.com/winzipsdo/sweeping-monk/actions/runs/128': { title: L('构建 #128 · winzipsdo/sweeping-monk', 'Build #128 · winzipsdo/sweeping-monk') },
   'https://app.slack.com/client/design': { title: L('#design – Slack', '#design – Slack') },
   'https://ankiweb.net/decks': { title: L('每日复习 – AnkiWeb', 'Daily review – AnkiWeb') },
   'https://zh.wikipedia.org/wiki/贝叶斯定理': {
@@ -170,8 +170,8 @@ const PAGES = {
 // 浏览历史:打开试用时已经有的访问记录(网址,多少小时以前)。开着的标签页也会记上。
 // 搜索两个字以上时,侧边栏会在标签页下面列出匹配的历史记录
 export const HISTORY = [
-  ['https://www.notion.so/sidearc/weekly-notes', 3],
-  ['https://www.notion.so/sidearc/release-plan', 20],
+  ['https://www.notion.so/sweeping-monk/weekly-notes', 3],
+  ['https://www.notion.so/sweeping-monk/release-plan', 20],
   ['https://developer.chrome.com/docs/extensions/reference/api/tabGroups', 5],
   ['https://developer.chrome.com/docs/extensions/develop/migrate', 30],
   ['https://developer.chrome.com/docs/extensions/reference/api/tabs', 52],
@@ -183,14 +183,14 @@ export const HISTORY = [
   ['https://developer.chrome.com/docs/extensions/reference/manifest', 96],
   ['https://developer.chrome.com/docs/extensions/reference/api/i18n', 110],
   ['https://developer.mozilla.org/docs/Web/CSS/color_value/oklch', 8],
-  ['https://github.com/winzipsdo/sidearc/releases', 26],
-  ['https://github.com/winzipsdo/sidearc/blob/main/CHANGELOG.md', 49],
-  ['https://github.com/winzipsdo/sidearc/issues/42', 75],
+  ['https://github.com/winzipsdo/sweeping-monk/releases', 26],
+  ['https://github.com/winzipsdo/sweeping-monk/blob/main/CHANGELOG.md', 49],
+  ['https://github.com/winzipsdo/sweeping-monk/issues/42', 75],
   ['https://www.youtube.com/watch?v=HZGCoVF3YvM', 100],
   ['https://zh.wikipedia.org/wiki/条件概率', 120],
   ['https://en.wikipedia.org/wiki/Conditional_probability', 120],
   ['https://www.figma.com/design/home-v3', 6],
-  ['https://linear.app/sidearc/issue/SID-128', 28],
+  ['https://linear.app/sweeping-monk/issue/SID-128', 28],
   ['https://tabs.blog/80-tabs', 60],
   ['https://chromium.dev/memory-saver', 150],
 ];
@@ -199,7 +199,7 @@ export const HISTORY = [
 export const tiles = (lang) => [
   'https://news.ycombinator.com/',
   'https://mail.google.com/mail/u/0/#inbox',
-  'https://github.com/winzipsdo/sidearc',
+  'https://github.com/winzipsdo/sweeping-monk',
   'https://www.youtube.com/watch?v=jfKfPfyJRdk',
   'https://www.figma.com/files/recent',
   lang === 'zh' ? 'https://zh.wikipedia.org/wiki/贝叶斯定理' : 'https://en.wikipedia.org/wiki/Bayes%27_theorem',
@@ -237,7 +237,7 @@ export function scenario(lang) {
   const state = {
     favorites: [
       item('f-gmail', 'https://mail.google.com/mail/u/0/#inbox'),
-      item('f-github', 'https://github.com/winzipsdo/sidearc'),
+      item('f-github', 'https://github.com/winzipsdo/sweeping-monk'),
       item('f-youtube', 'https://www.youtube.com/'),
       item('f-figma', 'https://www.figma.com/files/recent'),
       item('f-spotify', 'https://open.spotify.com/'),
@@ -248,7 +248,7 @@ export function scenario(lang) {
         name: z ? '个人' : 'Personal',
         color: '#6b7cff',
         pinned: [
-          item('p-notion', 'https://www.notion.so/sidearc/project-plan', z ? '规划' : 'Plan'),
+          item('p-notion', 'https://www.notion.so/sweeping-monk/project-plan', z ? '规划' : 'Plan'),
           {
             id: 'd-trip',
             folder: true,
@@ -262,7 +262,7 @@ export function scenario(lang) {
         id: 's-work',
         name: z ? '工作' : 'Work',
         color: '#4fae6e',
-        pinned: [item('p-linear', 'https://linear.app/sidearc/my-issues'), item('p-cal', 'https://calendar.google.com/')],
+        pinned: [item('p-linear', 'https://linear.app/sweeping-monk/my-issues'), item('p-cal', 'https://calendar.google.com/')],
       },
       { id: 's-study', name: z ? '学习' : 'Study', color: '#f0913f', pinned: [item('p-anki', 'https://ankiweb.net/decks', z ? '复习' : 'Review')] },
     ],
@@ -271,16 +271,16 @@ export function scenario(lang) {
   const wiki = z ? 'https://zh.wikipedia.org/wiki/贝叶斯定理' : 'https://en.wikipedia.org/wiki/Bayes%27_theorem';
   const tabs = [
     { key: 'gmail', url: 'https://mail.google.com/mail/u/0/#inbox', item: 'f-gmail', trail: 6 },
-    { key: 'notion', url: 'https://www.notion.so/sidearc/project-plan', item: 'p-notion' },
+    { key: 'notion', url: 'https://www.notion.so/sweeping-monk/project-plan', item: 'p-notion' },
     { key: 'trip', url: 'https://docs.google.com/document/d/tokyo-trip', item: 'p-trip' },
     { key: 'docs', url: 'https://developer.chrome.com/docs/extensions/reference/api/sidePanel', space: 's-me', alias: z ? '文档' : 'Docs', active: true },
     { key: 'mdn', url: 'https://developer.mozilla.org/docs/Web/CSS/color_value/color-mix', space: 's-me', parent: 'docs', trail: 2 },
     { key: 'lofi', url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk', space: 's-me', alias: 'BGM', playing: true },
     { key: 'hn', url: 'https://news.ycombinator.com/', space: 's-me', slept: 135, idle: 120 },
-    { key: 'linear', url: 'https://linear.app/sidearc/my-issues', item: 'p-linear' },
+    { key: 'linear', url: 'https://linear.app/sweeping-monk/my-issues', item: 'p-linear' },
     { key: 'figma', url: 'https://www.figma.com/design/home-v3', space: 's-work' },
-    { key: 'pr', url: 'https://github.com/winzipsdo/sidearc/pulls', space: 's-work' },
-    { key: 'build', url: 'https://github.com/winzipsdo/sidearc/actions/runs/128', space: 's-work', parent: 'pr' },
+    { key: 'pr', url: 'https://github.com/winzipsdo/sweeping-monk/pulls', space: 's-work' },
+    { key: 'build', url: 'https://github.com/winzipsdo/sweeping-monk/actions/runs/128', space: 's-work', parent: 'pr' },
     { key: 'slack', url: 'https://app.slack.com/client/design', space: 's-work', slept: 50, idle: 60 },
     { key: 'anki', url: 'https://ankiweb.net/decks', item: 'p-anki' },
     { key: 'wiki', url: wiki, space: 's-study' },

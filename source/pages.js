@@ -1,6 +1,6 @@
 // 从 source/index.html(中英文写在一起)生成两个页面,各自只留一种语言,方便搜索引擎分别收录:
-//   index.html     中文,https://winzipsdo.github.io/sidearc/
-//   en/index.html  英文,https://winzipsdo.github.io/sidearc/en/
+//   index.html     中文,https://winzipsdo.github.io/sweeping-monk/
+//   en/index.html  英文,https://winzipsdo.github.io/sweeping-monk/en/
 // 带 data-l="zh" / data-l="en" 的元素(连同里面的内容)只留在对应语言的页面里;英文页在 en/ 下,相对地址前面补上 ../。
 // 同时按语言填好结构化数据(JSON-LD:软件信息和介绍视频)、写 sitemap.xml,最后运行 stamp.js 加版本号。
 // 改了 source/index.html、样式、脚本或视频后运行:node source/pages.js(source/build.js 最后也会运行)。
@@ -11,8 +11,8 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SITE = fileURLToPath(new URL('../', import.meta.url));
-const ORIGIN = 'https://winzipsdo.github.io/sidearc/';
-const REPO = 'https://github.com/winzipsdo/sidearc';
+const ORIGIN = 'https://winzipsdo.github.io/sweeping-monk/';
+const REPO = 'https://github.com/winzipsdo/sweeping-monk';
 const PAGES = {
   zh: { file: 'index.html', url: ORIGIN, htmlLang: 'zh-CN' },
   en: { file: 'en/index.html', url: ORIGIN + 'en/', htmlLang: 'en' },
@@ -64,14 +64,18 @@ function uploadDate(file) {
 
 const TEXT = {
   zh: {
+    name: '扫地僧',
+    alt: ['Sweeping Monk', 'Sidearc'],
     app: 'Arc 风格的 Chrome 垂直标签页侧边栏:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。',
-    video: 'Sidearc 介绍视频',
-    videoText: '一分钟看懂 Sidearc:侧边栏和顶部标签栏双向同步、空间、子标签、固定标签回家、足迹与休眠、键盘操作和落叶。',
+    video: '扫地僧介绍视频',
+    videoText: '一分钟看懂扫地僧:侧边栏和顶部标签栏双向同步、空间、子标签、固定标签回家、足迹与休眠、键盘操作和落叶。',
   },
   en: {
+    name: 'Sweeping Monk',
+    alt: ['扫地僧', 'Sidearc'],
     app: "Arc-style vertical tabs for Chrome: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source, no network requests, data stays on your machine.",
-    video: 'Sidearc intro video',
-    videoText: 'Sidearc in a minute: two-way sync with the tab strip, spaces, child tabs, pinned tabs going home, footprints and sleep, keyboard navigation and fallen leaves.',
+    video: 'Sweeping Monk intro video',
+    videoText: 'Sweeping Monk in a minute: two-way sync with the tab strip, spaces, child tabs, pinned tabs going home, footprints and sleep, keyboard navigation and fallen leaves.',
   },
 };
 
@@ -86,7 +90,8 @@ function jsonLd(lang) {
     {
       '@type': 'SoftwareApplication',
       '@id': ORIGIN + '#app',
-      name: 'Sidearc',
+      name: t.name,
+      alternateName: t.alt,
       description: t.app,
       url: page.url,
       applicationCategory: 'BrowserApplication',

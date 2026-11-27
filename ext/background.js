@@ -1,8 +1,8 @@
 // 后台(service worker):侧边栏没开着时也要做的事。会话存储的键和消息格式见 src/protocol.js
 
-import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js?v=6d9a844f';
-import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX, TAB_KEYS } from './src/protocol.js?v=6d9a844f';
-import { arrangeSpace, startGroupSync } from './src/groups.js?v=6d9a844f';
+import { addressOf, ANY_SPACE, itemsAt, nextTrail, privateItemIds, SPLIT_NONE, tabSpaces } from './src/logic.js?v=8d31379d';
+import { hasPrefix, KEY, LAST_TAKEN, MSG, PREFIX, TAB_KEYS } from './src/protocol.js?v=8d31379d';
+import { arrangeSpace, startGroupSync } from './src/groups.js?v=8d31379d';
 
 // 点击工具栏图标(或快捷键)直接开关侧边栏
 chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(console.error);

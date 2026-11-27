@@ -3,7 +3,7 @@
 // 和在真的 Chrome 里一样:各自注册事件、读写同一份存储、互相发消息。
 // 事件的先后顺序尽量照着 Chrome 来,事件和返回值都是拷贝,插件改了也不会影响这里的数据。
 
-import { NEW_TAB, page } from './web.js?v=71ea2bda';
+import { NEW_TAB, page } from './web.js?v=8cc95184';
 
 const WIN = 1;
 const LOAD_MS = 300; // 网页「加载」多久
@@ -336,7 +336,7 @@ export class Browser {
         for (const [w, l] of calls)
           w.queueMicrotask(() => {
             try {
-              if (l(clone(msg), { id: 'sidearc-demo' }, reply) === true) waiting = true;
+              if (l(clone(msg), { id: 'sweeping-monk-demo' }, reply) === true) waiting = true;
             } finally {
               if (!--left && !waiting) resolve();
             }
@@ -361,8 +361,8 @@ export class Browser {
     const window = { id: WIN, focused: true, type: 'normal', state: 'normal', incognito: false, alwaysOnTop: false };
     return {
       runtime: {
-        id: 'sidearc-demo',
-        getURL: (p) => 'chrome-extension://sidearc-demo/' + String(p).replace(/^\//, ''),
+        id: 'sweeping-monk-demo',
+        getURL: (p) => 'chrome-extension://sweeping-monk-demo/' + String(p).replace(/^\//, ''),
         sendMessage,
         ...events('runtime', ['onMessage', 'onInstalled', 'onStartup']),
       },
@@ -377,7 +377,7 @@ export class Browser {
           if (typeof id === 'object') [id, p] = [b.active.id, id];
           const t = b.tab(id);
           if ('muted' in p) {
-            t.mutedInfo = p.muted ? { muted: true, reason: 'extension', extensionId: 'sidearc-demo' } : { muted: false };
+            t.mutedInfo = p.muted ? { muted: true, reason: 'extension', extensionId: 'sweeping-monk-demo' } : { muted: false };
             b.emit('tabs.onUpdated', t.id, { mutedInfo: t.mutedInfo }, pub(t));
           }
           if ('autoDiscardable' in p && t.autoDiscardable !== p.autoDiscardable) {

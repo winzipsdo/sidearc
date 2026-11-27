@@ -1,16 +1,16 @@
 // 把状态画到页面上。状态变了就整体重画,没有局部更新。
 
-import { $, faviconFor, h, icon, tabIcon } from './dom.js?v=6d9a844f';
-import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, SPLIT_NONE, splitPartners, TRAIL_TTL, trailLeft } from './logic.js?v=6d9a844f';
-import { formatDuration, t } from './i18n.js?v=6d9a844f';
-import { applyCursor } from './keys.js?v=6d9a844f';
-import { refreshLeaves } from './leaves.js?v=6d9a844f';
-import { refreshLocate, revealPending } from './locate.js?v=6d9a844f';
-import { refreshHistory } from './history.js?v=6d9a844f';
-import { recentMenu, settingsMenu } from './menus.js?v=6d9a844f';
-import { addSpace } from './spaces.js?v=6d9a844f';
-import { applyMenuTarget, toggleMenuFrom } from './ui.js?v=6d9a844f';
-import { activeSpace, bind, dragging, pinPicked, matches, pressing, query, refreshTabs, renderHeld, selectedIds, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js?v=6d9a844f';
+import { $, faviconFor, h, icon, tabIcon } from './dom.js?v=8d31379d';
+import { favColumns, isAway, isFolder, isUnloaded, pinnedItems, sleptFor, SPLIT_NONE, splitPartners, TRAIL_TTL, trailLeft } from './logic.js?v=8d31379d';
+import { formatDuration, t } from './i18n.js?v=8d31379d';
+import { applyCursor } from './keys.js?v=8d31379d';
+import { refreshLeaves } from './leaves.js?v=8d31379d';
+import { refreshLocate, revealPending } from './locate.js?v=8d31379d';
+import { refreshHistory } from './history.js?v=8d31379d';
+import { recentMenu, settingsMenu } from './menus.js?v=8d31379d';
+import { addSpace } from './spaces.js?v=8d31379d';
+import { applyMenuTarget, toggleMenuFrom } from './ui.js?v=8d31379d';
+import { activeSpace, bind, dragging, pinPicked, matches, pressing, query, refreshTabs, renderHeld, selectedIds, setRenderPending, state, tabAlias, tabReplacedHooks, tabSlept, tabs, trail, trailCount, treeTabs, visibleTabs, windowId } from './store.js?v=8d31379d';
 
 // 开了保持唤醒(不会被 Chrome 自动回收)的标签页:一把小锁,悬停说明是什么意思
 const keepAlive = (tab, cls) => tab?.autoDiscardable === false && h('span', { class: cls, title: t('keepAwakeTip') }, icon('lock'));

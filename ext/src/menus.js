@@ -1,17 +1,17 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=6d9a844f';
-import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=6d9a844f';
-import { canScatter, scatterLeaves } from './leaves.js?v=6d9a844f';
-import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=6d9a844f';
-import { render } from './render.js?v=6d9a844f';
-import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=6d9a844f';
-import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=6d9a844f';
-import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=6d9a844f';
-import { $, faviconFor, h, icon } from './dom.js?v=6d9a844f';
-import { formatDuration, LANGS, langPref, t } from './i18n.js?v=6d9a844f';
-import { lastSessionCount, restoreLastSession } from './restore.js?v=6d9a844f';
-import { copyText, showMenu } from './ui.js?v=6d9a844f';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=8d31379d';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=8d31379d';
+import { canScatter, scatterLeaves } from './leaves.js?v=8d31379d';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=8d31379d';
+import { render } from './render.js?v=8d31379d';
+import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=8d31379d';
+import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=8d31379d';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=8d31379d';
+import { $, faviconFor, h, icon } from './dom.js?v=8d31379d';
+import { formatDuration, LANGS, langPref, t } from './i18n.js?v=8d31379d';
+import { lastSessionCount, restoreLastSession } from './restore.js?v=8d31379d';
+import { copyText, showMenu } from './ui.js?v=8d31379d';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {

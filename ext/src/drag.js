@@ -1,15 +1,15 @@
 // 拖拽:标签页排序和嵌套、拖进收藏夹或固定标签、拖到空间圆点上。收藏、固定标签(可以多选)和文件夹的拖动都可以撤销。
 
-import { detachItems, itemFromTab, movedText, moveWithUndo, placesOf, removeItems } from './items.js?v=6d9a844f';
-import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js?v=6d9a844f';
-import { moveUnit, moveUnits } from './splits.js?v=6d9a844f';
-import { render, schedule } from './render.js?v=6d9a844f';
-import { h, icon } from './dom.js?v=6d9a844f';
-import { t } from './i18n.js?v=6d9a844f';
-import { activeSpace, dragging, findItem, listedParent, listedTabs, pinPicked, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabParent, tabs, takeItem, visibleTabs } from './store.js?v=6d9a844f';
-import { switchSpace } from './spaces.js?v=6d9a844f';
-import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js?v=6d9a844f';
-import { hideMenu, pushUndo } from './ui.js?v=6d9a844f';
+import { detachItems, itemFromTab, movedText, moveWithUndo, placesOf, removeItems } from './items.js?v=8d31379d';
+import { dropBefore, dropInto, isFolder, splitPartners } from './logic.js?v=8d31379d';
+import { moveUnit, moveUnits } from './splits.js?v=8d31379d';
+import { render, schedule } from './render.js?v=8d31379d';
+import { h, icon } from './dom.js?v=8d31379d';
+import { t } from './i18n.js?v=8d31379d';
+import { activeSpace, dragging, findItem, listedParent, listedTabs, pinPicked, renderPending, save, selectedIds, setDragging, setTabParent, state, subtreeIds, tabParent, tabs, takeItem, visibleTabs } from './store.js?v=8d31379d';
+import { switchSpace } from './spaces.js?v=8d31379d';
+import { canSplit, moveTabToSpace, pairable, splitTabs } from './tabs.js?v=8d31379d';
+import { hideMenu, pushUndo } from './ui.js?v=8d31379d';
 
 function clearMarks() {
   for (const el of document.querySelectorAll('.split-hint')) el.remove();

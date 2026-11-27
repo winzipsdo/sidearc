@@ -1,5 +1,5 @@
 // 竖屏短片(抖音这类平台)的画面和时间线:约 17 秒,一屏一句大字,跟着 music-short.js 的节拍(每分钟 120 拍,一拍 0.5 秒)切。
-// 故事线:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 三天后好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sidearc。
+// 故事线:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 三天后好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sweeping Monk。
 // 时间线工具和落叶和介绍视频共用(engine.js),侧边栏的行、标签页的内容也共用(content.js)。地址后加 ?play 可以实时预览。
 
 import { iconFor } from '../../demo/web.js';
@@ -96,7 +96,7 @@ function windowHtml() {
       <button class="sb-btn sb-ext" id="ext"><img src="../../assets/logo.svg" alt=""></button>
     </div>
     <div class="sb-main">
-      <div class="sb-side" id="side"><iframe id="panel" title="Sidearc"></iframe></div>
+      <div class="sb-side" id="side"><iframe id="panel" title="Sweeping Monk"></iframe></div>
       <div class="sb-page"><div class="sb-doc" style="--site:${p.site.color}">
         <div class="sb-site"><img src="${p.site.icon}" alt=""><span>${p.site.name}</span></div><h3>${p.title}</h3>
         <i class="sb-sk" style="width:86%"></i><i class="sb-sk" style="width:70%"></i><i class="sb-sk" style="width:92%"></i><i class="sb-sk" style="width:64%"></i><i class="sb-sk block"></i>

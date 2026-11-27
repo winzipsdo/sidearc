@@ -2,10 +2,10 @@
 // 插件真正的侧边栏(左边)和后台(看不见)跑在里面的 iframe 里,用的是 sim.js 模拟的 chrome.* 接口。
 // 用户在这里做的操作(拖动、切换空间、休眠……)通过 onAction 报给主页,用来勾掉试用任务。
 
-import { Browser } from './sim.js?v=496aad92';
-import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=71ea2bda';
-import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=6d9a844f';
-import { KEY, MSG } from '../ext/src/protocol.js?v=6d9a844f';
+import { Browser } from './sim.js?v=01887822';
+import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=8cc95184';
+import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=8d31379d';
+import { KEY, MSG } from '../ext/src/protocol.js?v=8d31379d';
 
 const TEXT = {
   zh: { back: '后退', forward: '前进', reload: '重新加载', newTab: '新建标签页', close: '关闭', toggle: '打开/关闭侧边栏', search: '搜索或输入网址', play: '播放', pause: '暂停', newTabHint: '点一个快捷方式。已经开着的网站不会再开一份:会直接切过去。', muted: '已静音' },
@@ -324,23 +324,23 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
       },
       call: watch,
     });
-    window.sidearcDemo = { connect: (win, name) => b.connect(win, name), favicon: iconFor };
+    window.monkDemo = { connect: (win, name) => b.connect(win, name), favicon: iconFor };
     setup(b, lang);
     render();
     // 先启动后台,再打开侧边栏,和真的浏览器一样
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=744a9e0c', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=302c8df6', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
     });
     const panel = document.createElement('iframe');
     panel.className = 'sb-panel';
-    panel.title = 'Sidearc';
+    panel.title = 'Sweeping Monk';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=3a429d48', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=8c60d20c', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

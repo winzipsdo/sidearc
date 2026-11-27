@@ -1,7 +1,7 @@
 // 在线试用:插件的页面(ext/sidepanel.html、ext/background.html)第一个加载这个脚本,
 // 从外面的主页拿到模拟的 chrome.* 接口(见 sim.js),插件自己的代码不改(只有引用加了版本号)。
 (() => {
-  const demo = parent.sidearcDemo;
+  const demo = parent.monkDemo;
   const ctx = document.currentScript.dataset.ctx;
   window.chrome = demo.connect(window, ctx);
   if (ctx !== 'panel') return;
