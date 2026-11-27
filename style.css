@@ -3,11 +3,19 @@
    标题和正文是同一种衬线字体,靠字号和留白分层,不用粗体;默认是平的,只有真正浮起来的窗口和截图才有一层很轻的阴影。
    中英文两个页面共用;在线试用的假浏览器窗口在 demo/demo.css */
 
-/* 思源宋体(Noto Serif SC,SIL OFL 1.1)的子集:只有页面上用到的字,见 source/fonts.py */
+/* 字体都是只含页面上用到的字的子集,见 source/fonts.py。
+   中文页:仓耳今楷02 W04(只允许个人非商业免费使用,商用要向仓耳字库买授权);标题和正文同一个字重,不用粗体。
+   英文页:思源宋体(Noto Serif SC,SIL OFL 1.1) */
+@font-face {
+  font-family: "Monk Kai";
+  src: url("assets/fonts/kai.woff2") format("woff2");
+  font-weight: 400 500;
+  font-display: swap;
+}
 @font-face {
   font-family: "Monk Serif";
   src: url("assets/fonts/serif.woff2") format("woff2");
-  font-weight: 400 600;
+  font-weight: 400 500;
   font-display: swap;
 }
 
@@ -27,6 +35,7 @@
   --mono: "JetBrains Mono", "SF Mono", ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
   --gutter: 64px;
 }
+:root[data-lang="zh"] { --serif: "Monk Kai", "TsangerJinKai02", "Kaiti SC", "STKaiti", "KaiTi", "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", Georgia, serif; }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #181613;
@@ -77,6 +86,7 @@ a:hover { color: var(--accent); text-decoration-color: currentColor; }
 button { font: inherit; color: inherit; letter-spacing: inherit; border: 0; padding: 0; background: none; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
 h1, h2, h3, p, dl, dd, ol, figure { margin: 0; }
+b, strong { font-weight: 500; }
 ol { padding: 0; list-style: none; }
 code, kbd { font-family: var(--mono); font-size: 0.86em; letter-spacing: 0; }
 :not(pre) > code { padding: 0.1em 0.4em; border-radius: 4px; background: var(--sand); white-space: nowrap; }
@@ -114,7 +124,7 @@ h1 small { margin-left: 0.5em; font-size: 20px; font-weight: 400; letter-spacing
 .lead { max-width: 34em; margin-top: 28px; font-size: 20px; line-height: 1.7; color: var(--ink-2); }
 .specs { display: flex; flex-wrap: wrap; gap: 6px 36px; margin-top: 28px; font-size: 13.5px; }
 .specs div { display: flex; gap: 0.7em; align-items: baseline; }
-.specs dt { font-weight: 600; color: var(--ink-2); }
+.specs dt { font-weight: 500; color: var(--ink-2); }
 .specs dd { color: var(--olive); }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
 .btn { display: inline-flex; align-items: center; height: 42px; padding: 0 24px; border-radius: 8px; background: var(--sand); color: var(--ink); font-size: 15px; font-weight: 500; text-decoration: none; transition: background 0.15s, color 0.15s; }
@@ -144,7 +154,7 @@ h2 { font-size: 32px; font-weight: 500; line-height: 1.25; letter-spacing: 0.04e
 .demo-host .sb-window { border-radius: 12px; box-shadow: var(--float); }
 .quests { margin-top: 40px; }
 .q-head { display: flex; align-items: baseline; gap: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--line); font-size: 15px; }
-.q-head b { font-weight: 600; }
+.q-head b { font-weight: 500; }
 .q-count { font-family: var(--mono); font-size: 13px; letter-spacing: 0; color: var(--accent); }
 .q-done { color: var(--olive); font-size: 14px; }
 .q-reset { margin-left: auto; font-size: 13.5px; color: var(--stone); text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 0.28em; transition: color 0.15s, text-decoration-color 0.15s; }
@@ -203,7 +213,7 @@ h3 { margin-top: 10px; font-size: 22px; font-weight: 500; line-height: 1.45; let
 /* 快捷键 */
 .table { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 15px; }
-th { padding: 0 16px 12px 0; text-align: left; font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; color: var(--stone); border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { padding: 0 16px 12px 0; text-align: left; font-size: 12.5px; font-weight: 500; letter-spacing: 0.08em; color: var(--stone); border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); color: var(--olive); white-space: nowrap; }
 td:first-child { color: var(--ink); width: 38%; white-space: normal; }
 kbd { display: inline-block; padding: 1px 7px; border-radius: 4px; background: var(--sand); color: var(--ink-2); font-size: 12.5px; line-height: 1.7; white-space: nowrap; }

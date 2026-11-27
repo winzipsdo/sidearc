@@ -2,7 +2,7 @@
 <!-- 项目主页的源文件:中英文写在一起,data-l 标明语言。source/pages.js 从它生成中文页(index.html)和英文页(en/index.html),
      每个只留一种语言;不要直接改生成出来的那两个。
      「先上手」跑的是插件本身的代码(ext/,由 source/build.js 从 main 复制),浏览器是 demo/ 里模拟的。
-     版式:一页纸。宣纸色的底、墨色的字、一种赭色,一种衬线字体(assets/fonts/,见 source/fonts.py),靠字号和留白分层 -->
+     版式:一页纸。宣纸色的底、墨色的字、一种赭色,一种字体(中文仓耳今楷、英文思源宋体,assets/fonts/,见 source/fonts.py),靠字号和留白分层 -->
 <html lang="zh-CN" data-lang="zh">
 <head>
 <meta charset="utf-8">
@@ -42,7 +42,8 @@
 <script type="application/ld+json" data-jsonld></script>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/128.png">
-<link rel="preload" href="assets/fonts/serif.woff2" as="font" type="font/woff2" crossorigin>
+<link data-l="zh" rel="preload" href="assets/fonts/kai.woff2" as="font" type="font/woff2" crossorigin>
+<link data-l="en" rel="preload" href="assets/fonts/serif.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="demo/demo.css">
 <link rel="modulepreload" href="demo/demo.js">
