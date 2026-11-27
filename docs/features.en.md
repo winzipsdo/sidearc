@@ -1,4 +1,4 @@
-# Sidearc features in detail
+# Sweeping Monk features in detail
 
 [简体中文](features.md) | English | [Back to README](../README.en.md)
 

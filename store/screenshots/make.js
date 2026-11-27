@@ -29,7 +29,7 @@ const SCALE = process.platform === 'win32' ? 2 : 1;
 // 大标题的粗细:Windows 的系统字体到 800 会换成 Segoe UI Black,和 macOS 上出的图差得远,用 700
 const HEAVY = process.platform === 'win32' ? 700 : 800;
 
-const OUT = mkdtempSync(join(tmpdir(), 'sidearc-shots-'));
+const OUT = mkdtempSync(join(tmpdir(), 'sweeping-monk-shots-'));
 copyFileSync(join(ROOT, 'sidepanel.css'), join(OUT, 'sidepanel.css'));
 copyFileSync(join(ROOT, 'icons/128.png'), join(OUT, 'logo.png'));
 const css = readFileSync(join(ROOT, 'sidepanel.css'), 'utf8');
@@ -88,6 +88,7 @@ const SPACE_COLORS = [
 const TEXT = {
   zh: {
     lang: 'zh',
+    name: '扫地僧',
     dir: 'store',
     font: '"PingFang SC",system-ui,sans-serif',
     spaces: ['个人', '工作', '学习', '生活'],
@@ -109,6 +110,7 @@ const TEXT = {
   },
   en: {
     lang: 'en',
+    name: 'Sweeping Monk',
     dir: 'store/en',
     font: 'system-ui,-apple-system,"Segoe UI",sans-serif',
     spaces: ['Personal', 'Work', 'Study', 'Life'],
@@ -261,7 +263,7 @@ li::before{content:"";position:absolute;left:0;top:7px;width:10px;height:10px;bo
 .body{display:flex;height:596px} iframe{width:340px;height:100%;border:0;border-right:1px solid ${c.line}}
 .content{flex:1;padding:34px 28px} .content i{display:block;height:14px;border-radius:7px;background:${c.ph};margin-bottom:14px}
 </style></head><body>
-<div class="copy"><div class="brand"><img src="logo.png">Sidearc</div><h1>${title}</h1><p class="sub">${esc(sub)}</p><ul>${bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul></div>
+<div class="copy"><div class="brand"><img src="logo.png">${t.name}</div><h1>${title}</h1><p class="sub">${esc(sub)}</p><ul>${bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul></div>
 <div class="win"><div class="strip"><div class="lights"><i></i><i></i><i></i></div>${strip(t, active, dark, folder)}</div>
 <div class="toolbar"><div class="url"></div></div>
 <div class="body"><iframe src="panel-${n}.html"></iframe><div class="content">
@@ -283,7 +285,7 @@ background:linear-gradient(135deg,#6b7cff 0%,#a06be0 50%,#e5687a 100%);font-fami
 .mark{margin-top:32px;width:112px;height:112px;border-radius:24px;background:rgba(255,255,255,.18);display:flex;gap:7px;padding:17px 15px}
 .mark i{border-radius:6px;background:#fff} .mark i:first-child{width:18px} .mark i:last-child{flex:1;background:rgba(255,255,255,.62)}
 h1{margin-top:22px;font-family:system-ui,-apple-system,sans-serif;font-size:40px;font-weight:${HEAVY};letter-spacing:.5px} p{margin-top:12px;font-size:15px;opacity:.88}
-</style></head><body><div class="mark"><i></i><i></i></div><h1>Sidearc</h1><p>${esc(t.promo)}</p></body></html>`
+</style></head><body><div class="mark"><i></i><i></i></div><h1>${t.name}</h1><p>${esc(t.promo)}</p></body></html>`
   );
   capture(n, join(ROOT, t.dir, 'promo-small-440x280.jpg'), [440, 280]);
 }

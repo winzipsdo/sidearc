@@ -1,12 +1,12 @@
-# Sidearc 隐私政策 / Privacy Policy
+# 扫地僧 Sweeping Monk 隐私政策 / Privacy Policy
 
 最后更新 / Last updated: 2026-10-13
 
 ## 中文
 
-Sidearc 不收集、不上传、不出售任何用户数据。扩展里没有任何网络请求代码,也不包含统计或第三方脚本。
+扫地僧不收集、不上传、不出售任何用户数据。扩展里没有任何网络请求代码,也不包含统计或第三方脚本。
 
-为了实现功能,Sidearc 会在**你的浏览器本地**读取和保存以下信息:
+为了实现功能,扫地僧会在**你的浏览器本地**读取和保存以下信息:
 
 - **标签页信息**(标题、网址、图标、所在窗口和位置):用于在侧边栏里显示和管理标签页。
 - **你创建的内容**(空间、收藏夹、固定标签、别名):保存在 `chrome.storage.local`。
@@ -18,13 +18,13 @@ Sidearc 不收集、不上传、不出售任何用户数据。扩展里没有任
 
 网站图标由 Chrome 自身提供或直接从对应网站加载,与你正常浏览该网站时相同。
 
-如有问题,请在 https://github.com/winzipsdo/sidearc/issues 提交。
+如有问题,请在 https://github.com/winzipsdo/sweeping-monk/issues 提交。
 
 ## English
 
-Sidearc does not collect, transmit or sell any user data. The extension contains no network request code, no analytics and no third-party scripts.
+Sweeping Monk does not collect, transmit or sell any user data. The extension contains no network request code, no analytics and no third-party scripts.
 
-To provide its features, Sidearc reads and stores the following **locally in your browser**:
+To provide its features, Sweeping Monk reads and stores the following **locally in your browser**:
 
 - **Tab information** (title, URL, favicon, window and position): to display and manage tabs in the side panel.
 - **Content you create** (spaces, favorites, pinned tabs, aliases): stored in `chrome.storage.local`.
@@ -36,4 +36,4 @@ All of this stays on your device and is never sent to the developer or any third
 
 Favicons are provided by Chrome itself or loaded directly from the corresponding website, the same as when you browse that site.
 
-For questions, open an issue at https://github.com/winzipsdo/sidearc/issues.
+For questions, open an issue at https://github.com/winzipsdo/sweeping-monk/issues.

@@ -81,7 +81,7 @@ const evaluator = (send, sessionId) => async (expr, { gesture = false } = {}) =>
 };
 
 export function e2e(fn) {
-  const profile = mkdtempSync(join(tmpdir(), 'sidearc-e2e-'));
+  const profile = mkdtempSync(join(tmpdir(), 'sweeping-monk-e2e-'));
   const errors = [];
   let pass = 0;
   let fail = 0;

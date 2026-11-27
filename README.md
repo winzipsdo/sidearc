@@ -1,10 +1,12 @@
-# Sidearc
+# 扫地僧 Sweeping Monk
 
-简体中文 | [English](README.en.md) | [主页和在线试用](https://winzipsdo.github.io/sidearc/)
+简体中文 | [English](README.en.md) | [主页和在线试用](https://winzipsdo.github.io/sweeping-monk/)
 
-[![最新版本](https://img.shields.io/github/v/release/winzipsdo/sidearc?label=%E7%89%88%E6%9C%AC&color=6b7cff)](https://github.com/winzipsdo/sidearc/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![无依赖](https://img.shields.io/badge/%E4%BE%9D%E8%B5%96-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
+[![最新版本](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?label=%E7%89%88%E6%9C%AC&color=6b7cff)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![无依赖](https://img.shields.io/badge/%E4%BE%9D%E8%B5%96-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
 
 **Arc 风格的 Chrome 侧边标签栏。** 标签页竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。纯原生 JS/CSS,不联网,数据只在本机。
+
+> 名字取自《天龙八部》里少林藏经阁扫地的老僧:不声不响把地扫干净,其实是最厉害的那位。侧边栏也一样,平时安安静静,久没去的标签页落了叶子,扫一扫就干净。原名 Sidearc,2026 年 11 月改名。
 
 ![垂直标签栏、收藏夹与固定标签](store/screenshot-1-tabs.jpg)
 
@@ -12,14 +14,14 @@
 
 Chrome 自己的标签栏跟着侧边栏走:在哪边拖,另一边都跟着动。
 
-![在侧边栏里拖动,顶部标签栏跟着变;在顶部拖动,侧边栏也跟着变](https://winzipsdo.github.io/sidearc/assets/readme/zh/sync.gif)
+![在侧边栏里拖动,顶部标签栏跟着变;在顶部拖动,侧边栏也跟着变](https://winzipsdo.github.io/sweeping-monk/assets/readme/zh/sync.gif)
 
 | 空间 = 顶部的一个分组 | 落叶:该关的会自己冒出来 |
 | --- | --- |
-| ![点开顶部折叠的分组或底部圆点,切换空间](https://winzipsdo.github.io/sidearc/assets/readme/zh/spaces.gif) | ![鼠标左右扫几下,把落叶扫干净](https://winzipsdo.github.io/sidearc/assets/readme/zh/leaves.gif) |
+| ![点开顶部折叠的分组或底部圆点,切换空间](https://winzipsdo.github.io/sweeping-monk/assets/readme/zh/spaces.gif) | ![鼠标左右扫几下,把落叶扫干净](https://winzipsdo.github.io/sweeping-monk/assets/readme/zh/leaves.gif) |
 | 工作、学习、生活各一套标签页和主题色,点顶部分组或底部圆点切换。 | 一天没进去,叶子就开始落;扫几下就干净,点开就吹走。 |
 
-**[→ 不用安装,在线试一下](https://winzipsdo.github.io/sidearc/#try)**,跑的就是插件本身的代码。
+**[→ 不用安装,在线试一下](https://winzipsdo.github.io/sweeping-monk/#try)**,跑的就是插件本身的代码。
 
 ## 功能
 
@@ -54,17 +56,19 @@ Chrome 自己的标签栏跟着侧边栏走:在哪边拖,另一边都跟着动�
 
 推荐从源码安装:插件零依赖、没有构建步骤,仓库里的文件就是插件本身。
 
-1. 克隆本仓库:`git clone https://github.com/winzipsdo/sidearc.git`
+1. 克隆本仓库:`git clone https://github.com/winzipsdo/sweeping-monk.git`
 2. 打开 `chrome://extensions`,开启右上角的「开发者模式」,点「加载已解压的扩展程序」,选择仓库所在的文件夹。
 3. 点工具栏上的插件图标,或按 `Alt+S`(Mac 上是 `⌥ Option+S`)打开/关闭侧边栏。
 
 需要 Chrome 116 或更高版本。
 
-**更新**:在仓库文件夹里 `git pull`,然后把侧边栏关掉再打开,用的就是最新版本。少数更新改到了后台的部分(`background.js` 或 `manifest.json`),这时到 `chrome://extensions` 点一下 Sidearc 的刷新按钮;拿不准时点一下也没坏处,空间、收藏和设置都还在。
+**从 Sidearc 升级**:仓库改名后,原来的 `git pull` 还能用(GitHub 会自动跳转),也可以运行 `git remote set-url origin https://github.com/winzipsdo/sweeping-monk.git` 换成新地址。**本地文件夹不要改名**:Chrome 按文件夹路径区分解压安装的插件,换了路径就会当成另一个插件,空间和收藏就看不到了。
+
+**更新**:在仓库文件夹里 `git pull`,然后把侧边栏关掉再打开,用的就是最新版本。少数更新改到了后台的部分(`background.js` 或 `manifest.json`),这时到 `chrome://extensions` 点一下扫地僧的刷新按钮;拿不准时点一下也没坏处,空间、收藏和设置都还在。
 
 **按自己的习惯改**:代码是原生 JS/CSS,不用编译。哪里用着不顺手,可以直接让 AI 编程助手(比如 Claude Code)在仓库里改,比如「行再紧凑一点」「新标签页开在列表最上面」;改完关掉再打开侧边栏就能看到效果。之后 `git pull` 和你的改动冲突时,同样可以让它帮你合并。
 
-**不用 git**:也可以从 [Releases](https://github.com/winzipsdo/sidearc/releases/latest) 下载 `sidearc-<版本号>.zip`,解压后同样用「加载已解压的扩展程序」装上。更新时把新版本解压到同一个文件夹覆盖旧文件(换了文件夹,Chrome 会当成另一个插件,之前的空间和收藏就看不到了),再到 `chrome://extensions` 点一下刷新。
+**不用 git**:也可以从 [Releases](https://github.com/winzipsdo/sweeping-monk/releases/latest) 下载 `sweeping-monk-<版本号>.zip`,解压后同样用「加载已解压的扩展程序」装上。更新时把新版本解压到同一个文件夹覆盖旧文件(换了文件夹,Chrome 会当成另一个插件,之前的空间和收藏就看不到了),再到 `chrome://extensions` 点一下刷新。
 
 ### 把侧边栏放到左边
 
@@ -92,7 +96,7 @@ Chrome 的侧边栏默认在右侧。想让它像 Arc 一样在左边,打开 `ch
 
 ## 权限与隐私
 
-Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间、收藏夹、固定标签、别名都保存在浏览器本地,卸载扩展即删除。完整说明见[隐私政策](PRIVACY.md)。
+扫地僧不收集、不上传任何数据,代码里没有网络请求。空间、收藏夹、固定标签、别名都保存在浏览器本地,卸载扩展即删除。完整说明见[隐私政策](PRIVACY.md)。
 
 | 权限 | 用来做什么 |
 | --- | --- |
@@ -109,7 +113,7 @@ Sidearc 不收集、不上传任何数据,代码里没有网络请求。空间�
 
 ## 已知限制
 
-- Sidearc 会接管顶部标签栏里空间分组的顺序。你自己建的、或者别的扩展(比如 Claude)建的标签页分组不受影响,整组排在空间分组的最后面,里面的标签页不会被拆出来;Chrome 原生固定的标签页也不受影响,始终在最左边。分组颜色只有 9 种,空间颜色会对应到最接近的一种。
+- 扫地僧会接管顶部标签栏里空间分组的顺序。你自己建的、或者别的扩展(比如 Claude)建的标签页分组不受影响,整组排在空间分组的最后面,里面的标签页不会被拆出来;Chrome 原生固定的标签页也不受影响,始终在最左边。分组颜色只有 9 种,空间颜色会对应到最接近的一种。
 - 新版 Chrome 可能会自动保存标签页分组并同步到其他设备,空间分组也会出现在那里。
 - 标签页的空间归属、父子关系、别名和固定绑定,在浏览器重启或扩展重新加载后会按网址和位置重新对上。这要靠 Chrome 启动时恢复上次的标签页(设置 → 启动时 →「继续浏览上次打开的网页」)。选了别的启动方式时,侧边栏顶部会提示「上次有 N 个标签页没有恢复」,点「恢复」就按原来的空间、层级、别名重新打开(先不加载,点到时才加载);提示关掉后,在左下角「最近关闭」里也能恢复,直到下次启动浏览器。
 - 「相同地址只开一份」要等新标签页的地址确定后才能判断,所以重复的标签页会先闪一下再关掉;只在同一个窗口、同一个空间内查重(收藏夹所有空间共用)。
@@ -201,7 +205,7 @@ npm run pack
 
 ## 主页(GitHub Pages)
 
-主页 <https://winzipsdo.github.io/sidearc/> 由 `gh-pages` 分支直接发布:分支根目录的 `index.html`、`style.css`、`main.js`、`assets/`(含介绍视频)就是主页本身,`store/`、`icons/` 是从 `main` 复制过去的截图和图标。生成主页和介绍视频的脚本也放在这个分支的 `source/` 下,详细步骤见该分支的 [source/README.md](https://github.com/winzipsdo/sidearc/blob/gh-pages/source/README.md)。
+主页 <https://winzipsdo.github.io/sweeping-monk/> 由 `gh-pages` 分支直接发布:分支根目录的 `index.html`、`style.css`、`main.js`、`assets/`(含介绍视频)就是主页本身,`store/`、`icons/` 是从 `main` 复制过去的截图和图标。生成主页和介绍视频的脚本也放在这个分支的 `source/` 下,详细步骤见该分支的 [source/README.md](https://github.com/winzipsdo/sweeping-monk/blob/gh-pages/source/README.md)。
 
 常见的维护场景:
 
@@ -212,12 +216,12 @@ npm run pack
 不建议在 `main` 的工作区里直接切换到 `gh-pages` 分支来改:两个分支的文件完全不同。可以另开一个工作目录:
 
 ```bash
-git worktree add ../sidearc-pages gh-pages
+git worktree add ../sweeping-monk-pages gh-pages
 ```
 
 ## 支持这个项目
 
-Sidearc 免费、开源。觉得好用的话,可以在 [GitHub Sponsors](https://github.com/sponsors/winzipsdo) 赞助一下;侧边栏右下角的设置菜单里也有「支持 Sidearc」。
+扫地僧免费、开源。觉得好用的话,可以在 [GitHub Sponsors](https://github.com/sponsors/winzipsdo) 赞助一下;侧边栏右下角的设置菜单里也有「支持扫地僧」。
 
 ## 许可证
 

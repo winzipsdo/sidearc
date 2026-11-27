@@ -1,4 +1,5 @@
 {
+  "appName": { "message": "Sweeping Monk" },
   "description": { "message": "Vertical tabs in Chrome's side panel, with child tabs and spaces, and your favorite pages pinned on top." },
   "toggleSidebar": { "message": "Toggle the tab sidebar" }
 }

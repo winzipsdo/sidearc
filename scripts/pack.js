@@ -1,4 +1,4 @@
-// 打包成上传 Chrome 应用商店用的 zip:npm run pack → dist/sidearc-<版本号>.zip
+// 打包成上传 Chrome 应用商店用的 zip:npm run pack → dist/sweeping-monk-<版本号>.zip
 // 只放扩展运行需要的文件;测试、上架资料、截图脚本都不进包。
 // macOS / Linux 用系统的 zip,Windows 用自带的 tar(-a 按扩展名生成 zip)
 
@@ -13,7 +13,7 @@ const FILES = ['manifest.json', 'background.js', 'sidepanel.html', 'sidepanel.cs
 const { version } = JSON.parse(readFileSync(join(ROOT, 'manifest.json'), 'utf8'));
 for (const f of FILES) if (!existsSync(join(ROOT, f))) throw new Error(`缺少 ${f}`);
 mkdirSync(join(ROOT, 'dist'), { recursive: true });
-const out = join('dist', `sidearc-${version}.zip`);
+const out = join('dist', `sweeping-monk-${version}.zip`);
 rmSync(join(ROOT, out), { force: true });
 
 if (process.platform === 'win32') execFileSync('tar', ['-a', '-cf', out, ...FILES], { cwd: ROOT, stdio: 'inherit' });

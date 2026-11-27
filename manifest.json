@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Sidearc",
+  "name": "__MSG_appName__",
   "description": "__MSG_description__",
   "default_locale": "en",
   "version": "1.10.0",

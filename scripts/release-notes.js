@@ -50,7 +50,7 @@ const out = sections.map((s) => `## ${s}\n\n${picked.get(s).join('\n')}`);
 if (!out.length) out.push('这个版本没有面向用户的变化。');
 out.push(`## 安装
 
-下载下方的 \`sidearc-${version}.zip\`,解压后在 \`chrome://extensions\` 打开「开发者模式」,点「加载已解压的扩展程序」选择解压出的文件夹。
+下载下方的 \`sweeping-monk-${version}.zip\`,解压后在 \`chrome://extensions\` 打开「开发者模式」,点「加载已解压的扩展程序」选择解压出的文件夹。
 
-完整记录见 [CHANGELOG.md](https://github.com/winzipsdo/sidearc/blob/main/CHANGELOG.md)。`);
+完整记录见 [CHANGELOG.md](https://github.com/winzipsdo/sweeping-monk/blob/main/CHANGELOG.md)。`);
 console.log(out.join('\n\n'));

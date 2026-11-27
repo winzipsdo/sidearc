@@ -60,4 +60,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           v=${{ steps.version.outputs.version }}
-          gh release create "v$v" "dist/sidearc-$v.zip" --title "Sidearc $v" --notes-file release-notes.md --target "$GITHUB_SHA"
+          gh release create "v$v" "dist/sweeping-monk-$v.zip" --title "Sweeping Monk $v" --notes-file release-notes.md --target "$GITHUB_SHA"

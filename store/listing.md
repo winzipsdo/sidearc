@@ -4,7 +4,7 @@
 
 ## 上传的文件
 
-- 扩展包:`dist/sidearc-<版本号>.zip`,用 `npm run pack` 生成(不在 git 里)
+- 扩展包:`dist/sweeping-monk-<版本号>.zip`,用 `npm run pack` 生成(不在 git 里)
 - 商店图标:`icons/128.png`
 - 截图(1280×800):`store/screenshot-1-tabs.jpg`、`screenshot-2-child-tabs.jpg`、`screenshot-3-spaces-dark.jpg`
 - 小型宣传图(440×280):`store/promo-small-440x280.jpg`
@@ -13,7 +13,7 @@
 
 ## 商品详情(Store listing)
 
-**名称**:Sidearc(取自 manifest)
+**名称**:扫地僧(取自 manifest,英文界面为 Sweeping Monk)
 
 **简短说明**(取自 `_locales/*/messages.json` 的 description,132 字符以内,商店按语言显示):
 
@@ -24,7 +24,7 @@
 **详细说明**:
 
 ```
-Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理它们。
+扫地僧把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理它们。
 
 【垂直标签栏】
 · 标签页纵向排列,标题不再被挤成一小截
@@ -64,11 +64,11 @@ Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理�
 
 【隐私】
 · 不收集任何数据,没有任何网络请求,所有内容只保存在本机
-· 开源:https://github.com/winzipsdo/sidearc
+· 开源:https://github.com/winzipsdo/sweeping-monk
 
-使用方法:点击工具栏上的 Sidearc 图标,或按 Alt+S 打开侧边栏。
+使用方法:点击工具栏上的扫地僧图标,或按 Alt+S 打开侧边栏。
 
-说明:顶部原生标签栏仍然保留,Sidearc 会让它的顺序和侧边栏保持一致,并把其他空间的标签页折叠起来。
+说明:顶部原生标签栏仍然保留,扫地僧会让它的顺序和侧边栏保持一致,并把其他空间的标签页折叠起来。
 ```
 
 **类别**:工具(Tools)或 工作流程与规划(Workflow & Planning)
@@ -103,7 +103,7 @@ Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理�
 
 **隐私权政策网址**:
 
-> https://github.com/winzipsdo/sidearc/blob/main/PRIVACY.md
+> https://github.com/winzipsdo/sweeping-monk/blob/main/PRIVACY.md
 
 ## 分发(Distribution)
 
@@ -119,4 +119,4 @@ Sidearc 把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理�
 npm run pack
 ```
 
-会生成 `dist/sidearc-<版本号>.zip`,只包含扩展运行需要的文件。完整的发版步骤见 README 的「发布新版本」。
+会生成 `dist/sweeping-monk-<版本号>.zip`,只包含扩展运行需要的文件。完整的发版步骤见 README 的「发布新版本」。

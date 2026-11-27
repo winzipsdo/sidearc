@@ -1,10 +1,12 @@
-# Sidearc
+# Sweeping Monk
 
-[简体中文](README.md) | English | [Website and live demo](https://winzipsdo.github.io/sidearc/en/)
+[简体中文](README.md) | English | [Website and live demo](https://winzipsdo.github.io/sweeping-monk/en/)
 
-[![Latest release](https://img.shields.io/github/v/release/winzipsdo/sidearc?color=6b7cff)](https://github.com/winzipsdo/sidearc/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?color=6b7cff)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
 
 **Arc-style vertical tabs for Chrome.** Tabs stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.
+
+> The name comes from the old monk who sweeps the floor of the Shaolin library in Jin Yong's novel *Demi-Gods and Semi-Devils*: quiet and unassuming, and secretly the greatest master of all. The sidebar works the same way: it stays out of your way, and tabs you've left alone gather fallen leaves for you to sweep off. Chinese name: 扫地僧. Formerly Sidearc, renamed in November 2026.
 
 ![Vertical tabs, favorites and pinned tabs](store/en/screenshot-1-tabs.jpg)
 
@@ -12,14 +14,14 @@
 
 Chrome's tab strip follows the sidebar: drag on either side and the other one moves with it.
 
-![Dragging in the sidebar moves the tab strip, and dragging in the strip moves the sidebar](https://winzipsdo.github.io/sidearc/assets/readme/en/sync.gif)
+![Dragging in the sidebar moves the tab strip, and dragging in the strip moves the sidebar](https://winzipsdo.github.io/sweeping-monk/assets/readme/en/sync.gif)
 
 | Spaces are tab groups up top | Fallen leaves flag what to close |
 | --- | --- |
-| ![Open a collapsed group up top, or click a dot, to switch spaces](https://winzipsdo.github.io/sidearc/assets/readme/en/spaces.gif) | ![Sweep the mouse back and forth to clear the leaves](https://winzipsdo.github.io/sidearc/assets/readme/en/leaves.gif) |
+| ![Open a collapsed group up top, or click a dot, to switch spaces](https://winzipsdo.github.io/sweeping-monk/assets/readme/en/spaces.gif) | ![Sweep the mouse back and forth to clear the leaves](https://winzipsdo.github.io/sweeping-monk/assets/readme/en/leaves.gif) |
 | Work, study, life: each gets its own tabs and color. Switch from the tab strip or the dots. | Leave a tab for a day and leaves start to fall. Sweep them off, or open it and they blow away. |
 
-**[→ Try it live, no install](https://winzipsdo.github.io/sidearc/en/#try)**: the demo runs the extension's actual code.
+**[→ Try it live, no install](https://winzipsdo.github.io/sweeping-monk/en/#try)**: the demo runs the extension's actual code.
 
 ## Features
 
@@ -52,19 +54,21 @@ The full behavior of every feature is in **[Features in detail](docs/features.en
 
 ## Install
 
-Installing from source is the recommended way: Sidearc has zero dependencies and no build step, so the repository is the extension.
+Installing from source is the recommended way: Sweeping Monk has zero dependencies and no build step, so the repository is the extension.
 
-1. Clone this repository: `git clone https://github.com/winzipsdo/sidearc.git`
+1. Clone this repository: `git clone https://github.com/winzipsdo/sweeping-monk.git`
 2. Open `chrome://extensions`, turn on Developer mode (top right), click "Load unpacked" and choose the repository folder.
 3. Click the toolbar icon, or press `Alt+S` (`⌥ Option+S` on Mac), to toggle the sidebar.
 
 Requires Chrome 116 or later.
 
-**Updating**: run `git pull` in the repository folder, then close and reopen the sidebar to get the latest version. The few updates that touch the background part (`background.js` or `manifest.json`) also need the reload button on Sidearc's card in `chrome://extensions`; if unsure, reloading is harmless and keeps your spaces, favorites and settings.
+**Coming from Sidearc**: after the repository rename, `git pull` keeps working (GitHub redirects the old URL); you can also switch to the new one with `git remote set-url origin https://github.com/winzipsdo/sweeping-monk.git`. **Don't rename your local folder**: Chrome tells unpacked extensions apart by their folder path, so a new path counts as a different extension and your spaces and favorites won't show up.
+
+**Updating**: run `git pull` in the repository folder, then close and reopen the sidebar to get the latest version. The few updates that touch the background part (`background.js` or `manifest.json`) also need the reload button on Sweeping Monk's card in `chrome://extensions`; if unsure, reloading is harmless and keeps your spaces, favorites and settings.
 
 **Make it yours**: the code is plain JS/CSS with nothing to compile. If something doesn't fit how you work, ask an AI coding assistant (such as Claude Code) to change it in the repository, say "make the rows more compact" or "open new tabs at the top of the list", then close and reopen the sidebar to see it. If a later `git pull` conflicts with your changes, it can merge them for you too.
 
-**Without git**: download `sidearc-<version>.zip` from [Releases](https://github.com/winzipsdo/sidearc/releases/latest), unzip it and load it the same way. To update, unzip the new version over the same folder (Chrome treats a different folder as a different extension, so your spaces and favorites wouldn't show up), then click reload in `chrome://extensions`.
+**Without git**: download `sweeping-monk-<version>.zip` from [Releases](https://github.com/winzipsdo/sweeping-monk/releases/latest), unzip it and load it the same way. To update, unzip the new version over the same folder (Chrome treats a different folder as a different extension, so your spaces and favorites wouldn't show up), then click reload in `chrome://extensions`.
 
 **Sidebar on the left**: Chrome shows side panels on the right by default. To put it on the left like Arc, open `chrome://settings/appearance` and set the side panel position to left.
 
@@ -89,7 +93,7 @@ The sidebar shortcut can be changed at `chrome://extensions/shortcuts`.
 
 ## Permissions and privacy
 
-Sidearc collects and uploads nothing; the code makes no network requests. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall. See the [privacy policy](PRIVACY.md).
+Sweeping Monk collects and uploads nothing; the code makes no network requests. Spaces, favorites, pinned tabs and aliases are stored locally and removed when you uninstall. See the [privacy policy](PRIVACY.md).
 
 | Permission | Used for |
 | --- | --- |
@@ -106,7 +110,7 @@ Sidearc collects and uploads nothing; the code makes no network requests. Spaces
 
 ## Known limitations
 
-- Sidearc manages the order of its space groups in Chrome's tab strip. Tab groups created by you or by other extensions (such as Claude) are left alone — they're kept intact and placed after the space groups. Chrome's natively pinned tabs stay on the far left. Tab groups support only 9 colors, so each space uses the closest one.
+- Sweeping Monk manages the order of its space groups in Chrome's tab strip. Tab groups created by you or by other extensions (such as Claude) are left alone — they're kept intact and placed after the space groups. Chrome's natively pinned tabs stay on the far left. Tab groups support only 9 colors, so each space uses the closest one.
 - Spaces, child tabs, aliases and pins are matched back to tabs by URL and position after a restart, which relies on Chrome restoring your previous tabs on startup ("Continue where you left off"). With another startup setting, the sidebar offers to restore last time's tabs at the top (and under Recently closed until the next restart), back in their spaces with child tabs and aliases, unloaded until opened.
 - "No duplicate tabs" can only decide once the new tab's address is known, so a duplicate may flash briefly before closing.
 - Newer Chrome versions may save tab groups automatically and sync them to your other devices, so space groups can show up there too.
@@ -133,15 +137,15 @@ See [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## Releasing
 
-Releases are automated: when `version` in `manifest.json` changes on `main`, a GitHub Actions workflow runs the tests, builds the zip, tags `v<version>` and publishes a GitHub Release with notes picked from `CHANGELOG.md`. Sidearc isn't on the Chrome Web Store yet while it's still being polished; listing materials are ready in `store/listing.md`. Preview the notes locally with `npm run release-notes`.
+Releases are automated: when `version` in `manifest.json` changes on `main`, a GitHub Actions workflow runs the tests, builds the zip, tags `v<version>` and publishes a GitHub Release with notes picked from `CHANGELOG.md`. Sweeping Monk isn't on the Chrome Web Store yet while it's still being polished; listing materials are ready in `store/listing.md`. Preview the notes locally with `npm run release-notes`.
 
 ## Website
 
-<https://winzipsdo.github.io/sidearc/> is published from the `gh-pages` branch, which also keeps the site and intro-video sources under `source/` (see its `source/README.md`).
+<https://winzipsdo.github.io/sweeping-monk/> is published from the `gh-pages` branch, which also keeps the site and intro-video sources under `source/` (see its `source/README.md`).
 
 ## Support
 
-Sidearc is free and open source. If it's useful to you, consider [sponsoring on GitHub](https://github.com/sponsors/winzipsdo) — also reachable from "Support Sidearc" in the sidebar's settings menu.
+Sweeping Monk is free and open source. If it's useful to you, consider [sponsoring on GitHub](https://github.com/sponsors/winzipsdo) — also reachable from "Support Sweeping Monk" in the sidebar's settings menu.
 
 ## License
 
