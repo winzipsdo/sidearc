@@ -16,6 +16,7 @@ import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pinPicked, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
 import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js';
+import { applyFont } from './font.js';
 import { applyTheme } from './theme.js';
 import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
@@ -362,6 +363,7 @@ function bindBrowser() {
       refreshLeaves();
     }
     if (area === 'local' && changes.theme) applyTheme(changes.theme.newValue);
+    if (area === 'local' && changes.font) applyFont(changes.font.newValue);
     if (area === 'local' && changes.lang) {
       setLangPref(changes.lang.newValue);
       applyStaticText();

@@ -10,8 +10,9 @@ import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, 
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
+import { applyFont, downloadFont, fontPref, FONTS, hasFont } from './font.js';
 import { applyTheme, THEMES, themePref } from './theme.js';
-import { copyText, showMenu } from './ui.js';
+import { copyText, showMenu, toast } from './ui.js';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {
@@ -330,9 +331,53 @@ function themePicker() {
   return h('div', { class: 'theme-pick', title: t('themeTip') }, icon('contrast'), h('span', { class: 'label' }, t('appearance')), opts);
 }
 
+// 字体:默认、今楷(仓耳今楷,和主页一样)。今楷要下载(见 font.js):第一次点的时候下,这一项上显示进度;
+// 下载中关掉菜单也照样下完、换上。菜单不关
+let fontBusy = false;
+let fontProgress = () => {};
+function fontPicker() {
+  const opts = h('span', { class: 'opts' });
+  const LABEL = { default: t('fontDefault'), kai: t('fontKai') };
+  const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', el.dataset.v === v));
+  const kai = () => opts.querySelector('[data-v="kai"]');
+  const showProgress = (ratio) => {
+    kai().classList.toggle('busy', fontBusy);
+    kai().textContent = fontBusy ? (ratio == null ? '…' : `${Math.floor(ratio * 100)}%`) : LABEL.kai;
+  };
+  const choose = async (v) => {
+    if (fontBusy) return;
+    if (v === 'kai' && !(await hasFont())) {
+      fontBusy = true;
+      fontProgress(null);
+      toast(t('fontDownloading'));
+      try {
+        await downloadFont((ratio) => fontProgress(ratio));
+      } catch (e) {
+        console.warn(e);
+        fontBusy = false;
+        fontProgress(null);
+        return toast(t('fontFailed'));
+      }
+      fontBusy = false;
+      fontProgress(null);
+      toast(t('fontApplied'));
+    }
+    // 先在这个窗口换上,别的窗口收到存储的变化后跟着换(见 events.js)
+    await applyFont(v);
+    chrome.storage.local.set({ font: v });
+    paint(v);
+  };
+  opts.append(...FONTS.map((v) => h('i', { data: { v }, onclick: () => choose(v) }, LABEL[v])));
+  // 菜单重新打开时这一行是新画的:进度报给现在这一行
+  fontProgress = (ratio) => opts.isConnected && showProgress(ratio);
+  paint(fontPref);
+  if (fontBusy) showProgress(null);
+  return h('div', { class: 'font-pick', title: t('fontTip') }, icon('type'), h('span', { class: 'label' }, t('font')), opts);
+}
+
 const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
 
-// 右下角的设置按钮:界面语言、外观(浅色 / 深色)、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言、外观(浅色 / 深色)、字体、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -344,7 +389,7 @@ export function settingsMenu(e) {
     pick('en', LANGS.en),
     '-',
     // 几个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
-    { el: h('div', { class: 'picks' }, themePicker(), trailPicker(), leafPicker()) },
+    { el: h('div', { class: 'picks' }, themePicker(), fontPicker(), trailPicker(), leafPicker()) },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);
