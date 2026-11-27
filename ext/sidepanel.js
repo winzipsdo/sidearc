@@ -6,11 +6,11 @@
 //   folders.js 固定标签里的文件夹          dom.js     生成页面元素的小工具
 //   logic.js   纯逻辑(有测试)              protocol.js 和 background.js 之间的约定
 
-import { bindEvents } from './src/events.js?v=8d31379d';
-import { applyStaticText, setLangPref } from './src/i18n.js?v=8d31379d';
-import { render } from './src/render.js?v=8d31379d';
-import { initRestore } from './src/restore.js?v=8d31379d';
-import { applySession, normalize, refreshTabs, save, setLeafHours, setState, setTrailCount, setWindowId } from './src/store.js?v=8d31379d';
+import { bindEvents } from './src/events.js?v=a65b4ebd';
+import { applyStaticText, setLangPref } from './src/i18n.js?v=a65b4ebd';
+import { render } from './src/render.js?v=a65b4ebd';
+import { initRestore } from './src/restore.js?v=a65b4ebd';
+import { applySession, normalize, refreshTabs, save, setLeafHours, setState, setTrailCount, setWindowId } from './src/store.js?v=a65b4ebd';
 
 async function init() {
   // 启动要读的几样互不依赖,一起读

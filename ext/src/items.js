@@ -1,9 +1,9 @@
 // 对收藏夹和固定标签的操作。两者是同一种「项」({ id, title, url, alias? }),只是放的位置不同。
 
-import { t } from './i18n.js?v=8d31379d';
-import { addressOf, isAway, isFolder, pinnedItems, toUrl } from './logic.js?v=8d31379d';
-import { MSG } from './protocol.js?v=8d31379d';
-import { render, schedule } from './render.js?v=8d31379d';
+import { t } from './i18n.js?v=a65b4ebd';
+import { addressOf, isAway, isFolder, pinnedItems, toUrl } from './logic.js?v=a65b4ebd';
+import { MSG } from './protocol.js?v=a65b4ebd';
+import { render, schedule } from './render.js?v=a65b4ebd';
 import {
   activeSpace,
   bind,
@@ -24,9 +24,9 @@ import {
   uid,
   unbind,
   windowId,
-} from './store.js?v=8d31379d';
-import { createTab, focusTab, returnBeforeClose } from './tabs.js?v=8d31379d';
-import { ask, pushUndo, toast } from './ui.js?v=8d31379d';
+} from './store.js?v=a65b4ebd';
+import { createTab, focusTab, returnBeforeClose } from './tabs.js?v=a65b4ebd';
+import { ask, pushUndo, toast } from './ui.js?v=a65b4ebd';
 
 // 复制一个收藏/固定标签:副本放在它正下方(在文件夹里就还在这个文件夹里)。
 // 原来开着的,副本也用 Chrome 的复制打开(连前进后退记录)并绑上;没开的副本也先不开。

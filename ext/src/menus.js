@@ -1,17 +1,16 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=8d31379d';
-import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=8d31379d';
-import { canScatter, scatterLeaves } from './leaves.js?v=8d31379d';
-import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=8d31379d';
-import { render } from './render.js?v=8d31379d';
-import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=8d31379d';
-import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=8d31379d';
-import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=8d31379d';
-import { $, faviconFor, h, icon } from './dom.js?v=8d31379d';
-import { formatDuration, LANGS, langPref, t } from './i18n.js?v=8d31379d';
-import { lastSessionCount, restoreLastSession } from './restore.js?v=8d31379d';
-import { copyText, showMenu } from './ui.js?v=8d31379d';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=a65b4ebd';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=a65b4ebd';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=a65b4ebd';
+import { render } from './render.js?v=a65b4ebd';
+import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=a65b4ebd';
+import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=a65b4ebd';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=a65b4ebd';
+import { $, faviconFor, h, icon } from './dom.js?v=a65b4ebd';
+import { formatDuration, LANGS, langPref, t } from './i18n.js?v=a65b4ebd';
+import { lastSessionCount, restoreLastSession } from './restore.js?v=a65b4ebd';
+import { copyText, showMenu } from './ui.js?v=a65b4ebd';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {
@@ -28,13 +27,6 @@ function memoryItems(tab) {
     },
     { icon: keep ? 'unlock' : 'lock', label: keep ? t('stopKeepAwake') : t('keepAwake'), run: () => toggleAutoDiscard(tab) },
   ];
-}
-
-// 撒落叶(只有下面列表里的标签页落叶,收藏和固定标签没有):关了落叶时不显示;都落满了置灰
-function scatterItem(list) {
-  if (!leafHours) return null;
-  const full = !list.some(canScatter);
-  return { icon: 'leaf', label: t('scatterLeaves'), disabled: full, title: full ? t('leavesFullTip') : null, run: () => scatterLeaves(list) };
 }
 
 // 硬性重新加载:不走缓存,整页重新从服务器取,和 Ctrl/⌘+Shift+R 一样(菜单里不标快捷键,免得菜单变宽)。没开着的项不显示
@@ -97,7 +89,6 @@ function selectionMenu(e, list) {
     { header: t('nTabs', { n }) },
     hardReloadItem(list),
     { icon: 'sleep', label: t('sleep'), disabled: list.every(isUnloaded), run: () => discardTabs(list, { withActive: true }) },
-    scatterItem(list),
     markdownItem(list.map((x) => ({ title: x.title, url: x.url || x.pendingUrl }))),
     '-',
     splitItem(list),
@@ -139,7 +130,6 @@ export function tabMenu(e, tab) {
     // 只在正在发声或已经静音时显示,和行上的喇叭按钮一致
     (tab.audible || tab.mutedInfo?.muted) && { icon: tab.mutedInfo?.muted ? 'sound' : 'muted', label: tab.mutedInfo?.muted ? t('unmute') : t('mute'), run: () => chrome.tabs.update(tab.id, { muted: !tab.mutedInfo?.muted }) },
     ...memoryItems(tab),
-    scatterItem([tab]),
     // 移动:和当前标签页拆分、反转视图、取消拆分视图、放开子标签页,以及移到别的空间(把自己移出为顶级标签页用行上的按钮)
     '-',
     withCurrentItem(tab),

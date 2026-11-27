@@ -3,11 +3,12 @@
 // 叶子只铺在行的后半段,不挡图标和标题开头;画在每行一块 canvas 上,不接鼠标,点击照常落到行上。
 // 鼠标划过把叶子拨开,停下后落回原处;左右快速来回扫几下就扫干净,从现在重新计时(不打开它);
 // 点进去(成了当前标签页)叶子被风吹走;关掉时叶子跟着飘走。打开侧边栏时,已经落着的叶子也从上面飘下来。
+// 还藏了一个彩蛋,界面上不提示(见 bindShake)。
 // 列表会整体重画,canvas 和每片叶子的状态都记在这里,重画后挪到新的行上,不会重新落一遍。
 // 只有在动(飘落、被拨开、飞走)的时候才逐帧画,静止时不占资源
 
-import { LEAF_MAX, leafCount } from './logic.js?v=8d31379d';
-import { leafHours, setTabScattered, setTabSeen, tabReplacedHooks, tabScattered, tabSeen, tabs } from './store.js?v=8d31379d';
+import { LEAF_MAX, leafCount } from './logic.js?v=a65b4ebd';
+import { leafHours, setTabScattered, setTabSeen, tabReplacedHooks, tabScattered, tabSeen, tabs } from './store.js?v=a65b4ebd';
 
 const ROW_H = 36;
 const GONE_MS = 600; // 飞走的叶子多久淡完
@@ -311,7 +312,7 @@ function drawLeaf(ctx, p, alpha) {
   ctx.restore();
 }
 
-// 这个标签页现在落了几片:按时间该落的(当前标签页不落)和右键撒到的,取多的那个,不相加。
+// 这个标签页现在落了几片:按时间该落的(当前标签页不落)和摇下来的(见 bindShake),取多的那个,不相加。
 // 比如撒到了 4 片,按时间才该落第 1 片时还是 4 片,到该落第 5 片时才多出第 5 片
 export function leavesOn(tab, now = Date.now()) {
   if (!leafHours) return 0;
@@ -319,14 +320,12 @@ export function leavesOn(tab, now = Date.now()) {
   return Math.min(LEAF_MAX, Math.max(byTime, tabScattered.get(tab.id) ?? 0));
 }
 // 能不能再撒:开着落叶、还没落满
-export const canScatter = (tab) => leafHours > 0 && leavesOn(tab) < LEAF_MAX;
+const canScatter = (tab) => leafHours > 0 && leavesOn(tab) < LEAF_MAX;
 
-// 右键「撒落叶」:在现在有几片的基础上随机再落 1 到 6 片,落满为止,新的从上面飘下来。记下撒到了几片。
+// 撒落叶(彩蛋,长按一行触发,见 bindShake):在现在有几片的基础上随机再落 1 到 6 片,落满为止,新的从上面飘下来。记下撒到了几片。
 // 当前标签页也能撒:一直留着,离开后按时间落的追上来之前不会再多,再点回来时才被吹走
-export async function scatterLeaves(list) {
-  for (const tab of list.filter(canScatter)) {
-    await setTabScattered(tab.id, Math.min(LEAF_MAX, leavesOn(tab) + 1 + Math.floor(Math.random() * 6)));
-  }
+async function scatterLeaves(tab) {
+  await setTabScattered(tab.id, Math.min(LEAF_MAX, leavesOn(tab) + 1 + Math.floor(Math.random() * 6)));
   refreshLeaves();
 }
 
@@ -350,4 +349,85 @@ export function bindLeaves(list) {
   });
   // 侧边栏宽度变了(拖宽拖窄、出现滚动条):画布跟着重新量,不然叶子会被拉扁
   new ResizeObserver(() => refreshLeaves()).observe(list);
+  bindShake(list);
+}
+
+// 彩蛋:在下面列表里某个标签页那一行上按住不动一会儿,像摇了一下树,撒下几片落叶(见 scatterLeaves),只撒按住的这一个,
+// 多选着别的也不管。界面上不提示,留给人自己发现。
+// 只认左键(或第一根手指)、没按着修饰键、开着落叶、还没落满的;按在行上的按钮上不算。
+// 撒下来以后这次松手什么都不做:不切过去、不改多选,按住时再动也不会拖起来。没到时间就松手、动了、拖起来了、
+// 弹出右键菜单、滚动、侧边栏失去焦点,都作罢,普通的点击和拖动照旧
+const HOLD_MS = 600;
+const HOLD_SLOP = 5; // 按住时手抖一点不算动
+function bindShake(list) {
+  let hold = null; // 正在按住:{ x, y, timer }
+  let shook = false; // 这次按住已经撒过了:松手前的点击和拖拽都吞掉
+  const cancel = () => {
+    if (hold) clearTimeout(hold.timer);
+    hold = null;
+  };
+  // 松手可能没送到这里(在侧边栏外面松手等):下一次在侧边栏里任何地方按下时一定放开,不然别处的点击会被吞掉
+  addEventListener('pointerdown', () => (shook = false), true);
+  list.addEventListener('pointerdown', (e) => {
+    cancel();
+    const row = e.target.closest('.row[data-kind="tab"]');
+    if (!row || !e.isPrimary || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.target.closest('[data-act]')) return;
+    const id = +row.dataset.id;
+    const tabNow = () => tabs.find((x) => x.id === id);
+    if (!tabNow() || !canScatter(tabNow())) return;
+    hold = {
+      x: e.clientX,
+      y: e.clientY,
+      timer: setTimeout(() => {
+        hold = null;
+        // 按住的这段时间里可能落满了、关了落叶,或者标签页没了
+        const tab = tabNow();
+        if (!tab || !canScatter(tab)) return;
+        shook = true;
+        shake(row);
+        scatterLeaves(tab);
+      }, HOLD_MS),
+    };
+  });
+  addEventListener('pointermove', (e) => hold && Math.hypot(e.clientX - hold.x, e.clientY - hold.y) > HOLD_SLOP && cancel());
+  // 松手:这次的 click 紧跟在 pointerup 后面派发,派发完再放开
+  const release = () => (cancel(), shook && setTimeout(() => (shook = false)));
+  addEventListener('pointerup', release);
+  addEventListener('pointercancel', release);
+  addEventListener('contextmenu', cancel, true);
+  addEventListener('wheel', cancel, { passive: true });
+  document.addEventListener('scroll', cancel, { capture: true, passive: true });
+  addEventListener('blur', () => (cancel(), (shook = false)));
+  // 在捕获阶段先拦下来:不会切到这个标签页、不会改多选,拖拽那边(drag.js)也收不到
+  addEventListener(
+    'click',
+    (e) => {
+      if (!shook) return;
+      shook = false;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    },
+    true
+  );
+  addEventListener(
+    'dragstart',
+    (e) => {
+      cancel();
+      if (!shook) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    },
+    true
+  );
+}
+
+// 撒下来的那一下:整行轻轻往下一沉再回来,像树枝被摇了一下(样式见 sidepanel.css 的 .row.shaken)
+function shake(row) {
+  if (reduceMotion.matches) return;
+  row.classList.remove('shaken');
+  void row.offsetWidth;
+  row.classList.add('shaken');
+  // 行里别的东西(比如图标)的动画结束也会冒泡上来,只认这一行自己的
+  const done = (e) => e.target === row && (row.classList.remove('shaken'), row.removeEventListener('animationend', done));
+  row.addEventListener('animationend', done);
 }

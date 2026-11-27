@@ -1,8 +1,10 @@
-// 主页的脚本:切换中英文、在线试用和任务清单、滚动淡入、视频的播放按钮、复制命令。
+// 主页的脚本:语言和深浅色、在线试用和任务清单、功能片段滚到时才播放、复制命令、开头横线上的落叶。
 
-import { mountDemo } from './demo/demo.js?v=6e25ec41';
+import { mountDemo } from './demo/demo.js?v=93657f93';
 
 const root = document.documentElement;
+const zh = root.dataset.lang === 'zh';
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const store = {
   get: (k) => {
     try {
@@ -18,22 +20,22 @@ const store = {
   },
 };
 
-// ---------- 语言:中文页和英文页是两个网址(source/pages.js 生成),右上角的按钮是到另一个的链接 ----------
-// 记住选择:下次直接打开另一种语言(页面开头的脚本会跳过去)
+// ---------- 语言:中文页和英文页是两个网址(source/pages.js 生成),右上角的链接指向另一个 ----------
+// 记住选择:下次直接打开那种语言(页面开头的脚本会跳过去)
 
-document.getElementById('lang').addEventListener('click', () => store.set('lang', root.dataset.lang === 'zh' ? 'en' : 'zh'));
+document.getElementById('lang').addEventListener('click', () => store.set('lang', zh ? 'en' : 'zh'));
 
-// 第一次来、浏览器语言和这个页面不一样:顶部提示一句有另一种语言的版本。只提示不跳转,
+// 第一次来、浏览器语言和这个页面不一样:顶上提示一句有另一种语言的版本。只提示不跳转,
 // 搜索引擎的爬虫(浏览器语言多半是英文)照样能收录中文页
 const browserLang = /^zh\b/i.test(navigator.language) ? 'zh' : 'en';
 if (browserLang !== root.dataset.lang && !store.get('lang')) {
-  const zh = browserLang === 'zh';
   const bar = document.createElement('div');
   bar.className = 'lang-hint';
-  bar.lang = zh ? 'zh-CN' : 'en';
-  bar.innerHTML = zh
-    ? '这个页面有中文版。<a href="../">查看中文版 ›</a><button type="button" aria-label="关闭">×</button>'
-    : 'This page is also available in English. <a href="en/">View in English ›</a><button type="button" aria-label="Close">×</button>';
+  bar.lang = browserLang === 'zh' ? 'zh-CN' : 'en';
+  bar.innerHTML =
+    browserLang === 'zh'
+      ? '<span>这个页面有中文版。<a href="../">看中文版</a></span><button type="button" aria-label="关闭">×</button>'
+      : '<span>This page is also available in English. <a href="en/">View in English</a></span><button type="button" aria-label="Close">×</button>';
   bar.querySelector('a').addEventListener('click', () => store.set('lang', browserLang));
   bar.querySelector('button').addEventListener('click', () => {
     store.set('lang', root.dataset.lang);
@@ -41,17 +43,6 @@ if (browserLang !== root.dataset.lang && !store.get('lang')) {
   });
   document.body.prepend(bar);
 }
-
-// ---------- 隐私:「每项权限用来做什么」展开 / 收起权限列表(没有脚本时列表一直显示) ----------
-
-const permsToggle = document.getElementById('perms-toggle');
-const perms = document.getElementById('perms');
-const showPerms = (open) => {
-  perms.hidden = !open;
-  permsToggle.setAttribute('aria-expanded', String(open));
-};
-showPerms(false);
-permsToggle.addEventListener('click', () => showPerms(perms.hidden));
 
 // ---------- 浅色 / 深色:默认跟随系统,点右上角的按钮在两者之间切换,记住选择(页面开头的脚本会先套上) ----------
 
@@ -61,7 +52,6 @@ const themeNow = () => root.dataset.theme || (dark.matches ? 'dark' : 'light');
 function showTheme() {
   root.dataset.themeNow = themeNow();
   const toDark = themeNow() === 'light';
-  const zh = root.dataset.lang === 'zh';
   themeBtn.setAttribute('aria-label', zh ? (toDark ? '切换到深色' : '切换到浅色') : toDark ? 'Switch to dark' : 'Switch to light');
   themeBtn.title = themeBtn.getAttribute('aria-label');
 }
@@ -80,12 +70,6 @@ themeBtn.addEventListener('click', () => {
 dark.addEventListener('change', showTheme);
 showTheme();
 
-// 当前版本号(由 source/build.js 从 main 的 manifest.json 写进来)
-fetch(new URL('ext/version.json', import.meta.url))
-  .then((r) => r.json())
-  .then(({ version }) => (document.getElementById('ver').textContent = 'v' + version))
-  .catch(() => {});
-
 // ---------- 在线试用的任务清单 ----------
 
 // on:试用里发生了哪些操作就算完成(见 demo/demo.js 的 onAction)
@@ -93,72 +77,69 @@ const TASKS = [
   {
     id: 'drag',
     on: ['sidebarDrag', 'stripDrag'],
-    zh: ['拖动一个标签页', '在侧边栏里上下拖一行,或者拖顶部标签栏里的标签页:另一边跟着变。'],
+    zh: ['拖动一个标签页', '在侧边栏里上下拖一行，或者拖顶部标签栏里的标签页：另一边跟着变。'],
     en: ['Drag a tab', 'Drag a row in the sidebar, or a tab in the strip up top: the other side follows.'],
   },
   {
     id: 'space',
     on: ['space', 'groupExpand'],
-    zh: ['切换空间', '点顶部标签栏里折叠起来的「工作」分组,或者侧边栏底部的圆点。'],
-    en: ['Switch spaces', 'Open the collapsed “Work” group in the tab strip, or click a dot at the bottom of the sidebar.'],
+    zh: ['切换空间', '点顶部标签栏里折叠起来的「工作」分组，或者侧边栏底部的圆点。'],
+    en: ['Switch spaces', 'Open the collapsed "Work" group in the tab strip, or click a dot at the bottom of the sidebar.'],
   },
   {
     id: 'child',
     on: ['childTab'],
-    zh: ['打开一个子标签', '在网页里点带 ↗ 的链接,新标签页会挂在当前这一页下面。'],
+    zh: ['打开一个子标签', '在网页里点带 ↗ 的链接，新标签页会挂在当前这一页下面。'],
     en: ['Open a child tab', 'Click a link marked ↗ in the page: the new tab lands under the current one.'],
   },
   {
     id: 'pin',
     on: ['pinBack'],
-    zh: ['让固定标签回家', '点固定的「规划」,在网页里点「本周笔记」,再点这一行右边的 ↩。'],
-    en: ['Send a pinned tab home', 'Click the pinned “Plan”, follow “Weekly notes” in the page, then click ↩ on its row.'],
+    zh: ['让固定标签回家', '点固定的「规划」，在网页里点「本周笔记」，再点这一行右边的 ↩。'],
+    en: ['Send a pinned tab home', 'Click the pinned "Plan", follow "Weekly notes" in the page, then click ↩ on its row.'],
   },
   {
     id: 'sleep',
     on: ['sleep'],
-    zh: ['让标签页休眠', '鼠标移到一个标签页上,点关闭按钮左边的月亮。'],
+    zh: ['让标签页休眠', '鼠标移到一个标签页上，点关闭按钮左边的月亮。'],
     en: ['Put a tab to sleep', 'Hover a tab and click the moon left of its close button.'],
   },
   {
     id: 'dedupe',
     on: ['dedupe'],
-    zh: ['再开一个已经开着的网站', '点顶部的 + 新建标签页,再点 Gmail 或 YouTube:不会多开一份,而是直接切过去。'],
-    en: ['Open a site that’s already open', 'Click + in the tab strip, then pick Gmail or YouTube: instead of a second copy, you jump to the open one.'],
+    zh: ['再开一个已经开着的网站', '点顶部的 + 新建标签页，再点 Gmail 或 YouTube：不会多开一份，而是直接切过去。'],
+    en: ['Open a site that is already open', 'Click + in the tab strip, then pick Gmail or YouTube: instead of a second copy, you jump to the open one.'],
   },
   {
     id: 'undo',
     on: ['undo'],
-    zh: ['关掉,再找回来', '关掉一个标签页,点提示条上的「撤销」,或者在侧边栏里按 Ctrl/⌘+Z。'],
+    zh: ['关掉，再找回来', '关掉一个标签页，点提示条上的「撤销」，或者在侧边栏里按 Ctrl/⌘+Z。'],
     en: ['Close a tab, then get it back', 'Close a tab, then click Undo on the toast, or press Ctrl/⌘+Z in the sidebar.'],
   },
   {
     id: 'leaves',
     on: ['leaves'],
-    zh: ['扫掉落叶', 'Hacker News 好几天没看了,上面落了叶子。鼠标在那一行上左右快速来回扫几下。'],
-    en: ['Sweep away the leaves', 'Hacker News hasn’t been visited in days and has gathered leaves. Sweep the mouse quickly back and forth over its row.'],
+    zh: ['扫掉落叶', 'Hacker News 好几天没看了，上面落了叶子。鼠标在那一行上左右快速来回扫几下。'],
+    en: ['Sweep away the leaves', 'Hacker News has not been visited in days and has gathered leaves. Sweep the mouse quickly back and forth over its row.'],
   },
   {
     id: 'keys',
     on: ['keys'],
-    zh: ['用键盘选', '点一下侧边栏,按 ↑ ↓ 移动选中框,回车打开。'],
+    zh: ['用键盘选', '点一下侧边栏，按 ↑ ↓ 移动选中框，回车打开。'],
     en: ['Use the keyboard', 'Click the sidebar, move the cursor with ↑ ↓, press Enter to open.'],
   },
 ];
 const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5"/></svg>';
 const list = document.getElementById('q-list');
-list.innerHTML = TASKS.map(
-  (t) =>
-    `<li class="q-item" data-id="${t.id}"><span class="q-check">${CHECK}</span>` +
-    `<b><span data-l="zh">${t.zh[0]}</span><span data-l="en">${t.en[0]}</span></b>` +
-    `<p><span data-l="zh">${t.zh[1]}</span><span data-l="en">${t.en[1]}</span></p></li>`
-).join('');
+list.innerHTML = TASKS.map((t) => {
+  const [title, hint] = zh ? t.zh : t.en;
+  return `<li class="q-item" data-id="${t.id}"><span class="q-check">${CHECK}</span><b>${title}</b><p>${hint}</p></li>`;
+}).join('');
 
 let done = new Set((store.get('demo-done') ?? '').split(',').filter((id) => TASKS.some((t) => t.id === id)));
 function showProgress() {
   for (const li of list.children) li.classList.toggle('done', done.has(li.dataset.id));
   document.getElementById('q-count').textContent = `${done.size}/${TASKS.length}`;
-  document.getElementById('q-bar').style.width = `${(done.size / TASKS.length) * 100}%`;
   document.getElementById('q-done').hidden = done.size < TASKS.length;
   store.set('demo-done', [...done].join(','));
 }
@@ -178,171 +159,19 @@ document.getElementById('q-reset').addEventListener('click', () => {
   demo.reset();
 });
 
-// 功能介绍里的「在上面试试」:滚到试用,并让对应的任务闪一下
+// 功能介绍里的「在上面试试」:滚回试用,让对应的那一条任务亮一下
 for (const btn of document.querySelectorAll('[data-task]')) {
   btn.addEventListener('click', () => {
-    goTo(document.querySelector('.try-grid'), { atEnd: true });
+    document.getElementById('demo').scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'start' });
     const li = list.querySelector(`[data-id="${btn.dataset.task}"]`);
-    // 清单在自己的框里滚动时,把这一条滚到框的中间
-    const box = list.getBoundingClientRect();
-    const at = li.getBoundingClientRect();
-    if (list.scrollHeight > list.clientHeight) list.scrollTo({ top: list.scrollTop + at.top - box.top - (box.height - at.height) / 2, behavior: 'smooth' });
     li.classList.remove('flash');
     void li.offsetWidth;
     li.classList.add('flash');
   });
 }
 
-// ---------- 滚动到时淡入:给 <html> 加上 reveal-on 才隐藏(见 style.css),看不到 IntersectionObserver 时什么都不做 ----------
+// ---------- 功能演示的片段:滚到时才加载、播放,滚走就停;系统开了「减少动态效果」时不自动播,显示播放控件 ----------
 
-if ('IntersectionObserver' in window) {
-  const seen = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        e.target.classList.add('in');
-        seen.unobserve(e.target);
-      }
-    },
-    { rootMargin: '0px 0px -8% 0px' }
-  );
-  // 一开始就在视野里的不做动画,免得首屏闪一下
-  for (const el of document.querySelectorAll('.reveal')) {
-    const r = el.getBoundingClientRect();
-    if (r.top < innerHeight && r.bottom > 0) el.classList.add('in');
-    else seen.observe(el);
-  }
-  root.classList.add('reveal-on');
-}
-
-// ---------- 幻灯片式翻页:大屏幕、没开「减少动态效果」时才启用(样式见 style.css 的 .slides) ----------
-
-const slidesOk = matchMedia('(min-width: 1000px) and (min-height: 680px) and (prefers-reduced-motion: no-preference)');
-const slides = [...document.querySelectorAll('main > section')];
-// 比一屏高的页:sticky 的 top 设成「屏幕高 - 页高」(负数),滚到它的底边才停住,内容一点不漏
-const mainEl = document.querySelector('main');
-let marks = [];
-const pages = new Map(); // 区块 -> { start, end }:在 main 里原本的位置(停住叠在一起时浏览器自己算不对)
-function fitSlides() {
-  const on = slidesOk.matches;
-  root.classList.toggle('slides', on);
-  for (const m of marks) m.remove();
-  marks = [];
-  pages.clear();
-  const room = innerHeight - 48;
-  let y = 0; // 这一页在 main 里的起点(区块一个接一个,不受 sticky 停住的影响)
-  slides.forEach((el, i) => {
-    el.classList.toggle('slide', on);
-    el.style.zIndex = on ? String(i + 1) : '';
-    el.style.top = '';
-    if (!on) return;
-    const h = el.offsetHeight;
-    pages.set(el, { start: y, end: y + Math.max(0, h - room) });
-    const stops = [y];
-    // 只高出一点的页不多加一站,底下那一点在下一页滑上来时露出来就够了
-    if (h > room) el.style.top = `${48 + room - h}px`;
-    if (h > room + 120) stops.push(y + h - room);
-    for (const top of stops) {
-      const m = document.createElement('i');
-      m.className = 'snap-mark';
-      m.style.top = `${top}px`;
-      mainEl.append(m);
-      marks.push(m);
-    }
-    y += h;
-  });
-  // 最后一站:页脚完整露出来(滚到页面最底下)
-  if (on) {
-    const end = document.createElement('i');
-    end.className = 'snap-mark end';
-    end.style.top = `${y + document.querySelector('.foot').offsetHeight - 1}px`;
-    mainEl.append(end);
-    marks.push(end);
-  }
-}
-// 滚到某个元素所在的那一页:翻页模式下按原本的位置算(atEnd:滚到这一页的底边,比如试用区要看到整个演示窗口),
-// 平时就用浏览器自己的 scrollIntoView
-function goTo(el, { atEnd = false } = {}) {
-  const page = root.classList.contains('slides') && slides.find((s) => s.contains(el));
-  if (!page || !pages.has(page)) return el.scrollIntoView({ behavior: 'smooth' });
-  const { start, end } = pages.get(page);
-  const mainTop = mainEl.getBoundingClientRect().top + scrollY;
-  scrollTo({ top: mainTop + (atEnd ? end : start) - 48, behavior: 'smooth' });
-}
-// 页内链接(导航、「在线试用」「免费安装」按钮等):翻页模式下自己滚,地址栏照样带上 #
-document.addEventListener('click', (e) => {
-  const a = e.target.closest('a[href^="#"]');
-  if (!a || !root.classList.contains('slides') || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey) return;
-  const target = document.getElementById(a.getAttribute('href').slice(1));
-  if (!target) return;
-  e.preventDefault();
-  history.pushState(null, '', a.getAttribute('href'));
-  goTo(target);
-});
-
-// 右边的进度条:每页一个点(名字在 #pager-dots 的 data-zh / data-en 里),滚动时填满轨道、标出当前页
-const pager = document.getElementById('pager');
-const pagerFill = document.getElementById('pager-fill');
-const dotList = document.getElementById('pager-dots');
-const names = (dotList.dataset[root.dataset.lang] || '').split(',');
-const dots = slides.map((el, i) => {
-  const li = document.createElement('li');
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.setAttribute('aria-label', names[i] || String(i + 1));
-  const tip = document.createElement('span');
-  tip.textContent = names[i] || String(i + 1);
-  b.append(tip);
-  b.addEventListener('click', () => goTo(el));
-  li.append(b);
-  dotList.append(li);
-  return b;
-});
-let pagerRaf = 0;
-function showPager() {
-  pagerRaf = 0;
-  const on = root.classList.contains('slides');
-  pager.hidden = !on;
-  if (!on) return;
-  const mainTop = mainEl.getBoundingClientRect().top + scrollY;
-  const y = scrollY + 48 - mainTop + innerHeight * 0.3;
-  let current = 0;
-  slides.forEach((el, i) => {
-    if ((pages.get(el)?.start ?? Infinity) <= y) current = i;
-  });
-  dots.forEach((b, i) => b.setAttribute('aria-current', String(i === current)));
-  const max = document.documentElement.scrollHeight - innerHeight;
-  pagerFill.style.height = `${max > 0 ? Math.min(100, (scrollY / max) * 100) : 0}%`;
-}
-addEventListener('scroll', () => (pagerRaf ||= requestAnimationFrame(showPager)), { passive: true });
-
-fitSlides();
-showPager();
-slidesOk.addEventListener('change', () => (fitSlides(), showPager()));
-// 打开时地址带着 #:等排好再滚过去
-if (location.hash && root.classList.contains('slides')) {
-  const target = document.getElementById(location.hash.slice(1));
-  // 浏览器自己会先平滑地滚向锚点(按停住的位置算,会停错地方):等加载完,关掉平滑滚动直接跳过去,过一会儿再校正一次
-  const go = () => {
-    fitSlides();
-    const { start } = pages.get(slides.find((el) => el.contains(target))) ?? {};
-    if (start == null) return;
-    root.style.scrollBehavior = 'auto';
-    scrollTo({ top: mainEl.getBoundingClientRect().top + scrollY + start - 48, behavior: 'instant' });
-    requestAnimationFrame(() => (root.style.scrollBehavior = ''));
-  };
-  const goTwice = () => {
-    go();
-    setTimeout(go, 400);
-  };
-  if (target) document.readyState === 'complete' ? goTwice() : addEventListener('load', goTwice, { once: true });
-}
-addEventListener('resize', () => (fitSlides(), showPager()));
-new ResizeObserver(fitSlides).observe(mainEl);
-
-// ---------- 功能演示的短片:滚到时才加载、播放,滚走就停;系统开了「减少动态效果」时不自动播,显示播放控件 ----------
-
-const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clips = [...document.querySelectorAll('video.clip')];
 if (calm || !('IntersectionObserver' in window)) {
   for (const v of clips) {
@@ -362,22 +191,6 @@ if (calm || !('IntersectionObserver' in window)) {
   for (const v of clips) watch.observe(v);
 }
 
-// ---------- 视频:先显示封面和大播放按钮,点了再带声音播放并换成浏览器自带的控制条 ----------
-
-const video = document.getElementById('intro');
-const play = document.getElementById('play');
-video.controls = false;
-play.hidden = false;
-play.addEventListener('click', () => {
-  play.hidden = true;
-  video.controls = true;
-  video.play();
-});
-video.addEventListener('ended', () => {
-  video.controls = false;
-  play.hidden = false;
-});
-
 // ---------- 复制命令 ----------
 
 for (const btn of document.querySelectorAll('[data-copy]')) {
@@ -389,8 +202,42 @@ for (const btn of document.querySelectorAll('[data-copy]')) {
     }
     // 生成的页面里每个按钮只剩一种语言的文字
     const label = btn.querySelector('[data-l]');
-    const zh = root.dataset.lang === 'zh';
     label.textContent = zh ? '已复制' : 'Copied';
     setTimeout(() => (label.textContent = zh ? '复制' : 'Copy'), 1500);
   });
 }
+
+// ---------- 开头那条横线上落着几片叶子:鼠标扫过哪片,哪片就被吹走。不提示,留给人自己发现 ----------
+
+// 位置(占横线宽度的百分比)、转多少度、哪种颜色:疏密不匀,像真的落下来的
+const LEAVES = [
+  [57, -24, 0],
+  [63.5, 38, 1],
+  [66, -62, 2],
+  [74, 14, 0],
+  [81.5, -40, 1],
+  [84, 66, 0],
+  [93, -12, 2],
+];
+const LEAF_COLORS = [
+  ['#b0703c', '#8a4f26'],
+  ['#c98a3a', '#9a6424'],
+  ['#8d7a3e', '#6a5a2a'],
+];
+const fallen = document.getElementById('fallen');
+LEAVES.forEach(([x, r, c], i) => {
+  const [fill, vein] = LEAF_COLORS[c];
+  const leaf = document.createElement('i');
+  leaf.className = 'leaf';
+  leaf.style.cssText = `left:${x}%;--r:${r}deg;--y:${3 + (i % 3)}px;--d:${0.5 + i * 0.13}s`;
+  leaf.innerHTML = `<svg viewBox="0 0 22 22"><path d="M11 21C5.5 17 4 11.5 5.6 6.8 6.8 3.4 9.2 1.6 11 1c1.8.6 4.2 2.4 5.4 5.8C18 11.500 16.500 17 11 21z" fill="${fill}"/><path d="M11 20.500V4.500M11 9.500l-2.600-2.200M11 9.500l2.600-2.200M11 13.500l-3.200-2.600M11 13.500l3.200-2.600" stroke="${vein}" stroke-width=".7" stroke-linecap="round" fill="none"/></svg>`;
+  // 往鼠标来的反方向吹走
+  leaf.addEventListener('pointerenter', (e) => {
+    const dir = e.movementX < 0 ? -1 : 1;
+    leaf.style.setProperty('--gx', `${dir * (50 + Math.random() * 70)}px`);
+    leaf.style.setProperty('--gy', `${-(40 + Math.random() * 60)}px`);
+    leaf.style.setProperty('--gr', `${dir * (160 + Math.random() * 200)}deg`);
+    leaf.classList.add('gone');
+  });
+  fallen.append(leaf);
+});
