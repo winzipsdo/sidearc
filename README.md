@@ -4,9 +4,11 @@
 
 [![最新版本](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?label=%E7%89%88%E6%9C%AC&color=6b7cff)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![无依赖](https://img.shields.io/badge/%E4%BE%9D%E8%B5%96-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
 
-**Arc 风格的 Chrome 侧边标签栏。** 标签页竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。纯原生 JS/CSS,不联网,数据只在本机。
+**扫地,也扫心地。** Arc 风格的 Chrome 侧边标签栏:标签页竖着排、按空间分开,和 Chrome 顶部的标签栏双向同步。纯原生 JS/CSS,不联网,数据只在本机。
 
-> 名字取自《天龙八部》里少林藏经阁扫地的老僧:不声不响把地扫干净,其实是最厉害的那位。侧边栏也一样,平时安安静静,久没去的标签页落了叶子,扫一扫就干净。原名 Sidearc,2026 年 11 月改名。
+> 标签页开多了,心也跟着乱。扫地僧让它们各安其位;久不去看的,自会落上几片叶子,随手一扫,地净,心也净。
+>
+> 原名 Sidearc,2026 年 11 月改名。
 
 ![垂直标签栏、收藏夹与固定标签](store/screenshot-1-tabs.jpg)
 

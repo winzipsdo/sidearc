@@ -4,9 +4,11 @@
 
 [![Latest release](https://img.shields.io/github/v/release/winzipsdo/sweeping-monk?color=6b7cff)](https://github.com/winzipsdo/sweeping-monk/releases/latest) ![Chrome 116+](https://img.shields.io/badge/Chrome-116%2B-4285f4?logo=googlechrome&logoColor=white) ![Zero dependencies](https://img.shields.io/badge/dependencies-0-4fae6e) [![MIT](https://img.shields.io/badge/license-MIT-a874c8)](LICENSE)
 
-**Arc-style vertical tabs for Chrome.** Tabs stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.
+**Sweep the tabs, settle the mind.** Arc-style vertical tabs for Chrome: stacked in the side panel, split into spaces, and kept in two-way sync with Chrome's own tab strip. Plain JS/CSS, no network requests, your data stays local.
 
-> The name comes from the old monk who sweeps the floor of the Shaolin library in Jin Yong's novel *Demi-Gods and Semi-Devils*: quiet and unassuming, and secretly the greatest master of all. The sidebar works the same way: it stays out of your way, and tabs you've left alone gather fallen leaves for you to sweep off. Chinese name: 扫地僧. Formerly Sidearc, renamed in November 2026.
+> Too many tabs, a cluttered mind. Sweeping Monk gives every tab its place. Tabs you leave alone for days gather fallen leaves; one sweep, and the floor is clear.
+>
+> Chinese name: 扫地僧. Formerly Sidearc, renamed in November 2026.
 
 ![Vertical tabs, favorites and pinned tabs](store/en/screenshot-1-tabs.jpg)
 

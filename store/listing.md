@@ -17,14 +17,16 @@
 
 **简短说明**(取自 `_locales/*/messages.json` 的 description,132 字符以内,商店按语言显示):
 
-> 把标签页放到侧边栏:垂直排列,支持子标签和空间,常用的固定在顶部。
+> 扫地,也扫心地。标签页竖着排进 Chrome 侧边栏,各安其位:分空间,带子标签,常用的固定在顶部。
 >
-> Vertical tabs in Chrome's side panel, with child tabs and spaces, and your favorite pages pinned on top.
+> Sweep the tabs, settle the mind. Vertical tabs in Chrome's side panel, each in its place: spaces, child tabs, favorites on top.
 
 **详细说明**:
 
 ```
-扫地僧把标签页搬到浏览器侧边栏,用更适合宽屏的方式管理它们。
+标签页开多了,心也跟着乱。扫地,也扫心地。
+
+扫地僧把标签页搬到浏览器侧边栏,竖着排开,各安其位,用更适合宽屏的方式管理它们。
 
 【垂直标签栏】
 · 标签页纵向排列,标题不再被挤成一小截
