@@ -1,5 +1,5 @@
 {
   "appName": { "message": "Sweeping Monk" },
-  "description": { "message": "Sweep the tabs, settle the mind. Vertical tabs in Chrome's side panel, each in its place: spaces, child tabs, favorites on top." },
+  "description": { "message": "Sweep the floor, sweep the mind. Vertical tabs in Chrome's side panel, each in its place; idle ones gather leaves to sweep away." },
   "toggleSidebar": { "message": "Toggle the tab sidebar" }
 }

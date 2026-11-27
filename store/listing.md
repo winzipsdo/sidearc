@@ -17,9 +17,9 @@
 
 **简短说明**(取自 `_locales/*/messages.json` 的 description,132 字符以内,商店按语言显示):
 
-> 扫地,也扫心地。标签页竖着排进 Chrome 侧边栏,各安其位:分空间,带子标签,常用的固定在顶部。
+> 扫地扫地扫心地,心地不扫空扫地。标签页竖着排进 Chrome 侧边栏,各安其位;久不去看的落了叶,一扫即净。
 >
-> Sweep the tabs, settle the mind. Vertical tabs in Chrome's side panel, each in its place: spaces, child tabs, favorites on top.
+> Sweep the floor, sweep the mind. Vertical tabs in Chrome's side panel, each in its place; idle ones gather leaves to sweep away.
 
 **详细说明**:
 
