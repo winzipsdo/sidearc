@@ -1,6 +1,6 @@
 // 主页的脚本:语言和深浅色、在线试用和任务清单、功能片段滚到时才播放、复制命令、开头横线上的落叶。
 
-import { mountDemo } from './demo/demo.js?v=93657f93';
+import { mountDemo } from './demo/demo.js?v=e66ed7e4';
 
 const root = document.documentElement;
 const zh = root.dataset.lang === 'zh';

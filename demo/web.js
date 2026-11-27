@@ -246,7 +246,8 @@ export function scenario(lang) {
       {
         id: 's-me',
         name: z ? '个人' : 'Personal',
-        color: '#6b7cff',
+        // 插件自带的八种空间颜色里挑的金黄(落叶色),和主页的宣纸配;插件新建空间默认是第一种蓝色
+        color: '#d9a927',
         pinned: [
           item('p-notion', 'https://www.notion.so/sweeping-monk/project-plan', z ? '规划' : 'Plan'),
           {
@@ -264,7 +265,8 @@ export function scenario(lang) {
         color: '#4fae6e',
         pinned: [item('p-linear', 'https://linear.app/sweeping-monk/my-issues'), item('p-cal', 'https://calendar.google.com/')],
       },
-      { id: 's-study', name: z ? '学习' : 'Study', color: '#f0913f', pinned: [item('p-anki', 'https://ankiweb.net/decks', z ? '复习' : 'Review')] },
+      // 学习用灰色(墨):橙色的话顶部的分组和「个人」的黄色分组看着差不多
+      { id: 's-study', name: z ? '学习' : 'Study', color: '#8a8f98', pinned: [item('p-anki', 'https://ankiweb.net/decks', z ? '复习' : 'Review')] },
     ],
     activeSpaceId: 's-me',
   };

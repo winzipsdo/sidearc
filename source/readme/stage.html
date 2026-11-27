@@ -7,9 +7,10 @@
 <title>Sweeping Monk README recording</title>
 <link rel="stylesheet" href="../../demo/demo.css">
 <style>
-  html, body { margin: 0; overflow: hidden; background: linear-gradient(135deg, #eef0ff, #f4f2fb 55%, #f7eef3); }
+  /* 底色是主页的宣纸色(--bg 到 .alt 的 --bg-alt),阴影是暖墨色:视频放在主页的宣纸区块上不显得突兀 */
+  html, body { margin: 0; overflow: hidden; background: linear-gradient(135deg, #f8f4ec, #f4eee5 55%, #efe8dc); }
   #demo { width: 1000px; margin: 20px; }
-  #demo .sb-window { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 18px 40px rgba(40, 30, 100, 0.18); }
+  #demo .sb-window { box-shadow: 0 0 0 1px rgba(60, 40, 20, 0.1), 0 18px 40px rgba(60, 40, 20, 0.18); }
   #cursor { position: fixed; z-index: 10; left: 0; top: 0; width: 22px; height: 26px; pointer-events: none; transform-origin: 2px 1px; transition: transform 0.1s; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
   #cursor.down { transform: scale(0.85); }
 </style>
