@@ -1,16 +1,18 @@
 // 三种右键菜单的内容:标签页、收藏/固定项、空间。
 
-import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=a65b4ebd';
-import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=a65b4ebd';
-import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=a65b4ebd';
-import { render } from './render.js?v=a65b4ebd';
-import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=a65b4ebd';
-import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=a65b4ebd';
-import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=a65b4ebd';
-import { $, faviconFor, h, icon } from './dom.js?v=a65b4ebd';
-import { formatDuration, LANGS, langPref, t } from './i18n.js?v=a65b4ebd';
-import { lastSessionCount, restoreLastSession } from './restore.js?v=a65b4ebd';
-import { copyText, showMenu } from './ui.js?v=a65b4ebd';
+import { addItemFromTab, backToItem, closeItemTab, duplicateItem, editItem, moveItem, moveItems, moveItemsToSpace, moveItemToSpace, removeItem, removeItems, savePageAsItem, syncItemToTab } from './items.js?v=bf327012';
+import { buildTree, canDiscard, durationParts, isAway, isFolder, isUnloaded, LEAF_CHOICES, pinnedItems, splitPartners, toMarkdown, TRAIL_SIZE } from './logic.js?v=bf327012';
+import { closeFolderTabs, createFolder, deleteFolder, findFolder, moveToFolder, renameFolder, toggleFolderNoHistory } from './folders.js?v=bf327012';
+import { render } from './render.js?v=bf327012';
+import { deleteSpace, editSpace, switchSpace, toggleNoHistory } from './spaces.js?v=bf327012';
+import { activeSpace, bind, findItem, itemByTab, leafHours, listedTabs, selectedIds, setTabParent, state, tabAlias, tabParent, tabSpace, tabs, trailCount, visibleTabs, windowId } from './store.js?v=bf327012';
+import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, moveTabToSpace, pairable, reverseSplit, splitTabs, toggleAutoDiscard, unsplitTabs } from './tabs.js?v=bf327012';
+import { $, faviconFor, h, icon } from './dom.js?v=bf327012';
+import { formatDuration, LANGS, langPref, t } from './i18n.js?v=bf327012';
+import { lastSessionCount, restoreLastSession } from './restore.js?v=bf327012';
+import { applyFont, downloadFont, fontPref, FONTS, hasFont } from './font.js?v=bf327012';
+import { applyTheme, THEMES, themePref } from './theme.js?v=bf327012';
+import { copyText, showMenu, toast } from './ui.js?v=bf327012';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
 function memoryItems(tab) {
@@ -307,9 +309,75 @@ function leafPicker() {
   return h('div', { class: 'leaf-pick', title: t('leavesTip') }, icon('leaf'), h('span', { class: 'label' }, t('leaves')), opts);
 }
 
+// 外观:自动(跟随系统)、浅色、深色。菜单不关,点了马上就换
+function themePicker() {
+  const opts = h('span', { class: 'opts' });
+  const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', el.dataset.v === v));
+  const LABEL = { auto: t('themeAuto'), light: t('themeLight'), dark: t('themeDark') };
+  opts.append(
+    ...THEMES.map((v) =>
+      h('i', {
+        data: { v },
+        onclick: () => {
+          // 先在这个窗口套上,不等存储的变化绕一圈回来;别的窗口收到变化后跟着换(见 events.js)
+          applyTheme(v);
+          chrome.storage.local.set({ theme: v });
+          paint(v);
+        },
+      }, LABEL[v])
+    )
+  );
+  paint(themePref);
+  return h('div', { class: 'theme-pick', title: t('themeTip') }, icon('contrast'), h('span', { class: 'label' }, t('appearance')), opts);
+}
+
+// 字体:默认、今楷(仓耳今楷,和主页一样)。今楷要下载(见 font.js):第一次点的时候下,这一项上显示进度;
+// 下载中关掉菜单也照样下完、换上。菜单不关
+let fontBusy = false;
+let fontProgress = () => {};
+function fontPicker() {
+  const opts = h('span', { class: 'opts' });
+  const LABEL = { default: t('fontDefault'), kai: t('fontKai') };
+  const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', el.dataset.v === v));
+  const kai = () => opts.querySelector('[data-v="kai"]');
+  const showProgress = (ratio) => {
+    kai().classList.toggle('busy', fontBusy);
+    kai().textContent = fontBusy ? (ratio == null ? '…' : `${Math.floor(ratio * 100)}%`) : LABEL.kai;
+  };
+  const choose = async (v) => {
+    if (fontBusy) return;
+    if (v === 'kai' && !(await hasFont())) {
+      fontBusy = true;
+      fontProgress(null);
+      toast(t('fontDownloading'));
+      try {
+        await downloadFont((ratio) => fontProgress(ratio));
+      } catch (e) {
+        console.warn(e);
+        fontBusy = false;
+        fontProgress(null);
+        return toast(t('fontFailed'));
+      }
+      fontBusy = false;
+      fontProgress(null);
+      toast(t('fontApplied'));
+    }
+    // 先在这个窗口换上,别的窗口收到存储的变化后跟着换(见 events.js)
+    await applyFont(v);
+    chrome.storage.local.set({ font: v });
+    paint(v);
+  };
+  opts.append(...FONTS.map((v) => h('i', { data: { v }, onclick: () => choose(v) }, LABEL[v])));
+  // 菜单重新打开时这一行是新画的:进度报给现在这一行
+  fontProgress = (ratio) => opts.isConnected && showProgress(ratio);
+  paint(fontPref);
+  if (fontBusy) showProgress(null);
+  return h('div', { class: 'font-pick', title: t('fontTip') }, icon('type'), h('span', { class: 'label' }, t('font')), opts);
+}
+
 const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
 
-// 右下角的设置按钮:界面语言、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言、外观(浅色 / 深色)、字体、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -320,8 +388,8 @@ export function settingsMenu(e) {
     pick('zh', LANGS.zh),
     pick('en', LANGS.en),
     '-',
-    // 两个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
-    { el: h('div', { class: 'picks' }, trailPicker(), leafPicker()) },
+    // 几个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
+    { el: h('div', { class: 'picks' }, themePicker(), fontPicker(), trailPicker(), leafPicker()) },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);

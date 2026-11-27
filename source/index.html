@@ -9,8 +9,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-l="zh">赭：扫地，也扫心地。Chrome 侧边栏里的垂直标签页</title>
 <title data-l="en">Sweeping Monk: sweep the tabs, settle the mind. Vertical tabs for Chrome</title>
-<meta data-l="zh" name="description" content="赭（Sweeping Monk）把 Chrome 的标签页竖着排进侧边栏，各安其位：空间、子标签、固定标签、收藏夹和落叶提醒，和顶部标签栏双向同步。免费开源、不联网，打开主页就能上手试。">
-<meta data-l="en" name="description" content="Sweeping Monk puts your Chrome tabs in the side panel, each in its place: spaces, child tabs, pinned tabs, favorites and fallen-leaf reminders, in two-way sync with Chrome's own tab strip. Free, open source, no network requests. Try it right on the page.">
+<meta data-l="zh" name="description" content="赭（Sweeping Monk）把 Chrome 的标签页竖着排进侧边栏，各安其位：空间、子标签、固定标签、收藏夹和落叶提醒，和顶部标签栏双向同步。免费开源，打开主页就能上手试。">
+<meta data-l="en" name="description" content="Sweeping Monk puts your Chrome tabs in the side panel, each in its place: spaces, child tabs, pinned tabs, favorites and fallen-leaf reminders, in two-way sync with Chrome's own tab strip. Free and open source. Try it right on the page.">
 <link data-l="zh" rel="canonical" href="https://winzipsdo.github.io/sweeping-monk/">
 <link data-l="en" rel="canonical" href="https://winzipsdo.github.io/sweeping-monk/en/">
 <link rel="alternate" hreflang="zh-CN" href="https://winzipsdo.github.io/sweeping-monk/">
@@ -86,7 +86,7 @@
     <dl class="specs">
       <div><dt><span data-l="zh">浏览器</span><span data-l="en">Browser</span></dt><dd>Chrome 116+</dd></div>
       <div><dt><span data-l="zh">依赖</span><span data-l="en">Dependencies</span></dt><dd>0</dd></div>
-      <div><dt><span data-l="zh">联网</span><span data-l="en">Network</span></dt><dd><span data-l="zh">从不</span><span data-l="en">Never</span></dd></div>
+      <div><dt><span data-l="zh">数据</span><span data-l="en">Data</span></dt><dd><span data-l="zh">只在本机</span><span data-l="en">Stays on your device</span></dd></div>
       <div><dt><span data-l="zh">代码</span><span data-l="en">Code</span></dt><dd><span data-l="zh">原生 JS / CSS，不用编译</span><span data-l="en">Plain JS / CSS, nothing to build</span></dd></div>
     </dl>
     <p class="actions">
@@ -176,7 +176,7 @@
       <div><dt><span data-l="zh">足迹</span><span data-l="en">Footprints</span></dt><dd><span data-l="zh">刚离开的标签页留一道慢慢消失的竖条。</span><span data-l="en">The tabs you just left keep a fading mark.</span></dd></div>
       <div><dt><span data-l="zh">搜索</span><span data-l="en">Search</span></dt><dd><span data-l="zh">按 /，标签页和最近的历史记录一起搜。</span><span data-l="en">Press / to search tabs and recent history at once.</span></dd></div>
     </dl>
-    <p class="note"><span data-l="zh">此外还有别名、文件夹、不记录历史的空间、复制成 Markdown、最近关闭、恢复上次的标签页、浅色与深色、中文与 English。<a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.md">功能详解</a></span><span data-l="en">Plus aliases, folders, no-history spaces, copy as Markdown, recently closed, restoring last session, light and dark, English and Chinese. <a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.en.md">Every feature in detail</a></span></p>
+    <p class="note"><span data-l="zh">此外还有别名、文件夹、不记录历史的空间、复制成 Markdown、最近关闭、恢复上次的标签页、浅色与深色、可以换成今楷的字体、中文与 English。<a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.md">功能详解</a></span><span data-l="en">Plus aliases, folders, no-history spaces, copy as Markdown, recently closed, restoring last session, light and dark, an optional JinKai typeface, English and Chinese. <a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.en.md">Every feature in detail</a></span></p>
   </section>
 
   <section id="install">
@@ -233,10 +233,11 @@
 
   <section id="privacy">
     <header class="sec">
-      <h2><span data-l="zh">不联网</span><span data-l="en">No network</span></h2>
+      <h2><span data-l="zh">数据只在本机</span><span data-l="en">Your data stays local</span></h2>
     </header>
-    <p class="statement"><span data-l="zh">没有网络请求，没有统计，没有第三方脚本。一切都留在你的浏览器里，<em>卸载即删除</em>。</span><span data-l="en">No network requests, no analytics, no third-party scripts. Everything stays in your browser and <em>goes when you uninstall</em>.</span></p>
+    <p class="statement"><span data-l="zh">不收集，不上传，没有统计，没有第三方脚本。一切都留在你的浏览器里，<em>卸载即删除</em>。</span><span data-l="en">Nothing collected, nothing uploaded, no analytics, no third-party scripts. Everything stays in your browser and <em>goes when you uninstall</em>.</span></p>
     <p class="sub"><span data-l="zh">每项权限用来做什么，都写在这里。</span><span data-l="en">What each permission is for, all written down here.</span> <a href="https://github.com/winzipsdo/sweeping-monk/blob/main/PRIVACY.md"><span data-l="zh">完整的隐私政策</span><span data-l="en">The full privacy policy</span></a></p>
+    <p class="sub"><span data-l="zh">只有一处会联网，而且要你自己点：在设置里把字体换成「今楷」时，它从这个网站下载一次字体文件，存在本机，之后不再联网。</span><span data-l="en">It goes online in exactly one case, and only when you ask: switch the font to JinKai in settings and it downloads the font file once from this site, keeps it on your device, and fetches nothing after that.</span></p>
     <dl class="rows perms">
       <div><dt>sidePanel</dt><dd><span data-l="zh">全部界面都显示在浏览器侧边栏里。</span><span data-l="en">The whole interface lives in the side panel.</span></dd></div>
       <div><dt>tabs</dt><dd><span data-l="zh">读取标签页的标题、网址和图标来列出它们，并执行切换、移动、关闭、新建。</span><span data-l="en">Listing tabs (title, URL, icon) and switching, moving, closing and opening them.</span></dd></div>

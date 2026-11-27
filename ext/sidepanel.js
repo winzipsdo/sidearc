@@ -5,23 +5,29 @@
 //   drag.js    拖拽                        events.js  事件绑定
 //   folders.js 固定标签里的文件夹          dom.js     生成页面元素的小工具
 //   logic.js   纯逻辑(有测试)              protocol.js 和 background.js 之间的约定
+//   theme.js   浅色 / 深色                 font.js    换成仓耳今楷(要下载)
 
-import { bindEvents } from './src/events.js?v=a65b4ebd';
-import { applyStaticText, setLangPref } from './src/i18n.js?v=a65b4ebd';
-import { render } from './src/render.js?v=a65b4ebd';
-import { initRestore } from './src/restore.js?v=a65b4ebd';
-import { applySession, normalize, refreshTabs, save, setLeafHours, setState, setTrailCount, setWindowId } from './src/store.js?v=a65b4ebd';
+import { bindEvents } from './src/events.js?v=bf327012';
+import { applyStaticText, setLangPref } from './src/i18n.js?v=bf327012';
+import { render } from './src/render.js?v=bf327012';
+import { initRestore } from './src/restore.js?v=bf327012';
+import { applyFont } from './src/font.js?v=bf327012';
+import { applyTheme } from './src/theme.js?v=bf327012';
+import { applySession, normalize, refreshTabs, save, setLeafHours, setState, setTrailCount, setWindowId } from './src/store.js?v=bf327012';
 
 async function init() {
   // 启动要读的几样互不依赖,一起读
   const [win, stored, session, tabs] = await Promise.all([
     chrome.windows.getCurrent(),
-    chrome.storage.local.get(['state', 'lang', 'trail', 'leaves']),
+    chrome.storage.local.get(['state', 'lang', 'trail', 'leaves', 'theme', 'font']),
     chrome.storage.session.get(null),
     chrome.tabs.query({ windowId: chrome.windows.WINDOW_ID_CURRENT }),
   ]);
   // 语言要最先定:新建的默认空间的名字也看语言
   setLangPref(stored.lang);
+  applyTheme(stored.theme);
+  // 字体要从本机的缓存里读出来再装上,不等它:先按默认字体画出来
+  applyFont(stored.font);
   setTrailCount(stored.trail);
   setLeafHours(stored.leaves);
   applyStaticText();

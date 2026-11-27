@@ -1,6 +1,6 @@
 // 不碰浏览器和页面的纯逻辑,可以直接用 node --test 测。
 
-import { hasPrefix, PREFIX } from './protocol.js?v=a65b4ebd';
+import { hasPrefix, PREFIX } from './protocol.js?v=bf327012';
 
 // 搜索栏里输入的文字如果是网址,补全成能打开的地址;否则返回 null(当作搜索词)
 export function toUrl(text) {

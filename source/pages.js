@@ -45,12 +45,12 @@ const TEXT = {
   zh: {
     name: '赭',
     alt: ['Sweeping Monk', '扫地僧', 'Sidearc'],
-    app: 'Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。',
+    app: 'Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,数据只在本机。',
   },
   en: {
     name: 'Sweeping Monk',
     alt: ['赭', '扫地僧', 'Sidearc'],
-    app: "Arc-style vertical tabs for Chrome, each tab in its place: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source, no network requests, data stays on your machine.",
+    app: "Arc-style vertical tabs for Chrome, each tab in its place: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source; data stays on your machine.",
   },
 };
 

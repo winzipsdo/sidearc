@@ -4,8 +4,8 @@
 
 import { Browser } from './sim.js?v=0b138950';
 import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=5549f2d0';
-import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=a65b4ebd';
-import { KEY, MSG } from '../ext/src/protocol.js?v=a65b4ebd';
+import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=bf327012';
+import { KEY, MSG } from '../ext/src/protocol.js?v=bf327012';
 
 const TEXT = {
   zh: { back: '后退', forward: '前进', reload: '重新加载', newTab: '新建标签页', close: '关闭', toggle: '打开/关闭侧边栏', search: '搜索或输入网址', play: '播放', pause: '暂停', newTabHint: '点一个快捷方式。已经开着的网站不会再开一份:会直接切过去。', muted: '已静音' },
@@ -331,7 +331,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=b95a9d42', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=422471db', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -340,7 +340,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sweeping Monk';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=cb91b20e', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=42f226a1', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

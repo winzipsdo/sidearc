@@ -7,7 +7,7 @@
 | `source/index.html` | 主页的源文件,中英文写在一起(`data-l` 标明语言) | 手写 |
 | `index.html`、`en/index.html`、`sitemap.xml` | 中文页、英文页和网站地图 | `source/pages.js` 从 `source/index.html` 生成,别手改 |
 | `style.css`、`main.js` | 主页的样式和脚本,两个页面共用。版式是「一页纸」:宣纸色的底、墨色的字、一种赭色、一种字体(不用粗体),规矩写在 `style.css` 开头 | 手写 |
-| `assets/fonts/` | 页面的字体,都是只含页面上用到的字的子集:中文页 `kai.woff2` 是仓耳今楷02 W04(只允许个人非商业免费使用,商用要向[仓耳字库](https://tsanger.cn)买授权),英文页 `serif.woff2` 是思源宋体(Noto Serif SC,SIL OFL 1.1);`chars.txt` 记着收了哪些字 | `source/fonts.py` 生成 |
+| `assets/fonts/` | 页面的字体,都是只含页面上用到的字的子集:中文页 `kai.woff2` 是仓耳今楷02 W04(只允许个人非商业免费使用,商用要向[仓耳字库](https://tsanger.cn)买授权),英文页 `serif.woff2` 是思源宋体(Noto Serif SC,SIL OFL 1.1);`chars.txt` 记着收了哪些字。另有完整的 `TsangerJinKai02-W04.woff2`(约 9 MB),主页不引用:插件里把字体换成「今楷」时从这里下载(见 `main` 的 `src/font.js`),地址不能改 | `source/fonts.py` 生成;完整的那个由原 TTF 直接转成 woff2 |
 | `assets/seal.svg`、`assets/logo.svg` | 图标(一枚印:一个人在扫落叶)的大版和小版,和 `main` 的 `store/icon/` 里是同一份 | 从 `main` 复制 |
 | `demo/` | 在线试用:模拟的 Chrome(`sim.js`)、假的浏览器窗口(`demo.js`、`demo.css`)、假网站和初始状态(`web.js`)、给插件页面注入接口的 `inject.js` | 手写;`brand-icons.js` 从 `main` 复制 |
 | `ext/` | 插件本身的代码,在线试用直接跑它 | `source/build.js` 从 `main` 复制,别手改 |

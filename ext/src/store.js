@@ -1,9 +1,9 @@
 // 侧边栏的全部状态,以及只读写状态、不碰界面的函数。
 // 其他模块直接读这里导出的变量;需要整体替换的,用下面的 set* 函数。
 
-import { t } from './i18n.js?v=a65b4ebd';
-import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js?v=a65b4ebd';
-import { KEY, PREFIX } from './protocol.js?v=a65b4ebd';
+import { t } from './i18n.js?v=bf327012';
+import { buildTree, isAway, LEAF_CHOICES, LEAF_HOURS, matchesQuery, pinnedItems, pinnedLists, splitPartners, TRAIL_SHOW } from './logic.js?v=bf327012';
+import { KEY, PREFIX } from './protocol.js?v=bf327012';
 
 export const COLORS = ['#6b7cff', '#e5687a', '#f0913f', '#d9a927', '#4fae6e', '#3aa7b8', '#a06be0', '#8a8f98'];
 export const uid = () => crypto.randomUUID().slice(0, 8);

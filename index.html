@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title data-l="zh">赭：扫地，也扫心地。Chrome 侧边栏里的垂直标签页</title>
-<meta data-l="zh" name="description" content="赭（Sweeping Monk）把 Chrome 的标签页竖着排进侧边栏，各安其位：空间、子标签、固定标签、收藏夹和落叶提醒，和顶部标签栏双向同步。免费开源、不联网，打开主页就能上手试。">
+<meta data-l="zh" name="description" content="赭（Sweeping Monk）把 Chrome 的标签页竖着排进侧边栏，各安其位：空间、子标签、固定标签、收藏夹和落叶提醒，和顶部标签栏双向同步。免费开源，打开主页就能上手试。">
 <link data-l="zh" rel="canonical" href="https://winzipsdo.github.io/sweeping-monk/">
 <link rel="alternate" hreflang="zh-CN" href="https://winzipsdo.github.io/sweeping-monk/">
 <link rel="alternate" hreflang="en" href="https://winzipsdo.github.io/sweeping-monk/en/">
@@ -38,7 +38,7 @@
         "扫地僧",
         "Sidearc"
       ],
-      "description": "Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。",
+      "description": "Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,数据只在本机。",
       "url": "https://winzipsdo.github.io/sweeping-monk/",
       "applicationCategory": "BrowserApplication",
       "applicationSubCategory": "Chrome extension",
@@ -79,7 +79,7 @@
 <link data-l="zh" rel="preload" href="assets/fonts/kai.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="style.css?v=f58c5aac">
 <link rel="stylesheet" href="demo/demo.css?v=b4bb5681">
-<link rel="modulepreload" href="demo/demo.js?v=e66ed7e4">
+<link rel="modulepreload" href="demo/demo.js?v=5eb56535">
 <script>
   // 上次选过另一种语言（右上角的链接），或者旧链接带着 ?lang=，就跳到那种语言的页面。
   // 搜索引擎的爬虫没有这些记录，不会被带走，两个页面都能各自被收录
@@ -119,7 +119,7 @@
     <dl class="specs">
       <div><dt><span data-l="zh">浏览器</span></dt><dd>Chrome 116+</dd></div>
       <div><dt><span data-l="zh">依赖</span></dt><dd>0</dd></div>
-      <div><dt><span data-l="zh">联网</span></dt><dd><span data-l="zh">从不</span></dd></div>
+      <div><dt><span data-l="zh">数据</span></dt><dd><span data-l="zh">只在本机</span></dd></div>
       <div><dt><span data-l="zh">代码</span></dt><dd><span data-l="zh">原生 JS / CSS，不用编译</span></dd></div>
     </dl>
     <p class="actions">
@@ -209,7 +209,7 @@
       <div><dt><span data-l="zh">足迹</span></dt><dd><span data-l="zh">刚离开的标签页留一道慢慢消失的竖条。</span></dd></div>
       <div><dt><span data-l="zh">搜索</span></dt><dd><span data-l="zh">按 /，标签页和最近的历史记录一起搜。</span></dd></div>
     </dl>
-    <p class="note"><span data-l="zh">此外还有别名、文件夹、不记录历史的空间、复制成 Markdown、最近关闭、恢复上次的标签页、浅色与深色、中文与 English。<a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.md">功能详解</a></span></p>
+    <p class="note"><span data-l="zh">此外还有别名、文件夹、不记录历史的空间、复制成 Markdown、最近关闭、恢复上次的标签页、浅色与深色、可以换成今楷的字体、中文与 English。<a href="https://github.com/winzipsdo/sweeping-monk/blob/main/docs/features.md">功能详解</a></span></p>
   </section>
 
   <section id="install">
@@ -266,10 +266,11 @@
 
   <section id="privacy">
     <header class="sec">
-      <h2><span data-l="zh">不联网</span></h2>
+      <h2><span data-l="zh">数据只在本机</span></h2>
     </header>
-    <p class="statement"><span data-l="zh">没有网络请求，没有统计，没有第三方脚本。一切都留在你的浏览器里，<em>卸载即删除</em>。</span></p>
+    <p class="statement"><span data-l="zh">不收集，不上传，没有统计，没有第三方脚本。一切都留在你的浏览器里，<em>卸载即删除</em>。</span></p>
     <p class="sub"><span data-l="zh">每项权限用来做什么，都写在这里。</span> <a href="https://github.com/winzipsdo/sweeping-monk/blob/main/PRIVACY.md"><span data-l="zh">完整的隐私政策</span></a></p>
+    <p class="sub"><span data-l="zh">只有一处会联网，而且要你自己点：在设置里把字体换成「今楷」时，它从这个网站下载一次字体文件，存在本机，之后不再联网。</span></p>
     <dl class="rows perms">
       <div><dt>sidePanel</dt><dd><span data-l="zh">全部界面都显示在浏览器侧边栏里。</span></dd></div>
       <div><dt>tabs</dt><dd><span data-l="zh">读取标签页的标题、网址和图标来列出它们，并执行切换、移动、关闭、新建。</span></dd></div>
@@ -327,6 +328,6 @@
 </footer>
 
 </div>
-<script type="module" src="main.js?v=f659452c"></script>
+<script type="module" src="main.js?v=3aba1d98"></script>
 </body>
 </html>
