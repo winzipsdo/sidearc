@@ -16,6 +16,7 @@ import { deleteHistory, expandHistory } from './history.js';
 import { switchSpace } from './spaces.js';
 import { activeSpace, applySession, bind, findItem, followSpace, normalize, pinPicked, pressing, renderPending, replaceTabId, save, setLeafHours, setPressing, setQuery, setState, setTabParent, setTrailCount, state, tabScattered, tabs, visibleTabs, windowId } from './store.js';
 import { closeTab, discardTabs, endSearch, submitSearch, tidyTabs } from './tabs.js';
+import { applyTheme } from './theme.js';
 import { closeSearch, hideMenu, isMenuOwner, openSearch, pushUndo, setMenuTarget, toggleMenuFrom, undo } from './ui.js';
 
 const tabOf = (el) => tabs.find((t) => t.id === +el.dataset.id);
@@ -360,6 +361,7 @@ function bindBrowser() {
       setLeafHours(changes.leaves.newValue);
       refreshLeaves();
     }
+    if (area === 'local' && changes.theme) applyTheme(changes.theme.newValue);
     if (area === 'local' && changes.lang) {
       setLangPref(changes.lang.newValue);
       applyStaticText();

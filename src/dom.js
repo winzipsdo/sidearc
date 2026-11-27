@@ -44,6 +44,7 @@ const ICONS = {
   unpin: svg('<path d="M6 2.5h4M7 2.5v3.5L4.5 9h7L9 6V2.5M8 9v4.5M2.5 2.5l11 11"/>'),
   external: svg('<path d="M9.5 2.5h4v4"/><path d="M13.5 2.5L8 8"/><path d="M12 9.5v3a1 1 0 01-1 1H3.5a1 1 0 01-1-1V5a1 1 0 011-1h3"/>'),
   reload: svg('<path d="M13 8a5 5 0 11-1.5-3.6"/><path d="M13 2.5v3h-3"/>'),
+  contrast: svg('<circle cx="8" cy="8" r="5.2"/><path d="M8 2.8v10.4a5.2 5.2 0 000-10.4z" fill="currentColor" stroke="none"/>'),
   ban: svg('<circle cx="8" cy="8" r="5"/><path d="M4.5 11.5l7-7"/>'),
   // 一个框里写着 M 和往下的箭头,常见的 Markdown 标记
   markdown: svg('<rect x="1.5" y="3.5" width="13" height="9" rx="1.5"/><path d="M4 10V6l2 2.2L8 6v4M11 6v4M9.5 8.5L11 10l1.5-1.5"/>'),

@@ -34,7 +34,7 @@ copyFileSync(join(ROOT, 'sidepanel.css'), join(OUT, 'sidepanel.css'));
 copyFileSync(join(ROOT, 'icons/128.png'), join(OUT, 'logo.png'));
 const css = readFileSync(join(ROOT, 'sidepanel.css'), 'utf8');
 // 深色截图:把 CSS 里深色模式的变量直接套上,不依赖系统设置
-const darkVars = css.match(/@media \(prefers-color-scheme: dark\) \{\s*(:root \{[\s\S]*?\})\s*\}/)[1];
+const darkVars = css.match(/@media \(prefers-color-scheme: dark\) \{\s*(:root[^{]*\{[\s\S]*?\})\s*\}/)[1];
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const svgUrl = (svg) => 'data:image/svg+xml,' + encodeURIComponent(svg);

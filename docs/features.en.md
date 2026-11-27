@@ -46,5 +46,5 @@ The full behavior of every feature. Keyboard shortcuts are in the README's [Shor
 - **Keep awake**: right-click and choose "Keep awake" to stop Chrome's Memory Saver from unloading a tab — handy for music or chat. Putting a tab to sleep by hand turns keep awake off. Resets after a browser restart.
 - **Context menus** on tabs, favorites, pinned items and space dots.
 - **Copy as Markdown**: right-click a space dot (or use the ⋯ menu at the top right) to copy every tab in the space as a "- [title](link)" list, headed by the space name; pinned folders and child tabs are indented, new tab pages are skipped, favorites are left out. Right-click a multi-selection to copy just those tabs. Page titles are used as-is, ready to paste into any AI chat.
-- **Light and dark mode**, following the system.
+- **Light and dark mode**: follows the system by default, or pick Light or Dark under Appearance in the settings menu (bottom right); every window's sidebar switches together.
 - **English / 中文**: follows Chrome's UI language by default (Simplified Chinese shows Chinese, anything else English); pick one manually from the Settings button at the bottom right (it appears when you hover the bottom bar).

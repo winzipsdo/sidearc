@@ -10,6 +10,7 @@ import { canSplit, closeTab, closeWithUndo, discardTabs, editTabAlias, inSplit, 
 import { $, faviconFor, h, icon } from './dom.js';
 import { formatDuration, LANGS, langPref, t } from './i18n.js';
 import { lastSessionCount, restoreLastSession } from './restore.js';
+import { applyTheme, THEMES, themePref } from './theme.js';
 import { copyText, showMenu } from './ui.js';
 
 // 内存相关的两项:休眠(手动让 Chrome 回收),以及保持唤醒(不许 Chrome 自动回收)。tab 为空(项没开着)时不显示
@@ -307,9 +308,31 @@ function leafPicker() {
   return h('div', { class: 'leaf-pick', title: t('leavesTip') }, icon('leaf'), h('span', { class: 'label' }, t('leaves')), opts);
 }
 
+// 外观:自动(跟随系统)、浅色、深色。菜单不关,点了马上就换
+function themePicker() {
+  const opts = h('span', { class: 'opts' });
+  const paint = (v) => opts.querySelectorAll('i').forEach((el) => el.classList.toggle('on', el.dataset.v === v));
+  const LABEL = { auto: t('themeAuto'), light: t('themeLight'), dark: t('themeDark') };
+  opts.append(
+    ...THEMES.map((v) =>
+      h('i', {
+        data: { v },
+        onclick: () => {
+          // 先在这个窗口套上,不等存储的变化绕一圈回来;别的窗口收到变化后跟着换(见 events.js)
+          applyTheme(v);
+          chrome.storage.local.set({ theme: v });
+          paint(v);
+        },
+      }, LABEL[v])
+    )
+  );
+  paint(themePref);
+  return h('div', { class: 'theme-pick', title: t('themeTip') }, icon('contrast'), h('span', { class: 'label' }, t('appearance')), opts);
+}
+
 const SPONSOR_URL = 'https://github.com/sponsors/winzipsdo';
 
-// 右下角的设置按钮:界面语言、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
+// 右下角的设置按钮:界面语言、外观(浅色 / 深色)、足迹显示几个、落叶多久落一片,以及赞助入口。语言存到 chrome.storage.local,所有窗口的侧边栏收到变化后一起换(见 events.js)
 export function settingsMenu(e) {
   // 贴着按钮上方、右对齐弹出,不盖住底部这一行
   const anchor = e.currentTarget.getBoundingClientRect();
@@ -320,8 +343,8 @@ export function settingsMenu(e) {
     pick('zh', LANGS.zh),
     pick('en', LANGS.en),
     '-',
-    // 两个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
-    { el: h('div', { class: 'picks' }, trailPicker(), leafPicker()) },
+    // 几个选择条放进同一个网格:图标、名字、选项各占一列,⊘ 和右边缘都对齐
+    { el: h('div', { class: 'picks' }, themePicker(), trailPicker(), leafPicker()) },
     '-',
     { icon: 'heart', link: true, label: t('sponsor'), run: () => chrome.tabs.create({ url: SPONSOR_URL, windowId }) },
   ]);

@@ -1,3 +1,9 @@
+// 设置里固定了浅色或深色(见 src/theme.js):在画出来之前就套上
+try {
+  const theme = localStorage.getItem('panel-theme');
+  if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+} catch {}
+
 // 打开侧边栏时先把上次的样子显示出来(render.js 存的快照),真正的数据读好后会整体重画。
 // 这是普通脚本而不是模块,在页面解析到这里时立刻执行,比模块和异步读取都早
 try {
