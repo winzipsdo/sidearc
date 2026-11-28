@@ -355,7 +355,7 @@ function scenes() {
   tw($('#keys'), 48, 0.3, { opacity: [1, 0] });
   copyOut($('#copy-7'), 48.1);
 
-  // LEAVES_AT 起 8 秒:落叶。「三天后」,很久没进去的标签页落上叶子;扫干净一行,点开另一行叶子被吹走(鼠标在 pointer() 里)
+  // LEAVES_AT 起 8 秒:落叶。「三日后」,很久没进去的标签页落上叶子;扫干净一行,点开另一行叶子被吹走(鼠标在 pointer() 里)
   const L = LEAVES_AT;
   copyIn($('#copy-8'), L);
   const lapse = $('#lapse');
@@ -559,18 +559,18 @@ async function setup() {
   $('#win').innerHTML = windowHtml();
   // 图标颜色和主页一样,只取墨色和落叶、泥土的颜色:赭、松、枫、苔、墨、茶
   const CARDS = [
-    ['#9a5a34', ICON.back, '什么都能撤销', 'Ctrl/⌘+Z 一步步撤销', 'Undo everything, step by step'],
-    ['#5f7358', ICON.copy, '相同网址只开一份', '已经开着的,直接切过去', 'No duplicate tabs'],
-    ['#b5652f', ICON.select, '多选一起操作', 'Ctrl/⌘ 多选、Shift 连选', 'Multi-select, drag them together'],
-    ['#7d6a2a', ICON.recent, '恢复上次的标签页', '空间、层级、别名都在', 'Bring back last session, as it was'],
-    ['#4a3f36', ICON.folder, '折叠固定标签', '点空间名,只留正在看的', 'Fold pinned tabs away'],
-    ['#a8743c', ICON.theme, '中文 / English · 深浅色', '跟随浏览器和系统', 'Follows your language and theme'],
+    ['#9a5a34', ICON.back, '一切皆可回头', 'Ctrl/⌘+Z，一步步撤回', 'Undo anything, step by step'],
+    ['#5f7358', ICON.copy, '同一网址，只开一份', '已经开着的，直接切过去', 'One tab per address, never two'],
+    ['#b5652f', ICON.select, '多选，同进同退', 'Ctrl/⌘ 多选、Shift 连选', 'Select many, move them as one'],
+    ['#7d6a2a', ICON.recent, '重启之后，一切如旧', '空间、层级、别名都还在', 'After a restart, all as it was'],
+    ['#4a3f36', ICON.folder, '固定标签，收起即静', '点空间名，只留眼前这一个', 'Fold the pins, keep the one in view'],
+    ['#a8743c', ICON.theme, '中文 / English · 深浅色', '随浏览器和系统而变', 'Follows your browser and system'],
   ];
   $('#cards').innerHTML = CARDS.map(
     ([c, icon, t, zh, en]) => `<div class="card" style="--c:${c}"><span class="ic">${icon}</span><div><b>${t}</b><p>${zh}</p><p class="en">${en}</p></div></div>`
   ).join('');
   const PILLS = [
-    [ICON.shield, '无网络请求'],
+    [ICON.shield, '不收集 · 不上传'],
     [ICON.code, '纯 JS/CSS · 无依赖'],
     [ICON.heart, 'MIT 开源'],
   ];
@@ -583,6 +583,9 @@ async function setup() {
   doc = frame().contentDocument;
   setFrameDoc(doc);
   const images = [...document.images, ...doc.images];
+  // 今楷和思源宋体是网页字体:先把画面上所有的字都加载好,免得截出来的头几帧是备用字体
+  const fontsIn = (family, sel) => document.fonts.load(`20px "${family}"`, [...document.querySelectorAll(sel)].map((el) => el.textContent).join('') || 'A');
+  await Promise.all([fontsIn('Monk Kai', '#stage'), fontsIn('Monk Serif', '.en, .latin')]);
   await Promise.all([document.fonts.ready, doc.fonts.ready, ...images.map((img) => img.decode().catch(() => {}))]);
 
   scenes();

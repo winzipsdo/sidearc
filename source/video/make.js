@@ -35,7 +35,7 @@ const CHROME =
 if (!CHROME) throw new Error('找不到 Chrome,请用环境变量 CHROME 指定路径');
 
 // 从这个分支的根目录提供静态文件:画面要用到 ext/sidepanel.css、demo/ 下的样式和网站内容
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json', '.woff2': 'font/woff2' };
 const server = createServer((req, res) => {
   const file = join(ROOT, normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)));
   if (!file.startsWith(ROOT) || !existsSync(file)) return res.writeHead(404).end();

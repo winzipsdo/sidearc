@@ -76,6 +76,8 @@ node source/video/make.js
 
 生成 `assets/intro.mp4` 和 `assets/intro-poster.jpg`,大约 15 分钟。Chrome 不在默认位置时,用环境变量 `CHROME` 指定。
 
+两个视频的字体和主页一样:中文用仓耳今楷02 W04,英文用思源宋体(`assets/fonts/serif.woff2`),不用粗体;中文引用的是完整的 `assets/fonts/TsangerJinKai02-W04.woff2`,不是主页的子集 `kai.woff2`(子集里缺视频文案里的字)。按键、网址仍用 Inter,侧边栏是插件自己的字体。
+
 | 文件 | 作用 |
 | --- | --- |
 | `video/scene.html`、`video/scene.js` | 介绍视频的画面和时间线(1280×720 排版,输出时放大到 1920×1080) |
@@ -86,7 +88,7 @@ node source/video/make.js
 
 ### 竖屏短片
 
-给抖音这类平台的短片,十几秒,一屏一句大字:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sweeping Monk。
+给抖音这类平台的短片,十几秒,一屏一句大字:开了 40 个标签页,眼也花,心也乱 → 按 Alt+S,一键各安其位 → 三日后,久不去看的标签页自会落满叶子 → 还想留着?一扫即净;不要了?关掉,放下 → 该放下的标签页,自会浮现 → 赭 Sweeping Monk,扫地,也扫心地;GitHub 搜 Sweeping Monk。
 
 ```bash
 node source/video/make.js short

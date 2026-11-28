@@ -1,5 +1,5 @@
 // 竖屏短片(抖音这类平台)的画面和时间线:约 17 秒,一屏一句大字,跟着 music-short.js 的节拍(每分钟 120 拍,一拍 0.5 秒)切。
-// 故事线:标签栏挤爆了 → 按 Alt+S 一键竖起来 → 三天后好久没看的标签页落满叶子 → 扫一扫 / 直接关 → GitHub 搜 Sweeping Monk。
+// 故事线:开了 40 个标签页,眼也花、心也乱 → 按 Alt+S,一键各安其位 → 三日后,久不去看的标签页落满叶子 → 还想留着就一扫即净,不要了就关掉、放下 → 该放下的自会浮现 → 赭 Sweeping Monk,GitHub 搜 Sweeping Monk。
 // 时间线工具和落叶和介绍视频共用(engine.js),侧边栏的行、标签页的内容也共用(content.js)。地址后加 ?play 可以实时预览。
 
 import { iconFor } from '../../demo/web.js';
@@ -8,7 +8,7 @@ import { EASE, build, cls, leafPile, pile, playAll, seek, set, setFrameDoc, setL
 
 // 关键时刻都落在拍子上
 const PRESS = 3; // 按下 Alt+S,音乐在这一拍进鼓
-const LAPSE = 6; // 「三天后」
+const LAPSE = 6; // 「三日后」
 const ZOOM = 8; // 镜头再推近一些,看清叶子
 const Z1 = 1.28; // 侧边栏出来后先放大到占满画面宽度(网页那边不重要)
 const Z2 = 1.55;
@@ -167,7 +167,7 @@ function scenes() {
   tw(win, ZOOM, 0.6, { transform: [`scale(${Z1})`, `scale(${Z2})`] }, EASE.inOut);
   capOut($('#cap-2'), 5.55);
 
-  // LAPSE:三天后,好久没看的标签页落满叶子(离开一天后开始落,之后每 12 小时一片)
+  // LAPSE:三日后,好久没看的标签页落满叶子(离开一天后开始落,之后每 12 小时一片)
   const lapse = $('#lapse');
   tw(lapse, LAPSE - 0.1, 0.4, { opacity: [0, 1], transform: ['translateY(14px) scale(.85)', 'none'] }, EASE.spring);
   tw(lapse, LAPSE + 1.3, 0.3, { opacity: [1, 0] });
@@ -276,6 +276,9 @@ async function setup() {
   doc = frame().contentDocument;
   setFrameDoc(doc);
   const images = [...document.images, ...doc.images];
+  // 今楷和思源宋体是网页字体:先把画面上所有的字都加载好,免得截出来的头几帧是备用字体
+  const fontsIn = (family, sel) => document.fonts.load(`20px "${family}"`, [...document.querySelectorAll(sel)].map((el) => el.textContent).join('') || 'A');
+  await Promise.all([fontsIn('Monk Kai', '#stage'), fontsIn('Monk Serif', '.latin')]);
   await Promise.all([document.fonts.ready, doc.fonts.ready, ...images.map((img) => img.decode().catch(() => {}))]);
 
   scenes();
