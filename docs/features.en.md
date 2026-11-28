@@ -1,8 +1,8 @@
 # Sweeping Monk features in detail
 
-[简体中文](features.md) | English | [Back to README](../README.en.md)
+[简体中文](features.md) | English | [Back to README](../README.md)
 
-The full behavior of every feature. Keyboard shortcuts are in the README's [Shortcuts](../README.en.md#shortcuts).
+The full behavior of every feature. Keyboard shortcuts are in the README's [Shortcuts](../README.md#shortcuts).
 
 ## Tabs
 
@@ -21,7 +21,7 @@ The full behavior of every feature. Keyboard shortcuts are in the README's [Shor
 - **No duplicate tabs**: opening an address that is already open in the current space switches to the existing tab instead, and the sidebar scrolls to it and briefly highlights it. Opening the address of a favorite or pinned tab that isn't open yet opens it as that favorite or pinned tab. Tabs you deliberately open in a new tab (`Ctrl/⌘+click`, middle-click) are left alone.
 - **Footprints**: the last few tabs you left (3 by default) get a theme-colored bar on the left (a short line under the icon for favorites) that shrinks toward its middle and fades over 10 minutes, so you can find your way back. A tab sharing a split view with the one you are viewing is still on screen, so it gets none. Choose how many (off, 1, 3, 5 or 10) in Settings at the bottom right.
 - **Fallen leaves**: tabs you haven’t visited in a while slowly gather leaves at the end of the row — the first after a day away, then one more every 12 hours, up to 12 — so you can spot what’s safe to close. Sweep the mouse back and forth to clear them (restarting the clock without opening the tab); open the tab and the wind blows them away. There’s also a small hidden easter egg involving the leaves, left for you to find. Choose how often (off, 6, 8 or 12 hours) in Settings at the bottom right.
-- **Keyboard**: click the sidebar, then use the arrow keys to move a cursor (styled after the Switch) starting from the current page; Enter opens, Delete closes. See [Shortcuts](../README.en.md#shortcuts).
+- **Keyboard**: click the sidebar, then use the arrow keys to move a cursor (styled after the Switch) starting from the current page; Enter opens, Delete closes. See [Shortcuts](../README.md#shortcuts).
 - **Search**: tucked away as a magnifier next to the space name that appears when you hover the top — click it or press `/` or `Ctrl/⌘+F` to open; type to filter; Enter jumps to the first match, or opens the URL / searches with your default engine. Type two or more characters and matching pages from the last 30 days of history show up below (8 at first, with a "Show N more" row to expand up to 50; skipping ones already open) — click to open, or the × to remove it from history.
 - **Tidy by domain**: "Tidy" above the tab list puts tabs from the same site together in the current space, with each subdomain in a run of its own (Gmail and Google Docs join the other Google pages, each kept together). Sites keep the order they first appeared in, not alphabetical, so what was on top stays on top. Child tabs follow their parent and split pairs move together, filed under the first tab's address. It only reorders: nothing closes and the active tab stays the same. Favorites, pinned tabs, Chrome-pinned tabs and tabs in other groups aren't touched. It can be undone; tabs opened in the meantime then go last (ones closed and restored return to their place). Swapping the order of two split pairs needs Chrome 155+; on older versions they keep their order.
 - **Close in bulk**: right-click a tab to close all tabs below it, or select several and close them together.
