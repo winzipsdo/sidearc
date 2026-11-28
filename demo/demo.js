@@ -4,8 +4,8 @@
 
 import { Browser } from './sim.js?v=0b138950';
 import { GLOBE, HISTORY, iconFor, NEW_TAB, page, scenario, tiles } from './web.js?v=5549f2d0';
-import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=7f47949b';
-import { KEY, MSG } from '../ext/src/protocol.js?v=7f47949b';
+import { buildLayout, groupColor, toUrl } from '../ext/src/logic.js?v=bf327012';
+import { KEY, MSG } from '../ext/src/protocol.js?v=bf327012';
 
 const TEXT = {
   zh: { back: '后退', forward: '前进', reload: '重新加载', newTab: '新建标签页', close: '关闭', toggle: '打开/关闭侧边栏', search: '搜索或输入网址', play: '播放', pause: '暂停', newTabHint: '点一个快捷方式。已经开着的网站不会再开一份:会直接切过去。', muted: '已静音' },
@@ -29,7 +29,7 @@ const svg = (name, size = 14) => `<svg viewBox="0 0 16 16" width="${size}" heigh
 const zoomOf = (el) => el.getBoundingClientRect().width / el.offsetWidth || 1;
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 // 地址按这个脚本的位置算:中文页在根目录、英文页在 en/ 下,两边都能用
-const LOGO = new URL('../assets/logo.svg?v=cde65277', import.meta.url).href;
+const LOGO = new URL('../assets/logo.svg?v=a2a8db2f', import.meta.url).href;
 
 // 打开试用时的样子:按 web.js 的设定开好标签页、写好存储,再按侧边栏的顺序排好、分好组
 function setup(b, lang) {
@@ -368,7 +368,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const bg = document.createElement('iframe');
     bg.className = 'sb-bg';
     bg.hidden = true;
-    bg.src = new URL('../ext/background.html?v=4ec370b7', import.meta.url).href;
+    bg.src = new URL('../ext/background.html?v=422471db', import.meta.url).href;
     await new Promise((r) => {
       bg.onload = r;
       root.append(bg);
@@ -377,7 +377,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     panel.className = 'sb-panel';
     panel.title = 'Sweeping Monk';
     panel.allow = 'clipboard-write';
-    panel.src = new URL('../ext/sidepanel.html?v=acddb333', import.meta.url).href;
+    panel.src = new URL('../ext/sidepanel.html?v=42f226a1', import.meta.url).href;
     panel.onload = () => {
       root.classList.remove('booting');
       const w = panel.contentWindow;

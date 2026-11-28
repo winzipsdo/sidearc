@@ -2,10 +2,9 @@
 //   index.html     中文,https://winzipsdo.github.io/sweeping-monk/
 //   en/index.html  英文,https://winzipsdo.github.io/sweeping-monk/en/
 // 带 data-l="zh" / data-l="en" 的元素(连同里面的内容)只留在对应语言的页面里;英文页在 en/ 下,相对地址前面补上 ../。
-// 同时按语言填好结构化数据(JSON-LD:软件信息和介绍视频)、写 sitemap.xml,最后运行 stamp.js 加版本号。
+// 同时按语言填好结构化数据(JSON-LD:软件信息)和版本号、写 sitemap.xml,最后运行 stamp.js 加版本号。
 // 改了 source/index.html、样式、脚本或视频后运行:node source/pages.js(source/build.js 最后也会运行)。
 
-import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,47 +41,22 @@ function dropLang(html, other) {
 const relative = (v) => !/^(#|[a-z][a-z0-9+.-]*:|\/|\.\.\/)/i.test(v);
 const upOneLevel = (html) => html.replace(/\s(src|srcset|href|poster)="([^"]*)"/g, (all, attr, v) => (v && relative(v) ? ` ${attr}="../${v}"` : all));
 
-// 视频时长:读 MP4 里 mvhd 的 timescale 和 duration
-function mp4Seconds(file) {
-  const buf = readFileSync(file);
-  const i = buf.indexOf('mvhd');
-  if (i < 0) return null;
-  const v1 = buf[i + 4] === 1;
-  const scale = buf.readUInt32BE(i + (v1 ? 24 : 16));
-  const dur = v1 ? Number(buf.readBigUInt64BE(i + 28)) : buf.readUInt32BE(i + 20);
-  return scale ? dur / scale : null;
-}
-const isoDuration = (s) => `PT${Math.floor(s / 60) ? Math.floor(s / 60) + 'M' : ''}${Math.round(s % 60)}S`;
-// 视频的上传时间:最近一次提交它的时间;还没提交过就用现在
-function uploadDate(file) {
-  try {
-    return execFileSync('git', ['log', '-1', '--format=%cI', '--', file], { cwd: SITE, encoding: 'utf8' }).trim() || new Date().toISOString();
-  } catch {
-    return new Date().toISOString();
-  }
-}
-
 const TEXT = {
   zh: {
-    name: '扫地僧',
-    alt: ['Sweeping Monk', 'Sidearc'],
-    app: 'Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,不联网,数据只在本机。',
-    video: '扫地僧介绍视频',
-    videoText: '一分钟看懂扫地僧:侧边栏和顶部标签栏双向同步、空间、子标签、固定标签回家、足迹与休眠、键盘操作和落叶。',
+    name: '赭',
+    alt: ['Sweeping Monk', '扫地僧', 'Sidearc'],
+    app: 'Arc 风格的 Chrome 垂直标签页侧边栏,标签页各安其位:子标签、空间、固定标签、收藏夹和落叶提醒,和 Chrome 顶部标签栏双向同步。免费开源,数据只在本机。',
   },
   en: {
     name: 'Sweeping Monk',
-    alt: ['扫地僧', 'Sidearc'],
-    app: "Arc-style vertical tabs for Chrome, each tab in its place: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source, no network requests, data stays on your machine.",
-    video: 'Sweeping Monk intro video',
-    videoText: 'Sweeping Monk in a minute: two-way sync with the tab strip, spaces, child tabs, pinned tabs going home, footprints and sleep, keyboard navigation and fallen leaves.',
+    alt: ['赭', '扫地僧', 'Sidearc'],
+    app: "Arc-style vertical tabs for Chrome, each tab in its place: child tabs, spaces, pinned tabs, favorites and fallen-leaf reminders, kept in two-way sync with Chrome's tab strip. Free and open source; data stays on your machine.",
   },
 };
 
+const { version } = JSON.parse(readFileSync(join(SITE, 'ext/version.json'), 'utf8'));
+
 function jsonLd(lang) {
-  const { version } = JSON.parse(readFileSync(join(SITE, 'ext/version.json'), 'utf8'));
-  const video = join(SITE, 'assets/intro.mp4');
-  const seconds = mp4Seconds(video);
   const page = PAGES[lang];
   const t = TEXT[lang];
   const shots = lang === 'zh' ? 'store/' : 'store/en/';
@@ -108,17 +82,6 @@ function jsonLd(lang) {
       sameAs: [REPO],
       inLanguage: ['zh-CN', 'en'],
     },
-    {
-      '@type': 'VideoObject',
-      name: t.video,
-      description: t.videoText,
-      thumbnailUrl: ORIGIN + 'assets/intro-poster.jpg',
-      contentUrl: ORIGIN + 'assets/intro.mp4',
-      uploadDate: uploadDate('assets/intro.mp4'),
-      ...(seconds && { duration: isoDuration(seconds) }),
-      inLanguage: 'zh-CN',
-      about: { '@id': ORIGIN + '#app' },
-    },
   ];
   // </script> 不能出现在内联脚本里
   return JSON.stringify({ '@context': 'https://schema.org', '@graph': graph }, null, 2).replace(/</g, '\\u003c');
@@ -130,6 +93,7 @@ for (const [lang, page] of Object.entries(PAGES)) {
   html = html.replace(/<html lang="[^"]*" data-lang="[^"]*">/, `<html lang="${page.htmlLang}" data-lang="${lang}">`);
   html = html.replace('<script type="application/ld+json" data-jsonld></script>', `<script type="application/ld+json">\n${jsonLd(lang)}\n</script>`);
   html = html.replace(/<!-- 项目主页的源文件[\s\S]*?-->/, '<!-- 由 source/pages.js 从 source/index.html 生成,不要直接改这个文件 -->');
+  html = html.replaceAll('{{version}}', version);
   if (lang === 'en') html = upOneLevel(html);
   // 删掉另一种语言后留下的空行:<head> 里的全去掉,正文里连续的只留一行
   html = html.replace(/<head>[\s\S]*?<\/head>/, (head) => head.replace(/\n[ \t]*(?=\n)/g, '')).replace(/\n([ \t]*\n){2,}/g, '\n\n');
@@ -151,5 +115,13 @@ writeFileSync(
     '\n</urlset>\n'
 );
 console.log('已生成 index.html、en/index.html 和 sitemap.xml');
+
+// 页面的字体是只含用到的字的子集(assets/fonts/,由 source/fonts.py 生成):文字里出现了子集里没有的字,提醒重新生成,
+// 不然那几个字会换成系统字体,和旁边的不一样
+const have = new Set(readFileSync(join(SITE, 'assets/fonts/chars.txt'), 'utf8'));
+const used = new Set(['index.html', 'en/index.html', 'main.js'].flatMap((f) => [...readFileSync(join(SITE, f), 'utf8')]));
+const missing = [...used].filter((c) => c > ' ' && !have.has(c));
+if (missing.length) console.warn(`字体子集里没有这 ${missing.length} 个字:${missing.join('')}
+运行 python source/fonts.py 重新生成`);
 
 await import('./stamp.js');

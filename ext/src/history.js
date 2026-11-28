@@ -4,10 +4,10 @@
 // 输入两个字以上才查,停顿一下再查,免得每敲一个字查一次。点一下在新标签页打开,归入当前空间;
 // 点行尾的叉号(或选中后按 Delete)从浏览器的历史记录里删掉这个网址
 
-import { $, faviconFor, h, icon } from './dom.js?v=7f47949b';
-import { durationParts } from './logic.js?v=7f47949b';
-import { formatDuration, t } from './i18n.js?v=7f47949b';
-import { query, tabs } from './store.js?v=7f47949b';
+import { $, faviconFor, h, icon } from './dom.js?v=bf327012';
+import { durationParts } from './logic.js?v=bf327012';
+import { formatDuration, t } from './i18n.js?v=bf327012';
+import { query, tabs } from './store.js?v=bf327012';
 
 const DAYS = 30;
 const MAX = 8;

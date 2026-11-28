@@ -6,11 +6,13 @@
 | --- | --- | --- |
 | `source/index.html` | 主页的源文件,中英文写在一起(`data-l` 标明语言) | 手写 |
 | `index.html`、`en/index.html`、`sitemap.xml` | 中文页、英文页和网站地图 | `source/pages.js` 从 `source/index.html` 生成,别手改 |
-| `style.css`、`main.js` | 主页的样式和脚本,两个页面共用 | 手写 |
+| `style.css`、`main.js` | 主页的样式和脚本,两个页面共用。版式是「一页纸」:宣纸色的底、墨色的字、一种赭色、一种字体(不用粗体),规矩写在 `style.css` 开头 | 手写 |
+| `assets/fonts/` | 页面的字体,都是只含页面上用到的字的子集:中文页 `kai.woff2` 是仓耳今楷02 W04(只允许个人非商业免费使用,商用要向[仓耳字库](https://tsanger.cn)买授权),英文页 `serif.woff2` 是思源宋体(Noto Serif SC,SIL OFL 1.1);`chars.txt` 记着收了哪些字。另有完整的 `TsangerJinKai02-W04.woff2`(约 9 MB),主页不引用:插件里把字体换成「今楷」时从这里下载(见 `main` 的 `src/font.js`),地址不能改 | `source/fonts.py` 生成;完整的那个由原 TTF 直接转成 woff2 |
+| `assets/seal.svg`、`assets/logo.svg` | 图标(一枚印:一个人在扫落叶)的大版和小版,和 `main` 的 `store/icon/` 里是同一份 | 从 `main` 复制 |
 | `demo/` | 在线试用:模拟的 Chrome(`sim.js`)、假的浏览器窗口(`demo.js`、`demo.css`)、假网站和初始状态(`web.js`)、给插件页面注入接口的 `inject.js` | 手写;`brand-icons.js` 从 `main` 复制 |
 | `ext/` | 插件本身的代码,在线试用直接跑它 | `source/build.js` 从 `main` 复制,别手改 |
 | `store/`、`icons/` | 应用商店截图、插件图标 | `source/build.js` 从 `main` 复制 |
-| `assets/` | 标志、介绍视频 `intro.mp4` 和封面 `intro-poster.jpg`;`videos/` 里是给短视频平台的竖屏短片(`douyin.mp4` 和没有配乐的 `douyin-silent.mp4`)和从介绍视频剪出来的落叶片段 `fallen-leaves.mp4`,主页上不引用 | 视频由 `source/video/make.js` 生成 |
+| `assets/` | 介绍视频 `intro.mp4` 和封面 `intro-poster.jpg`(改版后主页上不再放,文件还留着);`videos/` 里是给短视频平台的竖屏短片(`douyin.mp4` 和没有配乐的 `douyin-silent.mp4`)和从介绍视频剪出来的落叶片段 `fallen-leaves.mp4`,主页上不引用 | 视频由 `source/video/make.js` 生成 |
 | `source/` | 生成用的脚本,主页上不引用 | 手写 |
 
 ## 在线试用是怎么跑起来的
@@ -21,7 +23,7 @@
 所以插件的新功能,重新运行一次 `source/build.js` 就会出现在试用里。
 
 如果插件用上了新的 `chrome.*` 接口,在 `sim.js` 的 `connect()` 里补上;试用的初始状态(空间、收藏、开着的标签页)在 `web.js` 的 `scenario()` 里。
-主页右边的任务清单在 `main.js` 的 `TASKS` 里,完成条件是 `demo.js` 通过 `onAction` 报上来的操作。
+试用下面的任务清单在 `main.js` 的 `TASKS` 里,完成条件是 `demo.js` 通过 `onAction` 报上来的操作。
 
 ## 插件更新后同步过来
 
@@ -42,12 +44,14 @@ git add -A && git commit -m "Site: update the extension to <版本号>" && git p
 node source/pages.js
 ```
 
-它生成中文页 `index.html` 和英文页 `en/index.html`(各只留一种语言,有各自的标题、描述、canonical、hreflang 和结构化数据),写 `sitemap.xml`,再给引用的样式、脚本、视频加上版本号(否则浏览器会拿缓存里的旧文件配新页面)。改了 `style.css`、`main.js`、`demo/` 或重新生成了视频,也要运行一次。提交推送后几分钟内生效。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
+它生成中文页 `index.html` 和英文页 `en/index.html`(各只留一种语言,有各自的标题、描述、canonical、hreflang 和结构化数据,`{{version}}` 换成当前版本号),写 `sitemap.xml`,再给引用的样式、脚本、视频加上版本号(否则浏览器会拿缓存里的旧文件配新页面)。
+
+文字里出现了字体子集里没有的字时,它会提醒一句;这时运行 `python source/fonts.py <仓耳今楷02-W04.ttf 的路径>` 重新生成字体(需要 `pip install fonttools brotli`;仓耳今楷的原文件不放进仓库,从仓耳官网下载,或者放在 `source/fonts/` 下,这个目录不提交;思源宋体默认用 Windows 11 自带的 `NotoSerifSC-VF.ttf`),再运行一次 `node source/pages.js`。中文用全角标点;英文用直引号(这款字体里弯引号是全角的,两边会空一大块)。改了 `style.css`、`main.js`、`demo/` 或重新生成了视频,也要运行一次。提交推送后几分钟内生效。本地预览:在这个目录起一个静态服务器,比如 `npx serve .`。
 
 ### 搜索引擎
 
 - 中文页和英文页是两个网址,互相用 hreflang 标明;右上角的语言按钮是到另一个页面的链接,选择会被记住,下次直接打开那种语言。浏览器语言和页面不一样时,顶部提示有另一种语言的版本,但不自动跳转,免得爬虫收录不到中文页。
-- 结构化数据(JSON-LD):`SoftwareApplication`(版本号取自 `ext/version.json`)和介绍视频的 `VideoObject`(时长从 MP4 读,上传时间是它最近一次提交的时间),都由 `source/pages.js` 生成。
+- 结构化数据(JSON-LD):`SoftwareApplication`(版本号取自 `ext/version.json`),由 `source/pages.js` 生成。
 - `ext/` 的两个页面和 `source/video/scene.html` 带 `noindex`,不会被当成空页面收录。
 - 主页在 `winzipsdo.github.io` 的子目录里,根目录的 `robots.txt` 不归这个仓库管,`sitemap.xml`(https://winzipsdo.github.io/sweeping-monk/sitemap.xml)要在 Google Search Console 里手动提交一次。
 

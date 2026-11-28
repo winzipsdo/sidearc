@@ -3,9 +3,9 @@
 // 收藏在滚动区外面,一直看得见,不管;别的空间、别的窗口的标签页列表里没有这一行,也不管。
 // 合并相同地址的标签页后,也用同样的方式滚到已有的那个(见 revealTab)
 
-import { $, h } from './dom.js?v=7f47949b';
-import { t } from './i18n.js?v=7f47949b';
-import { bind, query } from './store.js?v=7f47949b';
+import { $, h } from './dom.js?v=bf327012';
+import { t } from './i18n.js?v=bf327012';
+import { bind, query } from './store.js?v=bf327012';
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const arrow = (d) => `<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;

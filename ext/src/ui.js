@@ -1,8 +1,8 @@
 // 提示条、撤销栈、右键菜单的外壳和对话框。
 
-import { $, h, icon } from './dom.js?v=7f47949b';
-import { t } from './i18n.js?v=7f47949b';
-import { COLORS } from './store.js?v=7f47949b';
+import { $, h, icon } from './dom.js?v=bf327012';
+import { t } from './i18n.js?v=bf327012';
+import { COLORS } from './store.js?v=bf327012';
 
 let toastTimer;
 // 底部提示条;给了 action 就带一个按钮(比如「撤销」)
