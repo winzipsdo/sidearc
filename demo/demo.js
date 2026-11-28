@@ -24,6 +24,9 @@ const ICON = {
   pause: '<path d="M5.5 3.5v9M10.5 3.5v9"/>',
 };
 const svg = (name, size = 14) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+// 元素被 CSS zoom 放大了几倍(录 README 视频时 stage.html 把整个窗口放大 2 倍):
+// 指针事件的坐标和 getBoundingClientRect 是放大后的像素,transform、width 写的是放大前的
+const zoomOf = (el) => el.getBoundingClientRect().width / el.offsetWidth || 1;
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 // 地址按这个脚本的位置算:中文页在根目录、英文页在 en/ 下,两边都能用
 const LOGO = new URL('../assets/logo.svg?v=cde65277', import.meta.url).href;
@@ -139,13 +142,15 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     strip.innerHTML = next;
     if (!before.size || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const ease = 'cubic-bezier(.2,.8,.2,1)';
+    // getBoundingClientRect 是屏幕上的像素,transform 和 width 是放大前的,窗口被放大时要除掉(见 zoomOf)
+    const z = zoomOf(strip);
     for (const el of strip.children) {
       const old = before.get(key(el));
       const now = el.getBoundingClientRect();
       if (!old) {
         el.animate([{ opacity: 0, transform: 'scaleX(.4)', transformOrigin: 'left center' }, { opacity: 1, transform: 'none', transformOrigin: 'left center' }], { duration: 220, easing: ease });
       } else if (Math.abs(old.left - now.left) > 0.5 || Math.abs(old.width - now.width) > 0.5) {
-        el.animate([{ transform: `translateX(${old.left - now.left}px)`, width: `${old.width}px` }, { transform: 'none', width: `${now.width}px` }], { duration: 220, easing: ease });
+        el.animate([{ transform: `translateX(${(old.left - now.left) / z}px)`, width: `${old.width / z}px` }, { transform: 'none', width: `${now.width / z}px` }], { duration: 220, easing: ease });
       }
     }
   }
@@ -172,25 +177,56 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     const id = +el.dataset.id;
     const x0 = e.clientX;
     let moved = false;
-    const others = [...strip.querySelectorAll('.sb-tab')].filter((x) => x !== el);
+    let dx = 0;
+    let tx = 0;
+    let raf = 0;
+    const tabs = [...strip.querySelectorAll('.sb-tab')];
+    const others = tabs.filter((x) => x !== el);
+    const next = others[tabs.indexOf(el)] ?? null; // 原来排在它后面的那个:落在它前面等于没动
+    // 拖着的标签页要一直在指针底下:左边 = 按下时的位置 + 指针移动的距离。
+    // 它还占着原来的位置,别的标签页前面让出空隙(还带 0.12 秒的过渡)时它原来的位置也跟着挪,
+    // 所以不能直接 translateX(dx),每一帧按它现在实际在哪儿把差的补上
+    const left0 = el.getBoundingClientRect().left;
+    const z = zoomOf(strip);
+    const follow = () => {
+      tx += (left0 + dx - el.getBoundingClientRect().left) / z;
+      el.style.transform = `translateX(${tx}px)`;
+    };
+    const frame = () => {
+      follow();
+      raf = requestAnimationFrame(frame);
+    };
     const onMove = (ev) => {
-      const dx = ev.clientX - x0;
+      dx = ev.clientX - x0;
       if (!moved && Math.abs(dx) < 6) return;
       if (!moved) {
         moved = true;
         dragging = { id };
+        // 宽度定住:别的标签页让位时它不跟着缩(border-box:录制台没有主页那条全局的 box-sizing,不写就多出内边距)
+        el.style.boxSizing = 'border-box';
+        el.style.flex = `0 0 ${el.getBoundingClientRect().width / z}px`;
         el.classList.add('dragging');
         el.setPointerCapture?.(e.pointerId);
+        raf = requestAnimationFrame(frame);
       }
-      el.style.transform = `translateX(${dx}px)`;
-      const mid = el.getBoundingClientRect().left + el.offsetWidth / 2;
-      dragging.before = others.find((x) => mid < x.getBoundingClientRect().left + x.offsetWidth / 2) ?? null;
-      for (const x of others) x.classList.toggle('gap-before', x === dragging.before);
-      strip.classList.toggle('gap-end', !dragging.before);
+      follow();
+      const r = el.getBoundingClientRect();
+      const mid = r.left + r.width / 2;
+      dragging.before = others.find((x) => {
+        const o = x.getBoundingClientRect();
+        return mid < o.left + o.width / 2;
+      }) ?? null;
+      // 落下去顺序不变时不让出空隙
+      const gap = dragging.before === next ? undefined : dragging.before;
+      for (const x of others) x.classList.toggle('gap-before', x === gap);
+      strip.classList.toggle('gap-end', gap === null);
+      follow();
     };
     const onUp = () => {
       removeEventListener('pointermove', onMove);
       removeEventListener('pointerup', onUp);
+      removeEventListener('pointercancel', onUp);
+      cancelAnimationFrame(raf);
       if (!moved) return b.activate(b.tab(id));
       const before = dragging.before;
       dragging = null;
@@ -206,6 +242,7 @@ export function mountDemo(root, { lang, onAction = () => {} }) {
     };
     addEventListener('pointermove', onMove);
     addEventListener('pointerup', onUp);
+    addEventListener('pointercancel', onUp);
   });
 
   // ---------- 地址栏和网页 ----------

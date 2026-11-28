@@ -70,7 +70,9 @@ async function record(lang, name, script, { crop, width = GIF_W } = {}) {
       const x = x0 + (to[0] - x0) * e;
       const y = y0 + (to[1] - y0) * e;
       await page.mouse.move(x, y);
-      await page.evaluate(([x, y, d]) => window.pointAt(x, y, d), [x, y, down]);
+      // 画出来的指针在下一帧再挪:页面收到 mousemove 要等到下一帧开头,
+      // 马上挪的话指针总比页面(拖着的标签页)早一帧,动得快时看着就是标签页落在指针后面
+      await page.evaluate(([x, y, d]) => new Promise((r) => requestAnimationFrame(() => r(window.pointAt(x, y, d)))), [x, y, down]);
     }
     at = to;
   };
@@ -147,13 +149,20 @@ for (const lang of ['zh', 'en']) {
     await wait(350);
     await press(false);
     await wait(1300);
+    // 拖到 Hacker News 前面(标签页的第一个):再往前是固定的 Notion 和文件夹里的标签页,
+    // 放在那儿插件会把它挪回来,画面上就是松手后又弹了一下。
+    // 落点按拖着的标签页的中线算(见 demo.js):中线落在 Hacker News 左边一点
     const lofi = page.locator('.sb-tab', { hasText: 'lofi' });
-    await move(await where(lofi, 0.4), 700);
+    const from = await where(lofi, 0.4);
+    const lofiW = (await lofi.boundingBox()).width;
+    const hn = await page.locator('.sb-tab', { hasText: 'Hacker' }).boundingBox();
+    // 按住的是 lofi 的 0.4 处,中线在它右边 0.1 个宽度
+    const to = [hn.x + hn.width * 0.2 - lofiW * 0.1, from[1]];
+    await move(from, 700);
     await wait(250);
     await press(true);
-    const notion = await where(page.locator('.sb-tab', { hasText: 'Notion' }), 0.1);
-    await move([notion[0] + 40, notion[1]], 700, true);
-    await move(notion, 300, true);
+    await move([to[0] + 60, to[1]], 700, true);
+    await move(to, 300, true);
     await wait(250);
     await press(false);
     await wait(1500);
